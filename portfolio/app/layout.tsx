@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sota's Portfolio",
-  description: "数理最適化とデータサイエンスを活かしたプロジェクト紹介",
+  title: "Sakasu's Portfolio",
+  description: "A portfolio showcasing Sakasu's work and achievements."
 };
 
 export default function RootLayout({
