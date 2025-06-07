@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import LangSwitcher from "@/components/LangSwitcher";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,9 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased bg-white text-gray-900 dark:bg-zinc-900 dark:text-white min-h-screen">
+        {/* <ClientOnly> */}
+        <LangSwitcher />
+        {/* </ClientOnly> */}
         {children}
       </body>
     </html>
