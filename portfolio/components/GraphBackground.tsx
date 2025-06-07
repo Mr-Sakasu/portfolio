@@ -1,42 +1,34 @@
-// components/GraphBackground.tsx
 "use client";
 
-import Particles from "react-tsparticles";
-import { loadSlim } from "tsparticles-slim";
-import { useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
+import NET from "vanta/dist/vanta.net.min.js";
+import * as THREE from "three";
 
-export default function GraphBackground() {
-    const particlesInit = useCallback(async (engine: any) => {
-        await loadSlim(engine);
-    }, []);
+export default function VantaBackground() {
+    const ref = useRef(null);
+    const [vantaEffect, setVantaEffect] = useState<any>(null);
 
-    return (
-        <Particles
-            id="tsparticles"
-            init={particlesInit}
-            options={{
-                fullScreen: { enable: true, zIndex: -1 },
-                background: { color: { value: "transparent" } },
-                particles: {
-                    number: { value: 60 },
-                    color: { value: "#999" },
-                    links: {
-                        enable: true,
-                        distance: 120,
-                        color: "#999",
-                        opacity: 0.3,
-                        width: 1,
-                    },
-                    move: {
-                        enable: true,
-                        speed: 1,
-                        random: true,
-                        outModes: "out",
-                    },
-                    size: { value: 2 },
-                    opacity: { value: 0.5 },
-                },
-            }}
-        />
-    );
+    useEffect(() => {
+        if (!vantaEffect && ref.current) {
+            setVantaEffect(
+                NET({
+                    el: ref.current,
+                    THREE,
+                    mouseControls: true,
+                    touchControls: true,
+                    minHeight: 200.0,
+                    minWidth: 200.0,
+                    scale: 1.0,
+                    scaleMobile: 1.0,
+                    color: 0xffffff,
+                    backgroundColor: 0x111111,
+                })
+            );
+        }
+        return () => {
+            if (vantaEffect) vantaEffect.destroy();
+        };
+    }, [vantaEffect]);
+
+    return <div ref={ref} className="fixed top-0 left-0 w-full h-full -z-10" />;
 }
