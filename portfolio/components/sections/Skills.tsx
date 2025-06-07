@@ -1,5 +1,3 @@
-"use client";
-
 import { SiPython, SiCplusplus, SiLatex, SiTypescript} from "react-icons/si";
 import { MdCatchingPokemon } from "react-icons/md";
 import { RiNextjsFill } from "react-icons/ri";
@@ -14,7 +12,8 @@ const skill_list = [
     FaReact,
     FaGithub,
     FaGitAlt,
-    FaGitlab
+    FaGitlab,
+    MdCatchingPokemon
 ];
 export default function Skills() {
     return (
@@ -26,7 +25,11 @@ export default function Skills() {
             <br/>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 justify-items-center">
                 {skill_list.map((Icon, index) => (
-                    <Icon key={index} size={40} className="text-white" />
+                    <Icon
+                        key={index}
+                        size={40}
+                        className="text-gray-800 dark:text-white transition-colors"
+                    />
                 ))}
             </div>
         </section>
