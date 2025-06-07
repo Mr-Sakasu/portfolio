@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import LangSwitcher from "@/components/LangSwitcher";
-import VantaBackground from "@/components/GraphBackground";
+// import GraphBackground from "@/components/GraphBackground";
+// import ParticlesBackground from "@/components/ParticlesBackground";
 
 
 const geistSans = Geist({
@@ -31,8 +32,10 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body className="font-sans antialiased bg-white text-gray-900 dark:bg-zinc-900 dark:text-white min-h-screen">
-        <VantaBackground />
+        {/* <ParticlesBackground /> */}
+        {/* <ClientOnly> */}
         <LangSwitcher />
+        {/* </ClientOnly> */}
         {children}
       </body>
     </html>

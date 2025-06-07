@@ -1,19 +1,24 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import NET from "vanta/dist/vanta.net.min.js";
 import * as THREE from "three";
 
 export default function VantaBackground() {
-    const ref = useRef(null);
+    const ref = useRef<HTMLDivElement>(null);
     const [vantaEffect, setVantaEffect] = useState<any>(null);
 
     useEffect(() => {
-        if (!vantaEffect && ref.current) {
-            setVantaEffect(
-                NET({
+        if (typeof window === "undefined") return;
+
+        // 🔑 Vantaより先に globalThis に THREE を設定
+        // @ts-ignore
+        globalThis.THREE = THREE;
+
+        // ✅ Vanta を動的に import
+        import("vanta/dist/vanta.net.min.js").then((VANTA) => {
+            if (!vantaEffect && ref.current) {
+                const effect = VANTA.default({
                     el: ref.current,
-                    THREE,
                     mouseControls: true,
                     touchControls: true,
                     minHeight: 200.0,
@@ -22,11 +27,16 @@ export default function VantaBackground() {
                     scaleMobile: 1.0,
                     color: 0xffffff,
                     backgroundColor: 0x111111,
-                })
-            );
-        }
+                    vertexColors: false,
+                });
+                setVantaEffect(effect);
+            }
+        }).catch((err) => {
+            console.error("[VANTA] Init error", err);
+        });
+
         return () => {
-            if (vantaEffect) vantaEffect.destroy();
+            vantaEffect?.destroy?.();
         };
     }, [vantaEffect]);
 

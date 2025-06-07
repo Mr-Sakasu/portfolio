@@ -1,6 +1,14 @@
-// components/ClientOnly.tsx
 "use client";
 
-export default function ClientOnly({ children }: { children: React.ReactNode }) {
+import { ReactNode, useEffect, useState } from "react";
+
+export default function ClientOnly({ children }: { children: ReactNode }) {
+    const [hasMounted, setHasMounted] = useState(false);
+
+    useEffect(() => {
+        setHasMounted(true);
+    }, []);
+
+    if (!hasMounted) return null;
     return <>{children}</>;
 }
