@@ -1,4 +1,4 @@
-import {PencilLine} from "lucide-react";
+import {Box} from "lucide-react";
 import ProjectCard from "./ProjectCard";
 
 type Project = {
@@ -17,7 +17,10 @@ type ProjectsProps = {
 export default function Projects({projects}: ProjectsProps) {
     return (
         <section className="mt-16 text-left max-w-5xl w-full px-4 mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-white">Projects</h2>
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                <Box size={20} />
+                Projects
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {projects.map((proj, i) => (
                     <ProjectCard key={i} {...proj} />
