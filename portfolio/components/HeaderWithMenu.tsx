@@ -21,7 +21,7 @@ export default function HeaderWithMenu() {
             {/* モバイル用メニューのみを表示（Heroなどの中身は含めない） */}
             {open && (
                 <nav className="fixed top-16 right-4 z-40 bg-white/90 dark:bg-zinc-800/90 backdrop-blur-md rounded-xl shadow-lg p-4 space-y-3 text-sm text-left w-48 animate-fade-in">
-                    <a href="#hero" onClick={() => setOpen(false)} className="block px-3 py-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">Hero</a>
+                    <a href="#hero" onClick={() => setOpen(false)} className="block px-3 py-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">Top</a>
                     <a href="#about" onClick={() => setOpen(false)} className="block px-3 py-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">About</a>
                     <a href="#projects" onClick={() => setOpen(false)} className="block px-3 py-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">Projects</a>
                     <a href="#skills" onClick={() => setOpen(false)} className="block px-3 py-2 rounded hover:bg-zinc-200 dark:hover:bg-zinc-700 transition">Skills</a>
