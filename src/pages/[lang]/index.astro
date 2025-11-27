@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { ui, languages } from '../../i18n/ui';
 import Timeline from '../../components/Timeline.astro';
+import { projectData } from '../../data/projects';
 
 export function getStaticPaths() {
   return Object.keys(languages).map((lang) => ({ params: { lang } }));
@@ -9,54 +10,81 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const t = ui[lang as keyof typeof ui];
+const projects = projectData[lang] || projectData['en'];
 ---
 
-<Layout title="My Portfolio" lang={lang}>
+<Layout title="Sakasu Portfolio" lang={lang}>
 	
-    <section class="py-20 md:py-32">
-        <div class="flex flex-col md:flex-row items-center gap-10">
+    <section class="py-12 md:py-32">
+        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-10">
             
             <div class="flex-shrink-0">
                 <img 
                     src="/sakasu.jpg" 
                     alt="Profile Picture" 
-                    class="w-40 h-40 md:w-56 md:h-56 rounded-full object-cover border-4 border-gray-800 shadow-2xl"
+                    /* Made image smaller on mobile (w-32) and larger on desktop (md:w-56) */
+                    class="w-32 h-32 md:w-56 md:h-56 rounded-full object-cover border-4 border-gray-800 shadow-2xl"
                 />
             </div>
 
             <div class="text-center md:text-left">
-                <h1 class="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-white to-gray-600 bg-clip-text text-transparent pb-4 leading-tight">
+                <h1 class="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-white to-gray-600 bg-clip-text text-transparent pb-2 md:pb-4 leading-tight break-words">
                     {t['hero.title']}
                 </h1>
-                <p class="text-xl text-gray-400 mt-4 max-w-lg leading-relaxed">
+                
+                <p class="text-lg md:text-xl text-gray-400 mt-4 max-w-lg leading-relaxed mx-auto md:mx-0">
                     {t['hero.subtitle']}
                 </p>
                 
                 <div class="mt-6 flex gap-4 justify-center md:justify-start">
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors">GitHub</a>
-                    <a href="#" class="text-gray-400 hover:text-white transition-colors">Twitter</a>
+                    <a href="https://github.com/Mr-Sakasu/" target="_blank" class="text-gray-400 hover:text-white transition-colors">GitHub</a>
                 </div>
             </div>
-
         </div>
     </section>
 
     <section class="mt-12">
-        <h2 class="text-sm font-bold text-blue-500 uppercase tracking-widest mb-8">
+        <h2 class="text-sm font-bold text-blue-500 uppercase tracking-widest mb-6 md:mb-8">
             {t['nav.work']}
         </h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="p-6 rounded-xl border border-gray-800 bg-[#161616] hover:border-blue-500/50 hover:bg-[#1a1a1a] transition-all group">
-                <div class="h-40 bg-gray-800 rounded mb-4 w-full"></div> 
-                <h3 class="text-xl font-bold mb-2 group-hover:text-blue-400 transition-colors">Project Alpha</h3>
-                <p class="text-gray-400 text-sm">{t['project.alpha']}</p>
-            </div>
-            </div>
+            {projects.map((project) => (
+                <a href={project.link} target="_blank" class="block group">
+                    <div class="h-full p-5 md:p-6 rounded-xl border border-gray-800 bg-[#161616]/80 backdrop-blur-md hover:border-blue-500/50 hover:bg-[#1a1a1a] transition-all flex flex-col">
+                        
+                        <div class="relative w-full h-40 md:h-48 mb-4 overflow-hidden rounded-lg border border-gray-800">
+                            <img 
+                                src={project.image} 
+                                alt={project.title} 
+                                class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                            />
+                        </div>
+
+                        <div class="flex-grow">
+                            <h3 class="text-lg md:text-xl font-bold mb-2 group-hover:text-blue-400 transition-colors">
+                                {project.title}
+                            </h3>
+                            <p class="text-gray-400 text-sm mb-4 leading-relaxed">
+                                {project.desc}
+                            </p>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 mt-auto">
+                            {project.tags.map((tag) => (
+                                <span class="text-xs bg-gray-800 text-gray-300 px-2 py-1 rounded">
+                                    {tag}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </a>
+            ))}
+        </div>
     </section>
 
-    <section class="mt-24 mb-24">
-        <h2 class="text-3xl font-bold mb-8 text-white">{t['timeline.title']}</h2>
+    <section class="mt-16 md:mt-24 mb-24">
+        <h2 class="text-2xl md:text-3xl font-bold mb-8 text-white">{t['timeline.title']}</h2>
         <Timeline lang={lang} /> 
     </section>
 

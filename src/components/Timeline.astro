@@ -1,24 +1,28 @@
 ---
 import { timelineData } from '../data/timeline';
+
 const { lang } = Astro.props;
 const events = timelineData[lang] || timelineData['en'];
 ---
 
 <div class="relative wrap overflow-hidden p-4 md:py-10">
+    
     <div class="border-2-2 absolute border-opacity-20 border-blue-500 h-full border" style="left: 50%"></div>
 
     {events.map((event, index) => (
         <div class={`mb-8 flex justify-between items-center w-full ${index % 2 === 0 ? 'flex-row-reverse left-timeline' : 'right-timeline'}`}>
-            <div class="order-1 w-5/12"></div>
             
-            <div class={`z-20 flex items-center order-1 shadow-xl w-8 h-8 rounded-full border-4 
+            <div class="order-1 w-5/12 timeline-spacer"></div>
+            
+            <div class={`z-20 flex items-center order-1 shadow-xl w-8 h-8 rounded-full border-4 timeline-dot
                 ${event.color === 'blue' ? 'bg-blue-500 border-blue-900' : ''}
                 ${event.color === 'yellow' ? 'bg-yellow-500 border-yellow-900' : ''}
                 ${event.color === 'green' ? 'bg-green-500 border-green-900' : ''} 
                 ${event.color === 'gray' ? 'bg-gray-500 border-gray-900' : ''}
+                ${event.color === 'red' ? 'bg-red-500 border-red-900' : ''}
             `}></div>
             
-            <div class={`order-1 w-5/12 px-6 py-4 rounded-lg border border-gray-800 bg-[#161616] shadow-xl hover:border-blue-500/50 transition-all ${index % 2 === 0 ? 'text-right' : 'text-left'}`}>
+            <div class={`order-1 w-5/12 px-6 py-4 rounded-lg border border-gray-800 bg-[#161616]/80 backdrop-blur-md shadow-xl hover:border-blue-500/50 transition-all timeline-content ${index % 2 === 0 ? 'text-right' : 'text-left'}`}>
                 <p class="mb-1 text-sm text-blue-400 font-bold">{event.date}</p>
                 <h3 class="mb-2 font-bold text-white text-lg flex items-center gap-2 justify-end md:justify-start" style={index % 2 === 0 ? 'flex-direction: row' : 'flex-direction: row-reverse'}>
                     {event.title} <span class="text-xl">{event.icon}</span>
@@ -30,3 +34,44 @@ const events = timelineData[lang] || timelineData['en'];
         </div>
     ))}
 </div>
+
+<style>
+    /* MOBILE ADJUSTMENTS (< 768px) */
+    @media (max-width: 425px) {
+        
+        /* 1. Move the line to the left */
+        .border-2-2 { 
+            left: 30px !important; 
+        }
+
+        /* 2. Hide the empty spacer div completely */
+        .timeline-spacer {
+            display: none;
+        }
+
+        /* 3. Force the DOT to align with the line */
+        /* Line is at 30px. Dot is 32px wide. Center is 30 - 16 = 14px */
+        .timeline-dot {
+            position: absolute;
+            left: 14px !important;
+        }
+
+        /* 4. Make content take full width and sit to the right */
+        .timeline-content {
+            width: calc(100% - 70px) !important; /* Full width minus space for dot */
+            margin-left: 70px !important; /* Push away from the dot */
+            text-align: left !important;
+        }
+
+        /* 5. Reset Layout Direction */
+        .flex-row-reverse { 
+            flex-direction: row !important; 
+        }
+        
+        /* 6. Fix Icon Alignment inside the card */
+        h3 { 
+            justify-content: flex-start !important; 
+            flex-direction: row-reverse !important; 
+        }
+    }
+</style>

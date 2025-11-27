@@ -1,27 +1,29 @@
 export const languages = {
-    en: 'English',
-    zh: '中文',
-    jp: '日本語',
+    en: 'EN',
+    zh: 'ZH',
+    jp: 'JP',
 };
 
 export const defaultLang = 'en';
 
 export const ui = {
     en: {
-        'nav.work': 'Selected Work',
+        'nav.work': 'Interests',
         'timeline.title': 'Timeline',
-        'hero.title': 'Building digital experiences with speed.',
-        'hero.subtitle': 'I am a creative developer based in Tokyo.',
-        'project.alpha': 'High-performance finance dashboard.',
-        'project.beta': 'Global e-commerce platform.',
+        'hero.title': 'Sakasu',
+        'hero.subtitle': '1st-year Master\'s student researching Mathematical Optimization and Emotion Estimation.',
+        'project.alpha': 'NHK Student Robocon',
+        'project.beta': 'Competitive Programming',
+        'project.theta': 'Web Development',
     },
     zh: {
-        'nav.work': '精选作品',
+        'nav.work': '兴趣领域',
         'timeline.title': 'Timeline',
-        'hero.title': '极速构建数字体验。',
-        'hero.subtitle': '我是一名为居东京的创意开发者。',
-        'project.alpha': '高性能金融仪表盘。',
-        'project.beta': '全球电子商务平台。',
+        'hero.title': 'Sakasu',
+        'hero.subtitle': '硕士一年级在读，主攻数理优化与情感估测研究。',
+        'project.alpha': 'NHK 学生机器人大赛',
+        'project.beta': '竞技编程 (算法竞赛)',
+        'project.theta': 'Web 开发',
     },
     jp: {
         'nav.work': '興味関心',
@@ -33,4 +35,3 @@ export const ui = {
         'project.theta': 'Web開発',
     },
 } as const;
-

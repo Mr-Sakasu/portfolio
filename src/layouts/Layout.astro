@@ -1,7 +1,7 @@
 ---
 import { ClientRouter } from 'astro:transitions';
 import LanguagePicker from '../components/LanguagePicker.astro';
-import Background from '../components/Background.astro'; // <--- 1. Import it
+import Background from '../components/Background.astro';
 
 const { title, lang } = Astro.props;
 ---
@@ -18,8 +18,17 @@ const { title, lang } = Astro.props;
 		
         <Background />
 
-		<header class="w-full max-w-3xl mx-auto p-6 flex justify-between items-center border-b border-gray-800/50 relative z-10">
-			</header>
+        <header class="w-full max-w-3xl mx-auto p-6 flex justify-between items-center border-b border-gray-800/50 relative z-10">
+			
+            <div class="flex items-center gap-4">
+                <a href={`/${lang}/`} class="font-bold text-lg tracking-wider hover:text-blue-400 transition-colors">
+                    PORTFOLIO
+                </a>
+                </div>
+
+            <LanguagePicker />
+            
+		</header>
 
 		<main class="w-full max-w-3xl mx-auto p-6 flex-grow relative z-10">
 			<slot />
