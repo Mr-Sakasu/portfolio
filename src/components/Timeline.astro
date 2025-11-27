@@ -1,0 +1,32 @@
+---
+import { timelineData } from '../data/timeline';
+const { lang } = Astro.props;
+const events = timelineData[lang] || timelineData['en'];
+---
+
+<div class="relative wrap overflow-hidden p-4 md:py-10">
+    <div class="border-2-2 absolute border-opacity-20 border-blue-500 h-full border" style="left: 50%"></div>
+
+    {events.map((event, index) => (
+        <div class={`mb-8 flex justify-between items-center w-full ${index % 2 === 0 ? 'flex-row-reverse left-timeline' : 'right-timeline'}`}>
+            <div class="order-1 w-5/12"></div>
+            
+            <div class={`z-20 flex items-center order-1 shadow-xl w-8 h-8 rounded-full border-4 
+                ${event.color === 'blue' ? 'bg-blue-500 border-blue-900' : ''}
+                ${event.color === 'yellow' ? 'bg-yellow-500 border-yellow-900' : ''}
+                ${event.color === 'green' ? 'bg-green-500 border-green-900' : ''} 
+                ${event.color === 'gray' ? 'bg-gray-500 border-gray-900' : ''}
+            `}></div>
+            
+            <div class={`order-1 w-5/12 px-6 py-4 rounded-lg border border-gray-800 bg-[#161616] shadow-xl hover:border-blue-500/50 transition-all ${index % 2 === 0 ? 'text-right' : 'text-left'}`}>
+                <p class="mb-1 text-sm text-blue-400 font-bold">{event.date}</p>
+                <h3 class="mb-2 font-bold text-white text-lg flex items-center gap-2 justify-end md:justify-start" style={index % 2 === 0 ? 'flex-direction: row' : 'flex-direction: row-reverse'}>
+                    {event.title} <span class="text-xl">{event.icon}</span>
+                </h3>
+                <p class="text-sm leading-snug tracking-wide text-gray-400 text-opacity-100">
+                    {event.desc}
+                </p>
+            </div>
+        </div>
+    ))}
+</div>

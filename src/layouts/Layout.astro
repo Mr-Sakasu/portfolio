@@ -1,0 +1,33 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import LanguagePicker from '../components/LanguagePicker.astro';
+import Background from '../components/Background.astro'; // <--- 1. Import it
+
+const { title, lang } = Astro.props;
+---
+
+<!DOCTYPE html>
+<html lang={lang} class="scroll-smooth bg-[#111]">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<title>{title}</title>
+		<ClientRouter />
+	</head>
+	<body class="text-white font-sans antialiased min-h-screen flex flex-col relative">
+		
+        <Background />
+
+		<header class="w-full max-w-3xl mx-auto p-6 flex justify-between items-center border-b border-gray-800/50 relative z-10">
+			</header>
+
+		<main class="w-full max-w-3xl mx-auto p-6 flex-grow relative z-10">
+			<slot />
+		</main>
+
+        <footer class="text-center p-8 text-gray-600 text-sm relative z-10">
+            © 2025 
+        </footer>
+
+	</body>
+</html>
