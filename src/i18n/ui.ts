@@ -23,6 +23,6 @@ export const ui = {
         'nav.work': '興味分野',
         'timeline.title': 'Timeline',
         'hero.title': 'Sakasu',
-        'hero.subtitle': '修士1年 数理最適化や感情コンピューティングを研究しています',
+        'hero.subtitle': '修士1年 数理最適化や感情コンピューティングの研究をしています',
     },
 } as const;
