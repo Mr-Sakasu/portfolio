@@ -1,3 +1,17 @@
 ---
-return Astro.redirect('/en/');
+// Get the preferred languages from the browser request
+const acceptLanguage = Astro.request.headers.get("accept-language") || "";
+const langString = acceptLanguage.toLowerCase();
+
+let targetLang = "en"; // Default fallback
+
+// Check if the string contains language codes
+// Note: Checks for 'ja' (Japanese) or 'zh' (Chinese)
+if (langString.includes("ja")) {
+  targetLang = "jp";
+} else if (langString.includes("zh")) {
+  targetLang = "zh";
+}
+
+return Astro.redirect(`/${targetLang}/`);
 ---
