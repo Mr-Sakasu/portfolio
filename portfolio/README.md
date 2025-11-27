@@ -20,6 +20,17 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Private task section
+
+To show in-progress tasks that only you can unlock, set a private access code before starting the app:
+
+```bash
+export TASK_ACCESS_CODE="your-secret-code"
+npm run dev
+```
+
+The "Current Work" section will stay locked until the correct code is submitted, keeping personal task links (like your Kaggle notebook) private.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

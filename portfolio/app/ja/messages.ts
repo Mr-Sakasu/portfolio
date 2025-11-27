@@ -4,7 +4,7 @@ export const messages = {
         content: [
             "修士課程で数理最適化やってます。",
             "競プロとソフトウェア開発、中国語に興味あります。あとスマブラ。",
-        ]
+        ],
     },
     projects: {
         items: [
@@ -30,7 +30,16 @@ export const messages = {
                 image: "/images/understand_css_perfectly.avif",
             },
         ],
-    }
-
+    },
+    currentTasks: {
+        title: "進行中のタスク",
+        description: "今まさに取り組んでいる作業を、パスコードでロックした状態で管理します。",
+        privateNotice: "アクセスコードを入力したときだけ表示されます。",
+        inputPlaceholder: "アクセスコードを入力",
+        submitLabel: "解除",
+        successMessage: "アクセス成功。現在進行中のタスクを開けます。",
+        errorMessage: "コードが違います。もう一度試してください。",
+        lockedHint: "あなた専用のコードで進行中タスクを確認できます。",
+        linkLabel: "タスクを開く",
+    },
 };
-  

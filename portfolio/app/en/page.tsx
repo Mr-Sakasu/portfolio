@@ -3,6 +3,7 @@ import Hero from "@/components/sections/Hero";
 import About from "@/components/sections/About";
 import Projects from "@/components/sections/Projects";
 import Skills from "@/components/sections/Skills";
+import CurrentTasks from "@/components/sections/CurrentTasks";
 import { messages } from "./messages";
 
 export default function HomePage() {
@@ -18,6 +19,10 @@ export default function HomePage() {
 
       <section id="projects" className="min-h-screen flex items-center justify-center px-6">
         <Projects projects={messages.projects.items} />
+      </section>
+
+      <section id="current" className="min-h-screen flex items-center justify-center px-6">
+        <CurrentTasks copy={messages.currentTasks} />
       </section>
 
       <section id="skills" className="min-h-screen flex items-center justify-center px-6">
