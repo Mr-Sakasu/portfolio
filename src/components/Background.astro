@@ -7,111 +7,113 @@
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Puts it behind everything */
-    background-color: #111; /* Fallback color */
-    pointer-events: none; /* Allows you to click links through the canvas */
+    z-index: -1;
+    background-color: #111;
+    pointer-events: none;
   }
 </style>
 
 <script>
-  const canvas = document.getElementById('network-canvas') as HTMLCanvasElement;
-  const ctx = canvas.getContext('2d');
-  
-  let particles: Particle[] = [];
-  const particleCount = 60; // Adjust number of nodes here
-  const connectionDistance = 150; // Distance to draw lines
+  // Global variable to track the animation frame
+  let animationId;
 
-  // Resize canvas to fill screen
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  }
-  window.addEventListener('resize', resize);
-  resize();
+  // We wrap everything in a function so we can restart it
+  function initBackground() {
+    const canvas = document.getElementById('network-canvas');
+    
+    // Safety check: If we are on a page without the background, stop.
+    if (!canvas) return;
 
-  class Particle {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    size: number;
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const particleCount = 60;
+    const connectionDistance = 150;
 
-    constructor() {
-      this.x = Math.random() * canvas.width;
-      this.y = Math.random() * canvas.height;
-      this.vx = (Math.random() - 0.5) * 0.5; // Velocity X (Speed)
-      this.vy = (Math.random() - 0.5) * 0.5; // Velocity Y
-      this.size = Math.random() * 2 + 1;
+    // --- CLEANUP PREVIOUS ANIMATION ---
+    // This prevents the animation from running 2x speed if you switch pages fast
+    if (animationId) cancelAnimationFrame(animationId);
+
+    // --- RESIZE LOGIC ---
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    // Remove old listener to prevent memory leaks, then add new one
+    window.removeEventListener('resize', resize);
+    window.addEventListener('resize', resize);
+    resize();
+
+    // --- PARTICLE CLASS ---
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.5;
+        this.vy = (Math.random() - 0.5) * 0.5;
+        this.size = Math.random() * 2 + 1;
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+      }
+
+      draw() {
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        
+        // Style
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = 'rgba(0, 150, 255, 0.8)';
+        ctx.fillStyle = 'rgba(130, 200, 255, 1)';
+        
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
     }
 
-    update() {
-      this.x += this.vx;
-      this.y += this.vy;
-
-      // Bounce off edges
-      if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-      if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-    }
-
-    draw() {
-      if (!ctx) return;
-      
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-
-      // --- BRIGHTNESS SETTINGS ---
-      
-      // 1. Add a Glow (Neon effect)
-      ctx.shadowBlur = 15;  // How far the glow spreads
-      ctx.shadowColor = 'rgba(0, 150, 255, 0.8)'; // The color of the glow
-      
-      // 2. Make the center brighter (More opacity: 1.0)
-      // I changed the color slightly to a brighter "Electric Blue"
-      ctx.fillStyle = 'rgba(130, 200, 255, 1)'; 
-      
-      ctx.fill();
-
-      // 3. Reset shadow so the connecting lines don't glow 
-      // (Keep lines subtle to save performance and contrast)
-      ctx.shadowBlur = 0; 
-    }
-  }
-
-  function init() {
+    // --- INITIALIZE PARTICLES ---
     for (let i = 0; i < particleCount; i++) {
       particles.push(new Particle());
     }
-  }
 
-  function animate() {
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // --- ANIMATION LOOP ---
+    function animate() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    for (let i = 0; i < particles.length; i++) {
-      particles[i].update();
-      particles[i].draw();
+      for (let i = 0; i < particles.length; i++) {
+        particles[i].update();
+        particles[i].draw();
 
-      // Check distance to other particles to draw lines (Edges)
-      for (let j = i; j < particles.length; j++) {
-        const dx = particles[i].x - particles[j].x;
-        const dy = particles[i].y - particles[j].y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+        for (let j = i; j < particles.length; j++) {
+          const dx = particles[i].x - particles[j].x;
+          const dy = particles[i].y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance < connectionDistance) {
-          ctx.beginPath();
-          // The line opacity fades as particles get further apart
-          const opacity = 1 - distance / connectionDistance;
-          ctx.strokeStyle = `rgba(100, 149, 237, ${opacity * 0.2})`; // Blue lines
-          ctx.lineWidth = 1;
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.stroke();
+          if (distance < connectionDistance) {
+            ctx.beginPath();
+            const opacity = 1 - distance / connectionDistance;
+            ctx.strokeStyle = `rgba(100, 200, 255, ${opacity * 0.5})`;
+            ctx.lineWidth = 1;
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
         }
       }
+      // Save the ID so we can cancel it later
+      animationId = requestAnimationFrame(animate);
     }
-    requestAnimationFrame(animate);
+
+    animate();
   }
 
-  init();
-  animate();
+  // --- THE IMPORTANT PART ---
+  // Run this logic every time Astro swaps the page
+  document.addEventListener('astro:page-load', initBackground);
+  
 </script>
