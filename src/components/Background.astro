@@ -55,10 +55,25 @@
 
     draw() {
       if (!ctx) return;
-      ctx.fillStyle = 'rgba(100, 149, 237, 0.5)'; // Blueish Nodes
+      
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+
+      // --- BRIGHTNESS SETTINGS ---
+      
+      // 1. Add a Glow (Neon effect)
+      ctx.shadowBlur = 15;  // How far the glow spreads
+      ctx.shadowColor = 'rgba(0, 150, 255, 0.8)'; // The color of the glow
+      
+      // 2. Make the center brighter (More opacity: 1.0)
+      // I changed the color slightly to a brighter "Electric Blue"
+      ctx.fillStyle = 'rgba(130, 200, 255, 1)'; 
+      
       ctx.fill();
+
+      // 3. Reset shadow so the connecting lines don't glow 
+      // (Keep lines subtle to save performance and contrast)
+      ctx.shadowBlur = 0; 
     }
   }
 
