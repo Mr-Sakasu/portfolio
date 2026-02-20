@@ -325,7 +325,7 @@ export const ui = {
         'tsp.clickCity': '都市をクリック',
         'tsp.distanceUnit': '単位',
         'stars.title': '東京の星空',
-        'stars.subtitle': '今夜の星空コンディション',
+        'stars.subtitle': '今日の星空シミュレーション',
         'stars.loading': '星空データを読み込み中...',
         'stars.error': '星空データを取得できませんでした。',
         'stars.tonightScore': '今夜のスコア',

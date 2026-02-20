@@ -9,6 +9,7 @@ const t = ui[lang as keyof typeof ui] ?? ui.en;
 const isStarsPage = Astro.url.pathname.includes('/stars');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
 const isTspPage = Astro.url.pathname.includes('/tsp');
+const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-xs md:text-sm transition-colors';
 ---
 
 <!DOCTYPE html>
@@ -23,47 +24,57 @@ const isTspPage = Astro.url.pathname.includes('/tsp');
 		
         <Background />
 
-        <header class="w-full max-w-3xl mx-auto p-6 flex justify-between items-center border-b border-gray-800/50 relative z-10">
-			
-            <div class="flex items-center gap-4">
-                <a href={`/${lang}/`} class="font-bold tracking-wider hover:text-blue-400 transition-colors">
-                    Sakasu's note
-                </a>
-                <a
-                    href={`/${lang}/stars/`}
-                    class={`text-xs md:text-sm transition-colors ${
-                        isStarsPage
-                            ? 'text-blue-400'
-                            : 'text-gray-400 hover:text-white'
-                    }`}
-                >
-                    {t['nav.stars']}
-                </a>
-                <a
-                    href={`/${lang}/bandit/`}
-                    class={`text-xs md:text-sm transition-colors ${
-                        isBanditPage
-                            ? 'text-blue-400'
-                            : 'text-gray-400 hover:text-white'
-                    }`}
-                >
-                    {t['nav.bandit']}
-                </a>
-                <a
-                    href={`/${lang}/tsp/`}
-                    class={`text-xs md:text-sm transition-colors ${
-                        isTspPage
-                            ? 'text-blue-400'
-                            : 'text-gray-400 hover:text-white'
-                    }`}
-                >
-                    {t['nav.tsp']}
-                </a>
+        <header class="w-full max-w-3xl mx-auto px-4 py-4 md:p-6 border-b border-gray-800/50 relative z-10">
+            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div class="flex items-center justify-between gap-4">
+                    <a href={`/${lang}/`} class="font-bold tracking-wider hover:text-blue-400 transition-colors whitespace-nowrap">
+                        Sakasu's note
+                    </a>
+                    <div class="md:hidden shrink-0">
+                        <LanguagePicker />
+                    </div>
                 </div>
 
-            <LanguagePicker />
-            
-		</header>
+                <nav aria-label="Top navigation" class="w-full md:flex-1 md:flex md:justify-center">
+                    <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+                        <a
+                            href={`/${lang}/stars/`}
+                            class={`${navBaseClass} ${
+                                isStarsPage
+                                    ? 'border-blue-400/70 bg-blue-500/15 text-blue-300'
+                                    : 'border-gray-700 text-gray-300 hover:border-blue-400/60 hover:text-white'
+                            }`}
+                        >
+                            {t['nav.stars']}
+                        </a>
+                        <a
+                            href={`/${lang}/bandit/`}
+                            class={`${navBaseClass} ${
+                                isBanditPage
+                                    ? 'border-cyan-400/70 bg-cyan-500/15 text-cyan-300'
+                                    : 'border-gray-700 text-gray-300 hover:border-cyan-400/60 hover:text-white'
+                            }`}
+                        >
+                            {t['nav.bandit']}
+                        </a>
+                        <a
+                            href={`/${lang}/tsp/`}
+                            class={`${navBaseClass} ${
+                                isTspPage
+                                    ? 'border-emerald-400/70 bg-emerald-500/15 text-emerald-300'
+                                    : 'border-gray-700 text-gray-300 hover:border-emerald-400/60 hover:text-white'
+                            }`}
+                        >
+                            {t['nav.tsp']}
+                        </a>
+                    </div>
+                </nav>
+
+                <div class="hidden md:block shrink-0">
+                    <LanguagePicker />
+                </div>
+            </div>
+			</header>
 
 		<main class="w-full max-w-3xl mx-auto p-6 flex-grow relative z-10">
 			<slot />
