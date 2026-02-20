@@ -308,24 +308,26 @@ const labels = {
 <script>
   import { Body, Equator, Horizon, Illumination, Observer } from 'astronomy-engine';
 
-  const configEl = document.getElementById('stars-config');
-  let config = {};
-  if (configEl?.textContent) {
-    try {
-      config = JSON.parse(configEl.textContent);
-    } catch (error) {
-      console.warn('Failed to parse stars config JSON.', error);
-    }
-  }
-  const labels = config.labels ?? {};
-  const locale = config.locale ?? 'en-US';
-  const starNames = config.starNames ?? {};
+  let labels = {};
+  let locale = 'en-US';
+  let starNames = {};
 
   const TOKYO = {
     latitude: 35.6764,
     longitude: 139.65,
     timezone: 'Asia/Tokyo',
   };
+
+  function readStarsConfig() {
+    const configEl = document.getElementById('stars-config');
+    if (!configEl?.textContent) return {};
+    try {
+      return JSON.parse(configEl.textContent);
+    } catch (error) {
+      console.warn('Failed to parse stars config JSON.', error);
+      return {};
+    }
+  }
 
   const ONE_DAY = 24 * 60 * 60 * 1000;
   const HOUR = 60 * 60 * 1000;
@@ -425,7 +427,7 @@ const labels = {
     },
   ];
 
-  const tokyoFormatter = new Intl.DateTimeFormat(locale, {
+  let tokyoFormatter = new Intl.DateTimeFormat(locale, {
     timeZone: TOKYO.timezone,
     month: '2-digit',
     day: '2-digit',
@@ -434,32 +436,76 @@ const labels = {
     hour12: false,
   });
 
-  const scoreEl = document.getElementById('stars-score');
-  const summaryEl = document.getElementById('stars-summary');
-  const cloudEl = document.getElementById('stars-cloud');
-  const visibilityEl = document.getElementById('stars-visibility');
-  const precipitationEl = document.getElementById('stars-precipitation');
-  const sunsetEl = document.getElementById('stars-sunset');
-  const bestHourEl = document.getElementById('stars-best-hour');
-  const moonEl = document.getElementById('stars-moon');
-  const refreshBtn = document.getElementById('stars-refresh');
+  let scoreEl = null;
+  let summaryEl = null;
+  let cloudEl = null;
+  let visibilityEl = null;
+  let precipitationEl = null;
+  let sunsetEl = null;
+  let bestHourEl = null;
+  let moonEl = null;
+  let refreshBtn = null;
 
-  const skyCanvas = document.getElementById('sky-canvas');
-  const skyTimeSlider = document.getElementById('sky-time-slider');
-  const skyTimeLabel = document.getElementById('sky-time-label');
-  const skyNowBtn = document.getElementById('sky-now');
-  const skyPlayBtn = document.getElementById('sky-play');
-  const skyResetBtn = document.getElementById('sky-reset');
-  const skyInfoNameEl = document.getElementById('sky-info-name');
-  const skyInfoAltEl = document.getElementById('sky-info-alt');
-  const skyInfoAzEl = document.getElementById('sky-info-az');
-  const skyInfoMagEl = document.getElementById('sky-info-mag');
-  const skyMag1El = document.getElementById('sky-mag1');
-  const skyMag2El = document.getElementById('sky-mag2');
-  const skyMag3El = document.getElementById('sky-mag3');
-  const skyMag4El = document.getElementById('sky-mag4');
-  const skyMag5El = document.getElementById('sky-mag5');
-  const skyMag6El = document.getElementById('sky-mag6');
+  let skyCanvas = null;
+  let skyTimeSlider = null;
+  let skyTimeLabel = null;
+  let skyNowBtn = null;
+  let skyPlayBtn = null;
+  let skyResetBtn = null;
+  let skyInfoNameEl = null;
+  let skyInfoAltEl = null;
+  let skyInfoAzEl = null;
+  let skyInfoMagEl = null;
+  let skyMag1El = null;
+  let skyMag2El = null;
+  let skyMag3El = null;
+  let skyMag4El = null;
+  let skyMag5El = null;
+  let skyMag6El = null;
+
+  function applyStarsConfigFromDom() {
+    const config = readStarsConfig();
+    labels = config?.labels ?? {};
+    locale = config?.locale ?? 'en-US';
+    starNames = config?.starNames ?? {};
+    tokyoFormatter = new Intl.DateTimeFormat(locale, {
+      timeZone: TOKYO.timezone,
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    });
+  }
+
+  function bindStarsDom() {
+    scoreEl = document.getElementById('stars-score');
+    summaryEl = document.getElementById('stars-summary');
+    cloudEl = document.getElementById('stars-cloud');
+    visibilityEl = document.getElementById('stars-visibility');
+    precipitationEl = document.getElementById('stars-precipitation');
+    sunsetEl = document.getElementById('stars-sunset');
+    bestHourEl = document.getElementById('stars-best-hour');
+    moonEl = document.getElementById('stars-moon');
+    refreshBtn = document.getElementById('stars-refresh');
+
+    skyCanvas = document.getElementById('sky-canvas');
+    skyTimeSlider = document.getElementById('sky-time-slider');
+    skyTimeLabel = document.getElementById('sky-time-label');
+    skyNowBtn = document.getElementById('sky-now');
+    skyPlayBtn = document.getElementById('sky-play');
+    skyResetBtn = document.getElementById('sky-reset');
+    skyInfoNameEl = document.getElementById('sky-info-name');
+    skyInfoAltEl = document.getElementById('sky-info-alt');
+    skyInfoAzEl = document.getElementById('sky-info-az');
+    skyInfoMagEl = document.getElementById('sky-info-mag');
+    skyMag1El = document.getElementById('sky-mag1');
+    skyMag2El = document.getElementById('sky-mag2');
+    skyMag3El = document.getElementById('sky-mag3');
+    skyMag4El = document.getElementById('sky-mag4');
+    skyMag5El = document.getElementById('sky-mag5');
+    skyMag6El = document.getElementById('sky-mag6');
+  }
 
   function setText(el, value) {
     if (el) el.textContent = value;
@@ -1192,143 +1238,179 @@ const labels = {
       });
   }
 
-  if (typeof window.__tokyoSkyCleanup === 'function') {
-    window.__tokyoSkyCleanup();
-  }
-
-  resizeSkyCanvas();
-
-  let skyResizeObserver = null;
-  if (skyCanvas instanceof HTMLCanvasElement && 'ResizeObserver' in window) {
-    skyResizeObserver = new ResizeObserver(() => {
-      resizeSkyCanvas();
-    });
-    skyResizeObserver.observe(skyCanvas);
-  }
-
-  const onSkySliderInput = () => {
-    if (!(skyTimeSlider instanceof HTMLInputElement)) return;
-    skyState.hourOffset = Number(skyTimeSlider.value);
-  };
-
-  const onSkyNowClick = () => {
-    skyState.hourOffset = 0;
-    if (skyTimeSlider instanceof HTMLInputElement) {
-      skyTimeSlider.value = '0';
+  function initTokyoSkyPage() {
+    if (typeof window.__tokyoSkyCleanup === 'function') {
+      window.__tokyoSkyCleanup();
     }
-  };
 
-  const onSkyPlayClick = () => {
-    skyState.isPlaying = !skyState.isPlaying;
-    setPlayButtonLabel();
-  };
+    bindStarsDom();
+    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+    applyStarsConfigFromDom();
 
-  const onSkyResetClick = () => {
+    planetCacheKey = '';
+    planetCache = [];
+    skyState.hourOffset = 0;
     skyState.yaw = 0;
     skyState.pitch = 0.2;
     skyState.fov = 88;
-  };
-
-  const onCanvasPointerDown = (event) => {
-    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
-    skyState.isDragging = true;
-    skyState.dragStartX = event.clientX;
-    skyState.dragStartY = event.clientY;
+    skyState.isPlaying = false;
+    skyState.isDragging = false;
     skyState.dragMoved = false;
-    skyCanvas.setPointerCapture(event.pointerId);
-  };
+    skyState.selectedName = '';
+    skyState.hoverName = '';
+    skyState.visibleNamed = [];
+    skyState.animationId = 0;
+    skyState.dpr = window.devicePixelRatio || 1;
+    skyState.shootingStars = [];
+    skyState.nextShootingStarMs = performance.now() + 2400;
+    skyState.lastFrameTime = performance.now();
+    skyState.shootingLastFrameMs = performance.now();
 
-  const onCanvasPointerMove = (event) => {
-    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
-    const rect = skyCanvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    resizeSkyCanvas();
 
-    if (skyState.isDragging) {
-      const deltaX = event.clientX - skyState.dragStartX;
-      const deltaY = event.clientY - skyState.dragStartY;
+    let skyResizeObserver = null;
+    if ('ResizeObserver' in window) {
+      skyResizeObserver = new ResizeObserver(() => {
+        resizeSkyCanvas();
+      });
+      skyResizeObserver.observe(skyCanvas);
+    }
+
+    const onSkySliderInput = () => {
+      if (!(skyTimeSlider instanceof HTMLInputElement)) return;
+      skyState.hourOffset = Number(skyTimeSlider.value);
+    };
+
+    const onSkyNowClick = () => {
+      skyState.hourOffset = 0;
+      if (skyTimeSlider instanceof HTMLInputElement) {
+        skyTimeSlider.value = '0';
+      }
+    };
+
+    const onSkyPlayClick = () => {
+      skyState.isPlaying = !skyState.isPlaying;
+      setPlayButtonLabel();
+    };
+
+    const onSkyResetClick = () => {
+      skyState.yaw = 0;
+      skyState.pitch = 0.2;
+      skyState.fov = 88;
+    };
+
+    const onCanvasPointerDown = (event) => {
+      if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+      skyState.isDragging = true;
       skyState.dragStartX = event.clientX;
       skyState.dragStartY = event.clientY;
-      if (Math.abs(deltaX) > 0.6 || Math.abs(deltaY) > 0.6) skyState.dragMoved = true;
-      skyState.yaw -= deltaX * 0.0055;
-      skyState.pitch = clamp(skyState.pitch - deltaY * 0.0045, -1.25, 1.25);
-      skyState.hoverName = '';
-      skyCanvas.style.cursor = 'grabbing';
-      return;
-    }
+      skyState.dragMoved = false;
+      skyCanvas.setPointerCapture(event.pointerId);
+    };
 
-    const nearest = findNearestVisibleStar(x, y);
-    skyState.hoverName = nearest?.star?.name ?? '';
-    skyCanvas.style.cursor = nearest ? 'pointer' : 'grab';
-  };
+    const onCanvasPointerMove = (event) => {
+      if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+      const rect = skyCanvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
 
-  const onCanvasPointerUp = (event) => {
-    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
-    if (skyState.isDragging) {
-      skyState.isDragging = false;
-      if (skyCanvas.hasPointerCapture(event.pointerId)) {
-        skyCanvas.releasePointerCapture(event.pointerId);
+      if (skyState.isDragging) {
+        const deltaX = event.clientX - skyState.dragStartX;
+        const deltaY = event.clientY - skyState.dragStartY;
+        skyState.dragStartX = event.clientX;
+        skyState.dragStartY = event.clientY;
+        if (Math.abs(deltaX) > 0.6 || Math.abs(deltaY) > 0.6) skyState.dragMoved = true;
+        skyState.yaw -= deltaX * 0.0055;
+        skyState.pitch = clamp(skyState.pitch - deltaY * 0.0045, -1.25, 1.25);
+        skyState.hoverName = '';
+        skyCanvas.style.cursor = 'grabbing';
+        return;
       }
+
+      const nearest = findNearestVisibleStar(x, y);
+      skyState.hoverName = nearest?.star?.name ?? '';
+      skyCanvas.style.cursor = nearest ? 'pointer' : 'grab';
+    };
+
+    const onCanvasPointerUp = (event) => {
+      if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+      if (skyState.isDragging) {
+        skyState.isDragging = false;
+        if (skyCanvas.hasPointerCapture(event.pointerId)) {
+          skyCanvas.releasePointerCapture(event.pointerId);
+        }
+      }
+
+      if (!skyState.dragMoved && skyState.hoverName) {
+        skyState.selectedName = skyState.hoverName;
+      }
+
+      skyCanvas.style.cursor = 'grab';
+    };
+
+    const onCanvasWheel = (event) => {
+      event.preventDefault();
+      skyState.fov = clamp(skyState.fov + event.deltaY * 0.03, 42, 110);
+    };
+
+    const onRefreshClick = () => {
+      loadTokyoSky();
+    };
+
+    if (skyTimeSlider instanceof HTMLInputElement) {
+      skyTimeSlider.addEventListener('input', onSkySliderInput);
     }
+    if (skyNowBtn) skyNowBtn.addEventListener('click', onSkyNowClick);
+    if (skyPlayBtn) skyPlayBtn.addEventListener('click', onSkyPlayClick);
+    if (skyResetBtn) skyResetBtn.addEventListener('click', onSkyResetClick);
 
-    if (!skyState.dragMoved && skyState.hoverName) {
-      skyState.selectedName = skyState.hoverName;
-    }
-
-    skyCanvas.style.cursor = 'grab';
-  };
-
-  const onCanvasWheel = (event) => {
-    event.preventDefault();
-    skyState.fov = clamp(skyState.fov + event.deltaY * 0.03, 42, 110);
-  };
-
-  const onRefreshClick = () => {
-    loadTokyoSky();
-  };
-
-  if (skyTimeSlider instanceof HTMLInputElement) {
-    skyTimeSlider.addEventListener('input', onSkySliderInput);
-  }
-  if (skyNowBtn) skyNowBtn.addEventListener('click', onSkyNowClick);
-  if (skyPlayBtn) skyPlayBtn.addEventListener('click', onSkyPlayClick);
-  if (skyResetBtn) skyResetBtn.addEventListener('click', onSkyResetClick);
-
-  if (skyCanvas instanceof HTMLCanvasElement) {
     skyCanvas.style.cursor = 'grab';
     skyCanvas.addEventListener('pointerdown', onCanvasPointerDown);
     skyCanvas.addEventListener('pointermove', onCanvasPointerMove);
     skyCanvas.addEventListener('pointerup', onCanvasPointerUp);
     skyCanvas.addEventListener('pointerleave', onCanvasPointerUp);
     skyCanvas.addEventListener('wheel', onCanvasWheel, { passive: false });
+
+    if (refreshBtn) refreshBtn.addEventListener('click', onRefreshClick);
+
+    setPlayButtonLabel();
+    loadTokyoSky();
+    skyState.animationId = requestAnimationFrame(tick);
+
+    window.__tokyoSkyCleanup = () => {
+      if (skyState.animationId) cancelAnimationFrame(skyState.animationId);
+      skyState.animationId = 0;
+
+      if (refreshBtn) refreshBtn.removeEventListener('click', onRefreshClick);
+
+      if (skyTimeSlider instanceof HTMLInputElement) {
+        skyTimeSlider.removeEventListener('input', onSkySliderInput);
+      }
+      if (skyNowBtn) skyNowBtn.removeEventListener('click', onSkyNowClick);
+      if (skyPlayBtn) skyPlayBtn.removeEventListener('click', onSkyPlayClick);
+      if (skyResetBtn) skyResetBtn.removeEventListener('click', onSkyResetClick);
+
+      if (skyCanvas instanceof HTMLCanvasElement) {
+        skyCanvas.removeEventListener('pointerdown', onCanvasPointerDown);
+        skyCanvas.removeEventListener('pointermove', onCanvasPointerMove);
+        skyCanvas.removeEventListener('pointerup', onCanvasPointerUp);
+        skyCanvas.removeEventListener('pointerleave', onCanvasPointerUp);
+        skyCanvas.removeEventListener('wheel', onCanvasWheel);
+      }
+
+      if (skyResizeObserver) skyResizeObserver.disconnect();
+    };
   }
 
-  if (refreshBtn) refreshBtn.addEventListener('click', onRefreshClick);
+  if (!window.__tokyoSkyNavHooksInstalled) {
+    document.addEventListener('astro:page-load', initTokyoSkyPage);
+    document.addEventListener('astro:before-swap', () => {
+      if (typeof window.__tokyoSkyCleanup === 'function') {
+        window.__tokyoSkyCleanup();
+      }
+    });
+    window.__tokyoSkyNavHooksInstalled = true;
+  }
 
-  setPlayButtonLabel();
-  loadTokyoSky();
-  skyState.animationId = requestAnimationFrame(tick);
-
-  window.__tokyoSkyCleanup = () => {
-    if (skyState.animationId) cancelAnimationFrame(skyState.animationId);
-
-    if (refreshBtn) refreshBtn.removeEventListener('click', onRefreshClick);
-
-    if (skyTimeSlider instanceof HTMLInputElement) {
-      skyTimeSlider.removeEventListener('input', onSkySliderInput);
-    }
-    if (skyNowBtn) skyNowBtn.removeEventListener('click', onSkyNowClick);
-    if (skyPlayBtn) skyPlayBtn.removeEventListener('click', onSkyPlayClick);
-    if (skyResetBtn) skyResetBtn.removeEventListener('click', onSkyResetClick);
-
-    if (skyCanvas instanceof HTMLCanvasElement) {
-      skyCanvas.removeEventListener('pointerdown', onCanvasPointerDown);
-      skyCanvas.removeEventListener('pointermove', onCanvasPointerMove);
-      skyCanvas.removeEventListener('pointerup', onCanvasPointerUp);
-      skyCanvas.removeEventListener('pointerleave', onCanvasPointerUp);
-      skyCanvas.removeEventListener('wheel', onCanvasWheel);
-    }
-
-    if (skyResizeObserver) skyResizeObserver.disconnect();
-  };
+  initTokyoSkyPage();
 </script>
