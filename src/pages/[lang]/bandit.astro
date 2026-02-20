@@ -1,6 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { ui, languages } from '../../i18n/ui';
+import katex from 'katex';
+import 'katex/dist/katex.min.css';
 
 export function getStaticPaths() {
   return Object.keys(languages).map((lang) => ({ params: { lang } }));
@@ -8,6 +10,10 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params;
 const t = ui[lang as keyof typeof ui] ?? ui.en;
+const ucbFormulaHtml = katex.renderToString(
+  String.raw`UCB_i(t) = \hat{\mu}_i + \sqrt{\frac{2 \ln t}{n_i}}`,
+  { throwOnError: false, displayMode: false }
+);
 
 const labels = {
   round: t['bandit.round'],
@@ -190,9 +196,7 @@ const labels = {
             </summary>
             <div class="bandit-policy-body mt-2">
               <p class="text-gray-300 leading-relaxed">{t['bandit.policy.ucb']}</p>
-              <p class="bandit-policy-formula mt-2 text-cyan-200/90 leading-relaxed">
-                UCB<sub>i</sub>(t) = μ̂<sub>i</sub> + √((2 ln t) / n<sub>i</sub>)
-              </p>
+              <p class="bandit-policy-formula mt-2 text-cyan-200/90 leading-relaxed" set:html={ucbFormulaHtml}></p>
               <p class="mt-2 text-gray-400 leading-relaxed">{t['bandit.policy.ucbDetail']}</p>
             </div>
           </details>
@@ -953,12 +957,12 @@ const labels = {
   }
 
   .bandit-policy-formula {
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
     letter-spacing: 0.01em;
   }
 
-  .bandit-policy-formula sub {
-    font-size: 0.8em;
+  .bandit-policy-formula :global(.katex) {
+    color: inherit;
+    font-size: 1.02em;
   }
 
   .bandit-status-pill {
