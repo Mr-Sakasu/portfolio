@@ -1,5 +1,5 @@
 ---
-import { timelineData } from '../data/timeline';
+import { CURRENT_MONTH_TOKEN, timelineData } from '../data/timeline';
 
 const { lang } = Astro.props;
 const events = timelineData[lang] || timelineData['en'];
@@ -23,7 +23,13 @@ const events = timelineData[lang] || timelineData['en'];
             `}></div>
             
             <div class={`order-1 w-5/12 px-6 py-4 rounded-lg border border-gray-800 bg-[#161616]/80 backdrop-blur-md shadow-xl hover:border-blue-500/50 transition-all timeline-content ${index % 2 === 0 ? 'text-right' : 'text-left'}`}>
-                <p class="mb-1 text-sm text-blue-400 font-bold">{event.date}</p>
+                <p class="mb-1 text-sm text-blue-400 font-bold">
+                    {event.date === CURRENT_MONTH_TOKEN ? (
+                        <time data-current-month aria-label="Current month"></time>
+                    ) : (
+                        event.date
+                    )}
+                </p>
                 <h3 class="mb-2 font-bold text-white text-lg flex items-center gap-2 justify-end md:justify-start" style={index % 2 === 0 ? 'flex-direction: row' : 'flex-direction: row-reverse'}>
                     {event.title} <span class="text-xl">{event.icon}</span>
                 </h3>
@@ -34,6 +40,28 @@ const events = timelineData[lang] || timelineData['en'];
         </div>
     ))}
 </div>
+
+<script is:inline>
+    const formatCurrentMonth = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        return `${year}-${month}`;
+    };
+
+    const refreshCurrentMonth = () => {
+        const formatted = formatCurrentMonth();
+        document.querySelectorAll('[data-current-month]').forEach((node) => {
+            node.textContent = formatted;
+        });
+    };
+
+    refreshCurrentMonth();
+    if (!window.__timelineMonthListenerAttached) {
+        document.addEventListener('astro:page-load', refreshCurrentMonth);
+        window.__timelineMonthListenerAttached = true;
+    }
+</script>
 
 <style>
     /* MOBILE ADJUSTMENTS (< 768px) */

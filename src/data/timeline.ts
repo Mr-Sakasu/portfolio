@@ -1,5 +1,4 @@
-// 1. Get Today's Date automatically (Format: YYYY-MM)
-const currentDate = new Date().toISOString().slice(0, 7);
+export const CURRENT_MONTH_TOKEN = '__CURRENT_MONTH__';
 
 // 2. Define the "Class" (Type) for your events
 export interface TimelineEvent {
@@ -14,7 +13,7 @@ export interface TimelineEvent {
 export const timelineData: Record<string, TimelineEvent[]> = {
     en: [
         {
-            date: currentDate,
+            date: CURRENT_MONTH_TOKEN,
             title: 'Current Focus',
             desc: 'Master\'s Research',
             color: 'blue',
@@ -65,7 +64,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
     ],
     zh: [
         {
-            date: currentDate,
+            date: CURRENT_MONTH_TOKEN,
             title: '疯狂研究研究研究',
             desc: '硕士研究',
             color: 'blue',
@@ -116,7 +115,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
     ],
     jp: [
         {
-            date: currentDate,
+            date: CURRENT_MONTH_TOKEN,
             title: '現在',
             desc: '修士課程で研究中...',
             color: 'blue',
