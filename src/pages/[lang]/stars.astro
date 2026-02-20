@@ -463,6 +463,10 @@ const labels = {
   let skyMag5El = null;
   let skyMag6El = null;
 
+  const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+  let weatherCache = null;
+  let weatherFetchPromise = null;
+
   function applyStarsConfigFromDom() {
     const config = readStarsConfig();
     labels = config?.labels ?? {};
@@ -1151,9 +1155,7 @@ const labels = {
     skyState.animationId = requestAnimationFrame(tick);
   }
 
-  function loadTokyoSky() {
-    setText(summaryEl, labels.loading);
-
+  function createWeatherApiUrl() {
     const url = new URL('https://api.open-meteo.com/v1/forecast');
     url.searchParams.set('latitude', String(TOKYO.latitude));
     url.searchParams.set('longitude', String(TOKYO.longitude));
@@ -1161,79 +1163,141 @@ const labels = {
     url.searchParams.set('daily', 'sunset');
     url.searchParams.set('timezone', TOKYO.timezone);
     url.searchParams.set('forecast_days', '2');
+    return url;
+  }
 
-    fetch(url.toString())
+  function buildWeatherSummary(data) {
+    const times = data?.hourly?.time;
+    const cloudSeries = data?.hourly?.cloud_cover ?? data?.hourly?.cloudcover;
+    const visibilitySeries = data?.hourly?.visibility;
+    const precipitationSeries = data?.hourly?.precipitation;
+    const sunset = Array.isArray(data?.daily?.sunset) ? data.daily.sunset[0] : null;
+
+    if (!Array.isArray(times) || !times.length) throw new Error('Missing hourly times');
+
+    const today = getDateInTokyo();
+    const tomorrow = getDateInTokyo(new Date(Date.now() + ONE_DAY));
+    const tonightRows = [];
+
+    for (let i = 0; i < times.length; i += 1) {
+      const stamp = times[i];
+      if (typeof stamp !== 'string' || !stamp.includes('T')) continue;
+      const [datePart, timePart] = stamp.split('T');
+      const hour = Number(timePart.slice(0, 2));
+      const inTonight = (datePart === today && hour >= 20) || (datePart === tomorrow && hour <= 4);
+      if (!inTonight) continue;
+
+      tonightRows.push({
+        time: stamp,
+        cloud: numeric(cloudSeries, i, 100),
+        visibility: numeric(visibilitySeries, i, 0),
+        precipitation: numeric(precipitationSeries, i, 0),
+      });
+    }
+
+    if (!tonightRows.length) throw new Error('No rows for tonight');
+
+    const avgCloud = average(tonightRows.map((row) => row.cloud));
+    const avgVisibility = average(tonightRows.map((row) => row.visibility));
+    const avgPrecipitation = average(tonightRows.map((row) => row.precipitation));
+
+    let bestRow = tonightRows[0];
+    let bestRowScore = -Infinity;
+    for (const row of tonightRows) {
+      const rowScore = 100 - row.cloud * 0.7 - row.precipitation * 8 + row.visibility / 1500;
+      if (rowScore > bestRowScore) {
+        bestRowScore = rowScore;
+        bestRow = row;
+      }
+    }
+
+    const moon = getMoonPhaseInfo();
+    const moonPenalty = moon.illumination * 25;
+    const totalScore = clamp(Math.round(100 - avgCloud * 0.65 - avgPrecipitation * 8 - moonPenalty), 0, 100);
+
+    return {
+      totalScore,
+      avgCloud,
+      avgVisibility,
+      avgPrecipitation,
+      sunset,
+      bestHour: bestRow.time,
+    };
+  }
+
+  function renderWeatherSummary(summary) {
+    const moon = getMoonPhaseInfo();
+    setText(scoreEl, `${summary.totalScore}/100`);
+    setText(summaryEl, qualityMessage(summary.totalScore));
+    setText(cloudEl, `${Math.round(summary.avgCloud)}%`);
+    setText(visibilityEl, `${(summary.avgVisibility / 1000).toFixed(1)} km`);
+    setText(precipitationEl, `${summary.avgPrecipitation.toFixed(1)} mm/h`);
+    setText(sunsetEl, formatClock(summary.sunset));
+    setText(bestHourEl, formatClock(summary.bestHour));
+    setText(moonEl, `${moon.label} (${Math.round(moon.illumination * 100)}%)`);
+  }
+
+  function renderWeatherError() {
+    setText(scoreEl, '--');
+    setText(summaryEl, labels.error);
+    setText(cloudEl, '--');
+    setText(visibilityEl, '--');
+    setText(precipitationEl, '--');
+    setText(sunsetEl, '--');
+    setText(bestHourEl, '--');
+    setText(moonEl, '--');
+  }
+
+  function fetchTokyoSkySummary() {
+    if (weatherFetchPromise) return weatherFetchPromise;
+
+    const url = createWeatherApiUrl();
+    weatherFetchPromise = fetch(url.toString())
       .then((response) => {
         if (!response.ok) throw new Error(`Weather API status ${response.status}`);
         return response.json();
       })
       .then((data) => {
-        const times = data?.hourly?.time;
-        const cloudSeries = data?.hourly?.cloud_cover ?? data?.hourly?.cloudcover;
-        const visibilitySeries = data?.hourly?.visibility;
-        const precipitationSeries = data?.hourly?.precipitation;
-        const sunset = Array.isArray(data?.daily?.sunset) ? data.daily.sunset[0] : null;
+        const summary = buildWeatherSummary(data);
+        weatherCache = {
+          summary,
+          fetchedAt: Date.now(),
+        };
+        return summary;
+      })
+      .finally(() => {
+        weatherFetchPromise = null;
+      });
 
-        if (!Array.isArray(times) || !times.length) throw new Error('Missing hourly times');
+    return weatherFetchPromise;
+  }
 
-        const today = getDateInTokyo();
-        const tomorrow = getDateInTokyo(new Date(Date.now() + ONE_DAY));
-        const tonightRows = [];
+  function getFreshWeatherSummary() {
+    if (!weatherCache?.summary) return null;
+    if (Date.now() - weatherCache.fetchedAt > WEATHER_CACHE_TTL_MS) return null;
+    return weatherCache.summary;
+  }
 
-        for (let i = 0; i < times.length; i += 1) {
-          const stamp = times[i];
-          if (typeof stamp !== 'string' || !stamp.includes('T')) continue;
-          const [datePart, timePart] = stamp.split('T');
-          const hour = Number(timePart.slice(0, 2));
-          const inTonight = (datePart === today && hour >= 20) || (datePart === tomorrow && hour <= 4);
-          if (!inTonight) continue;
+  function loadTokyoSky() {
+    const freshSummary = getFreshWeatherSummary();
+    if (freshSummary) {
+      renderWeatherSummary(freshSummary);
+      return;
+    }
 
-          tonightRows.push({
-            time: stamp,
-            cloud: numeric(cloudSeries, i, 100),
-            visibility: numeric(visibilitySeries, i, 0),
-            precipitation: numeric(precipitationSeries, i, 0),
-          });
-        }
+    if (weatherCache?.summary) {
+      renderWeatherSummary(weatherCache.summary);
+    } else {
+      setText(summaryEl, labels.loading);
+    }
 
-        if (!tonightRows.length) throw new Error('No rows for tonight');
-
-        const avgCloud = average(tonightRows.map((row) => row.cloud));
-        const avgVisibility = average(tonightRows.map((row) => row.visibility));
-        const avgPrecipitation = average(tonightRows.map((row) => row.precipitation));
-
-        let bestRow = tonightRows[0];
-        let bestRowScore = -Infinity;
-        for (const row of tonightRows) {
-          const rowScore = 100 - row.cloud * 0.7 - row.precipitation * 8 + row.visibility / 1500;
-          if (rowScore > bestRowScore) {
-            bestRowScore = rowScore;
-            bestRow = row;
-          }
-        }
-
-        const moon = getMoonPhaseInfo();
-        const moonPenalty = moon.illumination * 25;
-        const totalScore = clamp(Math.round(100 - avgCloud * 0.65 - avgPrecipitation * 8 - moonPenalty), 0, 100);
-
-        setText(scoreEl, `${totalScore}/100`);
-        setText(summaryEl, qualityMessage(totalScore));
-        setText(cloudEl, `${Math.round(avgCloud)}%`);
-        setText(visibilityEl, `${(avgVisibility / 1000).toFixed(1)} km`);
-        setText(precipitationEl, `${avgPrecipitation.toFixed(1)} mm/h`);
-        setText(sunsetEl, formatClock(sunset));
-        setText(bestHourEl, formatClock(bestRow.time));
-        setText(moonEl, `${moon.label} (${Math.round(moon.illumination * 100)}%)`);
+    fetchTokyoSkySummary()
+      .then((summary) => {
+        renderWeatherSummary(summary);
       })
       .catch((error) => {
-        setText(scoreEl, '--');
-        setText(summaryEl, labels.error);
-        setText(cloudEl, '--');
-        setText(visibilityEl, '--');
-        setText(precipitationEl, '--');
-        setText(sunsetEl, '--');
-        setText(bestHourEl, '--');
-        setText(moonEl, '--');
+        if (weatherCache?.summary) return;
+        renderWeatherError();
         console.error(error);
       });
   }
@@ -1374,6 +1438,7 @@ const labels = {
     if (refreshBtn) refreshBtn.addEventListener('click', onRefreshClick);
 
     setPlayButtonLabel();
+    drawSky(performance.now());
     loadTokyoSky();
     skyState.animationId = requestAnimationFrame(tick);
 

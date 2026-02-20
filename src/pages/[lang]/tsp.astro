@@ -117,8 +117,9 @@ const labels = {
   const VIEW_HEIGHT = 560;
   const EDGE_MARGIN = 56;
   const MIN_DIST = 80;
-  const CITY_RADIUS = 14;
-  const HOVER_CAPTURE_RADIUS = CITY_RADIUS * 1.9;
+  const BASE_CITY_RADIUS = 14;
+  const MAX_CITY_RADIUS = 24;
+  const TARGET_CITY_RADIUS_PX = 9.5;
   const OPT_ROUTE_OFFSET_X = 5;
   const OPT_ROUTE_OFFSET_Y = -5;
 
@@ -249,6 +250,11 @@ const labels = {
     let optLength = null;
     let optRoute = [];
     let hoverCity = -1;
+    let cityRadius = BASE_CITY_RADIUS;
+    let hoverCaptureRadius = BASE_CITY_RADIUS * 1.9;
+    let cityLabelFontSize = 12;
+    let orderBadgeRadius = 8;
+    let orderBadgeFontSize = 10;
 
     function isComplete() {
       return route.length === CITY_COUNT;
@@ -280,6 +286,16 @@ const labels = {
       canvas.width = Math.floor(VIEW_WIDTH * ratio);
       canvas.height = Math.floor(VIEW_HEIGHT * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
+
+      const bounds = canvas.getBoundingClientRect();
+      const scale = bounds.width > 0 ? bounds.width / VIEW_WIDTH : 1;
+      const adaptiveRadius = scale > 0 ? TARGET_CITY_RADIUS_PX / scale : BASE_CITY_RADIUS;
+
+      cityRadius = Math.min(Math.max(BASE_CITY_RADIUS, adaptiveRadius), MAX_CITY_RADIUS);
+      hoverCaptureRadius = cityRadius * 2.2;
+      cityLabelFontSize = Math.max(11, Math.round(cityRadius * 0.78));
+      orderBadgeRadius = Math.max(7, Math.round(cityRadius * 0.58));
+      orderBadgeFontSize = Math.max(8, Math.round(orderBadgeRadius * 0.95));
     }
 
     function drawBackground() {
@@ -392,7 +408,7 @@ const labels = {
         if (isHover) {
           context.beginPath();
           context.fillStyle = 'rgba(251, 191, 36, 0.18)';
-          context.arc(city.x, city.y, CITY_RADIUS + 10, 0, Math.PI * 2);
+          context.arc(city.x, city.y, cityRadius + 10, 0, Math.PI * 2);
           context.fill();
         }
 
@@ -400,7 +416,7 @@ const labels = {
         context.fillStyle = visited ? '#38bdf8' : '#1f2937';
         context.strokeStyle = visited ? '#e0f2fe' : '#475569';
         context.lineWidth = visited ? 2.5 : 2;
-        context.arc(city.x, city.y, CITY_RADIUS, 0, Math.PI * 2);
+        context.arc(city.x, city.y, cityRadius, 0, Math.PI * 2);
         context.fill();
         context.stroke();
 
@@ -408,12 +424,12 @@ const labels = {
           context.beginPath();
           context.strokeStyle = 'rgba(250, 204, 21, 0.96)';
           context.lineWidth = 2;
-          context.arc(city.x, city.y, CITY_RADIUS + 5, 0, Math.PI * 2);
+          context.arc(city.x, city.y, cityRadius + 5, 0, Math.PI * 2);
           context.stroke();
         }
 
         context.fillStyle = '#ffffff';
-        context.font = '600 12px sans-serif';
+        context.font = `600 ${cityLabelFontSize}px sans-serif`;
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText(String(i + 1), city.x, city.y);
@@ -421,11 +437,17 @@ const labels = {
         if (order) {
           context.beginPath();
           context.fillStyle = '#22c55e';
-          context.arc(city.x + CITY_RADIUS - 2, city.y - CITY_RADIUS + 2, 8, 0, Math.PI * 2);
+          context.arc(
+            city.x + cityRadius - 2,
+            city.y - cityRadius + 2,
+            orderBadgeRadius,
+            0,
+            Math.PI * 2
+          );
           context.fill();
           context.fillStyle = '#04130a';
-          context.font = '10px sans-serif';
-          context.fillText(String(order), city.x + CITY_RADIUS - 2, city.y - CITY_RADIUS + 2);
+          context.font = `${orderBadgeFontSize}px sans-serif`;
+          context.fillText(String(order), city.x + cityRadius - 2, city.y - cityRadius + 2);
         }
       }
     }
@@ -504,7 +526,7 @@ const labels = {
         if (route.includes(i)) continue;
         const city = cities[i];
         const d = Math.hypot(city.x - x, city.y - y);
-        if (d < HOVER_CAPTURE_RADIUS && d < bestDist) {
+        if (d < hoverCaptureRadius && d < bestDist) {
           bestDist = d;
           selected = i;
         }
