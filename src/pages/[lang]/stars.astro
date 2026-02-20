@@ -1383,10 +1383,12 @@ const labels = {
         const deltaY = event.clientY - skyState.dragStartY;
         skyState.dragStartX = event.clientX;
         skyState.dragStartY = event.clientY;
-        if (Math.abs(deltaX) > 0.6 || Math.abs(deltaY) > 0.6) skyState.dragMoved = true;
+        if (Math.abs(deltaX) > 0.6 || Math.abs(deltaY) > 0.6) {
+          skyState.dragMoved = true;
+          skyState.hoverName = '';
+        }
         skyState.yaw -= deltaX * 0.0055;
         skyState.pitch = clamp(skyState.pitch - deltaY * 0.0045, -1.25, 1.25);
-        skyState.hoverName = '';
         skyCanvas.style.cursor = 'grabbing';
         return;
       }
@@ -1405,8 +1407,14 @@ const labels = {
         }
       }
 
-      if (!skyState.dragMoved && skyState.hoverName) {
-        skyState.selectedName = skyState.hoverName;
+      if (!skyState.dragMoved) {
+        const rect = skyCanvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        const nearest = findNearestVisibleStar(x, y);
+        if (nearest?.star?.name) {
+          skyState.selectedName = nearest.star.name;
+        }
       }
 
       skyCanvas.style.cursor = 'grab';

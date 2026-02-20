@@ -9,6 +9,7 @@ const t = ui[lang as keyof typeof ui] ?? ui.en;
 const isStarsPage = Astro.url.pathname.includes('/stars');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
 const isTspPage = Astro.url.pathname.includes('/tsp');
+const isMazePage = Astro.url.pathname.includes('/maze');
 const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-xs md:text-sm transition-colors';
 ---
 
@@ -66,6 +67,16 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
                             }`}
                         >
                             {t['nav.tsp']}
+                        </a>
+                        <a
+                            href={`/${lang}/maze/`}
+                            class={`${navBaseClass} ${
+                                isMazePage
+                                    ? 'border-cyan-300/70 bg-cyan-400/15 text-cyan-200'
+                                    : 'border-gray-700 text-gray-300 hover:border-cyan-300/60 hover:text-white'
+                            }`}
+                        >
+                            {t['nav.maze']}
                         </a>
                     </div>
                 </nav>
