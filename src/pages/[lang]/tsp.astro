@@ -118,6 +118,9 @@ const labels = {
   const EDGE_MARGIN = 56;
   const MIN_DIST = 80;
   const CITY_RADIUS = 14;
+  const HOVER_CAPTURE_RADIUS = CITY_RADIUS * 1.9;
+  const OPT_ROUTE_OFFSET_X = 5;
+  const OPT_ROUTE_OFFSET_Y = -5;
 
   function mulberry32(seed) {
     let t = seed >>> 0;
@@ -245,6 +248,7 @@ const labels = {
     let userLength = null;
     let optLength = null;
     let optRoute = [];
+    let hoverCity = -1;
 
     function isComplete() {
       return route.length === CITY_COUNT;
@@ -281,9 +285,22 @@ const labels = {
     function drawBackground() {
       context.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
       const gradient = context.createLinearGradient(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
-      gradient.addColorStop(0, '#090f1b');
-      gradient.addColorStop(1, '#111111');
+      gradient.addColorStop(0, '#091328');
+      gradient.addColorStop(1, '#0b111f');
       context.fillStyle = gradient;
+      context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+      const spotlight = context.createRadialGradient(
+        VIEW_WIDTH * 0.22,
+        VIEW_HEIGHT * 0.24,
+        10,
+        VIEW_WIDTH * 0.22,
+        VIEW_HEIGHT * 0.24,
+        VIEW_WIDTH * 0.7
+      );
+      spotlight.addColorStop(0, 'rgba(34, 211, 238, 0.18)');
+      spotlight.addColorStop(1, 'rgba(34, 211, 238, 0)');
+      context.fillStyle = spotlight;
       context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
 
       context.strokeStyle = 'rgba(90, 110, 150, 0.12)';
@@ -300,25 +317,63 @@ const labels = {
         context.lineTo(VIEW_WIDTH, y);
         context.stroke();
       }
+
+      context.strokeStyle = 'rgba(56, 189, 248, 0.08)';
+      context.lineWidth = 1.2;
+      for (let i = 0; i < 6; i += 1) {
+        context.beginPath();
+        context.arc(
+          VIEW_WIDTH * 0.82,
+          VIEW_HEIGHT * 0.22,
+          35 + i * 36,
+          0,
+          Math.PI * 2
+        );
+        context.stroke();
+      }
     }
 
-    function drawRoute(routeIndices, color, width, closePath) {
+    function drawRoute(
+      routeIndices,
+      color,
+      width,
+      closePath,
+      dash = [],
+      offsetX = 0,
+      offsetY = 0
+    ) {
       if (!routeIndices.length) return;
       context.strokeStyle = color;
       context.lineWidth = width;
       context.lineJoin = 'round';
       context.lineCap = 'round';
+      context.setLineDash(dash);
       context.beginPath();
       const first = cities[routeIndices[0]];
-      context.moveTo(first.x, first.y);
+      context.moveTo(first.x + offsetX, first.y + offsetY);
       for (let i = 1; i < routeIndices.length; i += 1) {
         const city = cities[routeIndices[i]];
-        context.lineTo(city.x, city.y);
+        context.lineTo(city.x + offsetX, city.y + offsetY);
       }
       if (closePath && routeIndices.length > 1) {
-        context.lineTo(first.x, first.y);
+        context.lineTo(first.x + offsetX, first.y + offsetY);
       }
       context.stroke();
+      context.setLineDash([]);
+    }
+
+    function drawHoverPreview() {
+      if (hoverCity < 0 || route.length === 0 || isComplete()) return;
+      const from = cities[route[route.length - 1]];
+      const to = cities[hoverCity];
+      context.strokeStyle = 'rgba(251, 191, 36, 0.85)';
+      context.lineWidth = 2.4;
+      context.setLineDash([7, 8]);
+      context.beginPath();
+      context.moveTo(from.x, from.y);
+      context.lineTo(to.x, to.y);
+      context.stroke();
+      context.setLineDash([]);
     }
 
     function drawCities() {
@@ -326,22 +381,39 @@ const labels = {
       route.forEach((cityIndex, order) => {
         orderByCity.set(cityIndex, order + 1);
       });
+      const startCity = route.length ? route[0] : -1;
 
       for (let i = 0; i < cities.length; i += 1) {
         const city = cities[i];
         const visited = orderByCity.has(i);
         const order = orderByCity.get(i);
+        const isHover = i === hoverCity && !visited;
+
+        if (isHover) {
+          context.beginPath();
+          context.fillStyle = 'rgba(251, 191, 36, 0.18)';
+          context.arc(city.x, city.y, CITY_RADIUS + 10, 0, Math.PI * 2);
+          context.fill();
+        }
 
         context.beginPath();
-        context.fillStyle = visited ? '#3b82f6' : '#22242a';
-        context.strokeStyle = visited ? '#93c5fd' : '#4b5563';
+        context.fillStyle = visited ? '#38bdf8' : '#1f2937';
+        context.strokeStyle = visited ? '#e0f2fe' : '#475569';
         context.lineWidth = visited ? 2.5 : 2;
         context.arc(city.x, city.y, CITY_RADIUS, 0, Math.PI * 2);
         context.fill();
         context.stroke();
 
+        if (i === startCity) {
+          context.beginPath();
+          context.strokeStyle = 'rgba(250, 204, 21, 0.96)';
+          context.lineWidth = 2;
+          context.arc(city.x, city.y, CITY_RADIUS + 5, 0, Math.PI * 2);
+          context.stroke();
+        }
+
         context.fillStyle = '#ffffff';
-        context.font = '12px sans-serif';
+        context.font = '600 12px sans-serif';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText(String(i + 1), city.x, city.y);
@@ -361,9 +433,12 @@ const labels = {
     function draw() {
       drawBackground();
       if (isComplete() && optRoute.length) {
-        drawRoute(optRoute, 'rgba(74, 222, 128, 0.85)', 4, true);
+        drawRoute(optRoute, 'rgba(74, 222, 128, 0.3)', 8, true, [6, 8], OPT_ROUTE_OFFSET_X, OPT_ROUTE_OFFSET_Y);
+        drawRoute(optRoute, 'rgba(74, 222, 128, 0.96)', 3.8, true, [6, 8], OPT_ROUTE_OFFSET_X, OPT_ROUTE_OFFSET_Y);
       }
-      drawRoute(route, 'rgba(96, 165, 250, 0.95)', 3, isComplete());
+      drawRoute(route, 'rgba(56, 189, 248, 0.34)', 7, isComplete());
+      drawRoute(route, 'rgba(125, 211, 252, 0.98)', 3.2, isComplete());
+      drawHoverPreview();
       drawCities();
     }
 
@@ -389,6 +464,13 @@ const labels = {
         setText(statusEl, labels.statusDone);
       } else {
         setText(statusEl, labels.statusDrawing);
+      }
+      if (statusEl) {
+        statusEl.className = isComplete()
+          ? 'tsp-status-pill inline-flex text-sm text-emerald-200'
+          : route.length
+            ? 'tsp-status-pill inline-flex text-sm text-cyan-200'
+            : 'tsp-status-pill inline-flex text-sm text-blue-200';
       }
 
       setText(hintEl, isComplete() ? '' : labels.completeHint);
@@ -422,7 +504,7 @@ const labels = {
         if (route.includes(i)) continue;
         const city = cities[i];
         const d = Math.hypot(city.x - x, city.y - y);
-        if (d < CITY_RADIUS * 1.7 && d < bestDist) {
+        if (d < HOVER_CAPTURE_RADIUS && d < bestDist) {
           bestDist = d;
           selected = i;
         }
@@ -432,6 +514,7 @@ const labels = {
 
     function resetRoute() {
       route = [];
+      hoverCity = -1;
       resetMetrics();
       render();
     }
@@ -440,6 +523,7 @@ const labels = {
       seed = getSeed();
       cities = generateCities(seed);
       route = [];
+      hoverCity = -1;
       resetMetrics();
       render();
     }
@@ -451,6 +535,29 @@ const labels = {
       if (cityIndex === -1) return;
       route.push(cityIndex);
       render();
+    });
+
+    canvas.addEventListener('pointermove', (event) => {
+      if (isComplete()) {
+        if (hoverCity !== -1) {
+          hoverCity = -1;
+          draw();
+        }
+        return;
+      }
+      const point = toCanvasCoords(event);
+      const nextHover = findUnvisitedCity(point.x, point.y);
+      if (nextHover !== hoverCity) {
+        hoverCity = nextHover;
+        draw();
+      }
+    });
+
+    canvas.addEventListener('pointerleave', () => {
+      if (hoverCity !== -1) {
+        hoverCity = -1;
+        draw();
+      }
     });
 
     if (newMapBtn) {
@@ -496,3 +603,79 @@ const labels = {
     window.__tspLabPageLoadListener = true;
   }
 </script>
+
+<style>
+  .tsp-lab-shell {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(34, 211, 238, 0.1), transparent 44%),
+      radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.1), transparent 42%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.38), rgba(2, 6, 23, 0.56));
+    box-shadow:
+      0 18px 40px rgba(2, 6, 23, 0.64),
+      inset 0 1px 0 rgba(148, 163, 184, 0.08);
+  }
+
+  .tsp-metric-card,
+  .tsp-result-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 170ms ease, border-color 170ms ease;
+  }
+
+  .tsp-metric-card:hover,
+  .tsp-result-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.52);
+  }
+
+  .tsp-action-btn {
+    backdrop-filter: blur(4px);
+    transition: transform 160ms ease, box-shadow 200ms ease;
+  }
+
+  .tsp-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(2, 6, 23, 0.42);
+  }
+
+  .tsp-canvas-shell {
+    background-image: linear-gradient(180deg, rgba(2, 6, 23, 0.82), rgba(2, 6, 23, 0.62));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 12px 26px rgba(2, 6, 23, 0.52);
+  }
+
+  #tsp-canvas {
+    cursor: crosshair;
+  }
+
+  .tsp-status-pill {
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    background: rgba(14, 116, 144, 0.12);
+    padding: 0.28rem 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    animation: tspStatusPulse 2.4s ease-in-out infinite;
+  }
+
+  .tsp-status-pill::before {
+    content: '';
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 12px currentColor;
+  }
+
+  @keyframes tspStatusPulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.28);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
+    }
+  }
+</style>
