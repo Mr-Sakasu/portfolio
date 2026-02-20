@@ -22,7 +22,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2025-08',
             title: 'Obtained HSK Level 5',
-            desc: 'Conversational Chinese proficiency.',
+            desc: 'I can speak a little Chinese.',
             color: 'red',
             icon: '🇨🇳'
         },
@@ -73,7 +73,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2025-08',
             title: '获得 HSK 5级证书',
-            desc: '具备汉语日常会话能力。',
+            desc: '中文会一点点。',
             color: 'red',
             icon: '🇨🇳'
         },
