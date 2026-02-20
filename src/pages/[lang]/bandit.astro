@@ -1,0 +1,909 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { ui, languages } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const t = ui[lang as keyof typeof ui] ?? ui.en;
+
+const labels = {
+  round: t['bandit.round'],
+  statusPlaying: t['bandit.status.playing'],
+  statusFinished: t['bandit.status.finished'],
+  revealRates: t['bandit.revealRates'],
+  hideRates: t['bandit.hideRates'],
+  arm: t['bandit.arm'],
+  rateHidden: t['bandit.rateHidden'],
+  pull: t['bandit.pull'],
+  reward: t['bandit.reward'],
+  outcomeWin: t['bandit.outcome.win'],
+  outcomeTie: t['bandit.outcome.tie'],
+  outcomeLose: t['bandit.outcome.lose'],
+  outcomePending: t['bandit.outcome.pending'],
+  oracleArm: t['bandit.oracleArm'],
+};
+---
+
+<Layout title={`${t['bandit.title']} | Sakasu Portfolio`} lang={lang}>
+  <section class="py-10 md:py-14 relative overflow-hidden">
+    <div aria-hidden="true" class="pointer-events-none absolute -top-28 -left-20 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 right-0 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl"></div>
+
+    <div class="relative rounded-2xl border border-blue-500/20 bg-[#0f1526]/70 backdrop-blur-sm p-6 md:p-8 shadow-[0_0_0_1px_rgba(59,130,246,0.08),0_18px_50px_rgba(2,6,23,0.7)]">
+      <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white via-blue-100 to-cyan-300 bg-clip-text text-transparent">
+        {t['bandit.title']}
+      </h1>
+      <p class="mt-4 text-gray-200 max-w-2xl leading-relaxed">
+        {t['bandit.subtitle']}
+      </p>
+      <p class="mt-2 text-sm text-gray-400 max-w-2xl">{t['bandit.instructions']}</p>
+    </div>
+
+    <section id="bandit-lab" class="bandit-lab-shell mt-8 space-y-6 rounded-2xl border border-gray-800/80 bg-[#10131d]/85 p-4 md:p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <article class="bandit-metric rounded-xl border border-blue-500/20 bg-[#0e1422]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-blue-200/70">{t['bandit.round']}</p>
+          <p id="bandit-round" class="mt-2 text-3xl font-bold text-white">0/20</p>
+        </article>
+        <article class="bandit-metric rounded-xl border border-cyan-500/20 bg-[#0e1422]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-cyan-200/70">{t['bandit.roundsLeft']}</p>
+          <p id="bandit-rounds-left" class="mt-2 text-3xl font-bold text-white">20</p>
+        </article>
+        <article class="bandit-metric rounded-xl border border-emerald-500/20 bg-[#0e1422]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-emerald-200/70">{t['bandit.totalReward']}</p>
+          <p id="bandit-total-reward" class="mt-2 text-3xl font-bold text-white">0</p>
+        </article>
+      </div>
+
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex flex-wrap gap-2">
+          <button
+            id="bandit-new-lab"
+            type="button"
+            class="bandit-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-blue-600/40 bg-blue-600/10 text-blue-100 hover:text-white hover:border-blue-400 transition-colors"
+          >
+            {t['bandit.newLab']}
+          </button>
+          <button
+            id="bandit-toggle-rates"
+            type="button"
+            class="bandit-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-cyan-600/40 bg-cyan-600/10 text-cyan-100 hover:text-white hover:border-cyan-400 transition-colors"
+          >
+            {t['bandit.revealRates']}
+          </button>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs md:text-sm">
+          <span
+            id="bandit-status"
+            class="bandit-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold"
+          >
+            {t['bandit.status.playing']}
+          </span>
+          <span class="text-gray-400">{t['bandit.seed']}: <span id="bandit-seed" class="text-gray-200">--</span></span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <article class={`bandit-arm-card bandit-arm-${index} rounded-xl border border-gray-700/80 bg-[#0f131d]/95 p-4 flex flex-col`}>
+            <div class="slot-machine-shell" data-slot-cabinet={index}>
+              <div class="slot-marquee">
+                <div class="slot-marquee-lights" aria-hidden="true">
+                  {Array.from({ length: 12 }).map(() => (
+                    <span class="slot-bulb"></span>
+                  ))}
+                </div>
+                <p class="slot-marquee-title">{t['bandit.arm']} {String.fromCharCode(65 + index)}</p>
+              </div>
+              <div class="slot-body">
+                <div class="slot-reels">
+                  {Array.from({ length: 3 }).map((__, reelIndex) => (
+                    <div class="slot-reel-cell">
+                      <span class="slot-symbol" data-slot-symbol-arm={index} data-slot-symbol-reel={reelIndex}>7</span>
+                    </div>
+                  ))}
+                </div>
+                <div class="slot-lever" aria-hidden="true">
+                  <span class="slot-lever-stick"></span>
+                  <span class="slot-lever-knob"></span>
+                </div>
+              </div>
+            </div>
+            <dl class="mt-4 space-y-2 text-xs">
+              <div class="flex items-center justify-between">
+                <dt class="text-gray-400">{t['bandit.pulls']}</dt>
+                <dd data-arm-pulls={index} class="font-semibold text-gray-100">0</dd>
+              </div>
+              <div class="flex items-center justify-between">
+                <dt class="text-gray-400">{t['bandit.avgReward']}</dt>
+                <dd data-arm-avg={index} class="font-semibold text-gray-100">0.00</dd>
+              </div>
+              <div class="flex items-center justify-between">
+                <dt class="text-gray-400">{t['bandit.rate']}</dt>
+                <dd data-arm-rate={index} class="font-semibold text-gray-100">{t['bandit.rateHidden']}</dd>
+              </div>
+            </dl>
+            <button
+              type="button"
+              data-arm-pull={index}
+              class={`bandit-pull-btn bandit-pull-${index} mt-4 w-full px-3 py-2 text-sm rounded-md border transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
+            >
+              {t['bandit.pull']} {String.fromCharCode(65 + index)}
+            </button>
+          </article>
+        ))}
+      </div>
+
+      <article class="rounded-xl border border-indigo-500/20 bg-[#0d1321]/90 p-4">
+        <h2 class="text-xl font-bold text-white">{t['bandit.results']}</h2>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+          <div class="bandit-score-card flex items-center justify-between rounded-md border border-gray-700/80 bg-[#141b2c] p-3">
+            <span class="text-gray-300">{t['bandit.you']}</span>
+            <span id="bandit-score-you" class="font-semibold text-white">0</span>
+          </div>
+          <div class="bandit-score-card flex items-center justify-between rounded-md border border-blue-500/30 bg-[#111827] p-3">
+            <span class="text-blue-100">{t['bandit.greedy']}</span>
+            <span id="bandit-score-greedy" class="font-semibold text-blue-100">0</span>
+          </div>
+          <div class="bandit-score-card flex items-center justify-between rounded-md border border-cyan-500/30 bg-[#0d1a25] p-3">
+            <span class="text-cyan-100">{t['bandit.ucb']}</span>
+            <span id="bandit-score-ucb" class="font-semibold text-cyan-100">0</span>
+          </div>
+          <div class="bandit-score-card flex items-center justify-between rounded-md border border-emerald-500/30 bg-[#0e1d1a] p-3">
+            <span class="text-emerald-100">{t['bandit.oracle']}</span>
+            <span id="bandit-score-oracle" class="font-semibold text-emerald-100">0</span>
+          </div>
+        </div>
+
+        <p id="bandit-outcome" class="mt-4 text-sm text-blue-200">{t['bandit.outcome.pending']}</p>
+        <p id="bandit-oracle-arm" class="mt-1 text-xs text-gray-300">--</p>
+
+        <div class="mt-4 border-t border-gray-700/80 pt-4">
+          <p class="text-xs uppercase tracking-widest text-gray-500">{t['bandit.lastPulls']}</p>
+          <ul id="bandit-history-list" class="mt-2 space-y-1 text-xs text-gray-300"></ul>
+        </div>
+      </article>
+
+      <article class="rounded-xl border border-gray-700/70 bg-[#0f1524]/85 p-4">
+        <h3 class="text-sm font-semibold text-gray-100">{t['bandit.policyDefs']}</h3>
+        <dl class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          <div class="rounded-md border border-blue-500/25 bg-[#121a2e] p-3">
+            <dt class="font-semibold text-blue-100">{t['bandit.greedy']}</dt>
+            <dd class="mt-1 text-gray-300 leading-relaxed">{t['bandit.policy.greedy']}</dd>
+          </div>
+          <div class="rounded-md border border-cyan-500/25 bg-[#0f1c27] p-3">
+            <dt class="font-semibold text-cyan-100">{t['bandit.ucb']}</dt>
+            <dd class="mt-1 text-gray-300 leading-relaxed">{t['bandit.policy.ucb']}</dd>
+          </div>
+          <div class="rounded-md border border-emerald-500/25 bg-[#0f201a] p-3">
+            <dt class="font-semibold text-emerald-100">{t['bandit.oracle']}</dt>
+            <dd class="mt-1 text-gray-300 leading-relaxed">{t['bandit.policy.oracle']}</dd>
+          </div>
+        </dl>
+      </article>
+    </section>
+  </section>
+</Layout>
+
+<script define:vars={{ labels }}>
+  const ARM_COUNT = 3;
+  const HORIZON = 20;
+  const SLOT_SYMBOLS = ['7', 'BAR', '$', 'STAR', 'BELL', 'CHERRY'];
+
+  function mulberry32(seed) {
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6d2b79f5;
+      let x = t;
+      x = Math.imul(x ^ (x >>> 15), x | 1);
+      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function armName(index) {
+    return String.fromCharCode(65 + index);
+  }
+
+  function getSeed() {
+    if (window.crypto?.getRandomValues) {
+      const data = new Uint32Array(1);
+      window.crypto.getRandomValues(data);
+      return data[0];
+    }
+    return Math.floor(Math.random() * 4294967295);
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function generateRates(random) {
+    const rates = Array.from({ length: ARM_COUNT }, () => 0.15 + random() * 0.7).sort((a, b) => a - b);
+    if (rates[rates.length - 1] - rates[0] < 0.18) {
+      rates[rates.length - 1] = clamp(rates[0] + 0.18, 0.15, 0.92);
+    }
+    for (let i = rates.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(random() * (i + 1));
+      [rates[i], rates[j]] = [rates[j], rates[i]];
+    }
+    return rates.map((value) => Number(value.toFixed(3)));
+  }
+
+  function generateRewardTable(random, rates) {
+    return rates.map((rate) =>
+      Array.from({ length: HORIZON }, () => (random() < rate ? 1 : 0))
+    );
+  }
+
+  function simulateStrategy(rewardTable, chooser) {
+    const counts = Array(ARM_COUNT).fill(0);
+    const sums = Array(ARM_COUNT).fill(0);
+    let total = 0;
+
+    for (let turn = 0; turn < HORIZON; turn += 1) {
+      const choice = chooser({ turn, counts, sums });
+      const arm = clamp(Math.floor(choice), 0, ARM_COUNT - 1);
+      const reward = rewardTable[arm][counts[arm]];
+      counts[arm] += 1;
+      sums[arm] += reward;
+      total += reward;
+    }
+
+    return { total, counts, sums };
+  }
+
+  function simulateGreedy(rewardTable, seed) {
+    const random = mulberry32(seed);
+    return simulateStrategy(rewardTable, ({ turn, counts, sums }) => {
+      if (turn < ARM_COUNT) return turn;
+      let bestMean = -1;
+      let candidates = [];
+      for (let i = 0; i < ARM_COUNT; i += 1) {
+        const mean = counts[i] ? sums[i] / counts[i] : 0;
+        if (mean > bestMean) {
+          bestMean = mean;
+          candidates = [i];
+        } else if (mean === bestMean) {
+          candidates.push(i);
+        }
+      }
+      return candidates[Math.floor(random() * candidates.length)];
+    });
+  }
+
+  function simulateUcb1(rewardTable) {
+    return simulateStrategy(rewardTable, ({ turn, counts, sums }) => {
+      for (let i = 0; i < ARM_COUNT; i += 1) {
+        if (counts[i] === 0) return i;
+      }
+      const t = turn + 1;
+      let bestArm = 0;
+      let bestScore = -Infinity;
+      for (let i = 0; i < ARM_COUNT; i += 1) {
+        const mean = sums[i] / counts[i];
+        const bonus = Math.sqrt((2 * Math.log(t)) / counts[i]);
+        const score = mean + bonus;
+        if (score > bestScore) {
+          bestScore = score;
+          bestArm = i;
+        }
+      }
+      return bestArm;
+    });
+  }
+
+  function createLab(seed) {
+    const random = mulberry32(seed);
+    const rates = generateRates(random);
+    const rewardTable = generateRewardTable(random, rates);
+
+    const greedy = simulateGreedy(rewardTable, seed ^ 0x9e3779b9);
+    const ucb = simulateUcb1(rewardTable);
+    const oracleArm = rewardTable.reduce(
+      (best, rewards, index) => {
+        const total = rewards.reduce((sum, value) => sum + value, 0);
+        if (total > best.total) {
+          return { index, total };
+        }
+        return best;
+      },
+      { index: 0, total: -Infinity }
+    );
+
+    return {
+      seed,
+      rates,
+      rewardTable,
+      greedy,
+      ucb,
+      oracleArm,
+    };
+  }
+
+  function formatRate(value) {
+    return `${(value * 100).toFixed(1)}%`;
+  }
+
+  function initBanditLab() {
+    const root = document.getElementById('bandit-lab');
+    if (!root || root.dataset.ready === 'true') return;
+    root.dataset.ready = 'true';
+
+    const roundEl = root.querySelector('#bandit-round');
+    const roundsLeftEl = root.querySelector('#bandit-rounds-left');
+    const totalRewardEl = root.querySelector('#bandit-total-reward');
+    const statusEl = root.querySelector('#bandit-status');
+    const seedEl = root.querySelector('#bandit-seed');
+    const scoreYouEl = root.querySelector('#bandit-score-you');
+    const scoreGreedyEl = root.querySelector('#bandit-score-greedy');
+    const scoreUcbEl = root.querySelector('#bandit-score-ucb');
+    const scoreOracleEl = root.querySelector('#bandit-score-oracle');
+    const outcomeEl = root.querySelector('#bandit-outcome');
+    const oracleArmEl = root.querySelector('#bandit-oracle-arm');
+    const historyList = root.querySelector('#bandit-history-list');
+
+    const newLabButton = root.querySelector('#bandit-new-lab');
+    const toggleRatesButton = root.querySelector('#bandit-toggle-rates');
+    const pullButtons = Array.from(root.querySelectorAll('[data-arm-pull]'));
+    const armPullEls = Array.from(root.querySelectorAll('[data-arm-pulls]'));
+    const armAvgEls = Array.from(root.querySelectorAll('[data-arm-avg]'));
+    const armRateEls = Array.from(root.querySelectorAll('[data-arm-rate]'));
+    const slotCabinetEls = Array.from(root.querySelectorAll('[data-slot-cabinet]'));
+    const slotSymbolsByArm = Array.from({ length: ARM_COUNT }, () => []);
+    root.querySelectorAll('[data-slot-symbol-arm]').forEach((node) => {
+      const arm = Number(node.getAttribute('data-slot-symbol-arm'));
+      if (Number.isFinite(arm) && arm >= 0 && arm < ARM_COUNT) {
+        slotSymbolsByArm[arm].push(node);
+      }
+    });
+
+    let lab = null;
+    let revealRates = false;
+    let round = 0;
+    let userCounts = Array(ARM_COUNT).fill(0);
+    let userSums = Array(ARM_COUNT).fill(0);
+    let userTotal = 0;
+    let history = [];
+    let symbolRandoms = Array.from({ length: ARM_COUNT }, () => Math.random);
+    const reelTimers = Array(ARM_COUNT).fill(null);
+
+    const isFinished = () => round >= HORIZON;
+
+    function setText(node, value) {
+      if (node) node.textContent = value;
+    }
+
+    function randomSymbol(random) {
+      return SLOT_SYMBOLS[Math.floor(random() * SLOT_SYMBOLS.length)];
+    }
+
+    function randomSymbolRow(random) {
+      return Array.from({ length: 3 }, () => randomSymbol(random));
+    }
+
+    function buildOutcomeRow(reward, random) {
+      if (reward === 1) {
+        const symbol = randomSymbol(random);
+        return [symbol, symbol, symbol];
+      }
+      const row = randomSymbolRow(random);
+      if (row[0] === row[1] && row[1] === row[2]) {
+        const pivot = SLOT_SYMBOLS.indexOf(row[2]);
+        row[2] = SLOT_SYMBOLS[(pivot + 1) % SLOT_SYMBOLS.length];
+      }
+      return row;
+    }
+
+    function setReelRow(armIndex, row) {
+      const nodes = slotSymbolsByArm[armIndex] || [];
+      nodes.forEach((node, reelIndex) => {
+        node.textContent = row[reelIndex] ?? row[row.length - 1] ?? '7';
+      });
+    }
+
+    function clearReelTimer(armIndex) {
+      if (reelTimers[armIndex]) {
+        clearTimeout(reelTimers[armIndex]);
+        reelTimers[armIndex] = null;
+      }
+    }
+
+    function setCabinetState(armIndex, { spinning, win }) {
+      const cabinet = slotCabinetEls[armIndex];
+      if (!cabinet) return;
+      cabinet.classList.toggle('is-spinning', Boolean(spinning));
+      cabinet.classList.toggle('is-win', Boolean(win));
+    }
+
+    function animateReel(armIndex, reward) {
+      const random = symbolRandoms[armIndex];
+      if (!random) return;
+
+      clearReelTimer(armIndex);
+      setCabinetState(armIndex, { spinning: true, win: false });
+      setReelRow(armIndex, randomSymbolRow(random));
+
+      reelTimers[armIndex] = setTimeout(() => {
+        const finalRow = buildOutcomeRow(reward, random);
+        setReelRow(armIndex, finalRow);
+        setCabinetState(armIndex, { spinning: false, win: reward === 1 });
+
+        if (reward === 1) {
+          reelTimers[armIndex] = setTimeout(() => {
+            setCabinetState(armIndex, { spinning: false, win: false });
+            reelTimers[armIndex] = null;
+          }, 850);
+        } else {
+          reelTimers[armIndex] = null;
+        }
+      }, 300 + armIndex * 60);
+    }
+
+    function renderHistory() {
+      if (!historyList) return;
+      historyList.innerHTML = '';
+      history.forEach((entry) => {
+        const item = document.createElement('li');
+        item.className = 'text-gray-300';
+        item.textContent = entry;
+        historyList.appendChild(item);
+      });
+    }
+
+    function renderScores() {
+      setText(scoreYouEl, String(userTotal));
+      setText(scoreGreedyEl, String(lab.greedy.total));
+      setText(scoreUcbEl, String(lab.ucb.total));
+      setText(scoreOracleEl, String(lab.oracleArm.total));
+
+      if (isFinished()) {
+        if (userTotal > lab.greedy.total) {
+          setText(outcomeEl, labels.outcomeWin);
+        } else if (userTotal === lab.greedy.total) {
+          setText(outcomeEl, labels.outcomeTie);
+        } else {
+          setText(outcomeEl, labels.outcomeLose);
+        }
+        setText(
+          oracleArmEl,
+          `${labels.oracleArm}: ${labels.arm} ${armName(lab.oracleArm.index)} (${lab.oracleArm.total})`
+        );
+      } else {
+        setText(outcomeEl, labels.outcomePending);
+        setText(oracleArmEl, '--');
+      }
+    }
+
+    function renderArms() {
+      for (let i = 0; i < ARM_COUNT; i += 1) {
+        const pulls = userCounts[i];
+        const mean = pulls > 0 ? (userSums[i] / pulls).toFixed(2) : '0.00';
+        setText(armPullEls[i], String(pulls));
+        setText(armAvgEls[i], mean);
+        setText(
+          armRateEls[i],
+          revealRates || isFinished() ? formatRate(lab.rates[i]) : labels.rateHidden
+        );
+      }
+      pullButtons.forEach((button, index) => {
+        button.disabled = isFinished();
+        button.textContent = `${labels.pull} ${armName(index)}`;
+      });
+    }
+
+    function renderTop() {
+      setText(roundEl, `${round}/${HORIZON}`);
+      setText(roundsLeftEl, String(HORIZON - round));
+      setText(totalRewardEl, String(userTotal));
+      setText(seedEl, String(lab.seed));
+      setText(statusEl, isFinished() ? labels.statusFinished : labels.statusPlaying);
+      if (statusEl) {
+        statusEl.className = isFinished()
+          ? 'bandit-status-pill px-2 py-1 rounded border border-green-600/50 bg-green-500/10 text-green-300 font-semibold'
+          : 'bandit-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold';
+      }
+      if (toggleRatesButton) {
+        toggleRatesButton.textContent = revealRates ? labels.hideRates : labels.revealRates;
+      }
+    }
+
+    function render() {
+      renderTop();
+      renderArms();
+      renderScores();
+      renderHistory();
+    }
+
+    function pullArm(armIndex) {
+      if (isFinished()) return;
+      const reward = lab.rewardTable[armIndex][userCounts[armIndex]];
+      userCounts[armIndex] += 1;
+      userSums[armIndex] += reward;
+      userTotal += reward;
+      round += 1;
+      animateReel(armIndex, reward);
+      history.unshift(
+        `${labels.round} ${round}: ${labels.arm} ${armName(armIndex)} -> +${reward} ${labels.reward}`
+      );
+      history = history.slice(0, 8);
+      render();
+    }
+
+    function resetLab() {
+      lab = createLab(getSeed());
+      revealRates = false;
+      round = 0;
+      userCounts = Array(ARM_COUNT).fill(0);
+      userSums = Array(ARM_COUNT).fill(0);
+      userTotal = 0;
+      history = [];
+
+      symbolRandoms = Array.from(
+        { length: ARM_COUNT },
+        (_, index) => mulberry32((lab.seed ^ 0xa53f9c3d) + index * 2654435761)
+      );
+      for (let i = 0; i < ARM_COUNT; i += 1) {
+        clearReelTimer(i);
+        setCabinetState(i, { spinning: false, win: false });
+        setReelRow(i, randomSymbolRow(symbolRandoms[i]));
+      }
+
+      render();
+    }
+
+    pullButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const arm = Number(button.getAttribute('data-arm-pull'));
+        if (Number.isFinite(arm)) {
+          pullArm(arm);
+        }
+      });
+    });
+
+    if (newLabButton) {
+      newLabButton.addEventListener('click', resetLab);
+    }
+
+    if (toggleRatesButton) {
+      toggleRatesButton.addEventListener('click', () => {
+        revealRates = !revealRates;
+        render();
+      });
+    }
+
+    resetLab();
+  }
+
+  function bootBanditLab() {
+    initBanditLab();
+  }
+
+  bootBanditLab();
+  if (!window.__banditLabLoadListener) {
+    document.addEventListener('astro:page-load', bootBanditLab);
+    window.__banditLabLoadListener = true;
+  }
+</script>
+
+<style>
+  .bandit-lab-shell {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.08), transparent 45%),
+      radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.08), transparent 42%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.35), rgba(2, 6, 23, 0.5));
+    box-shadow:
+      0 18px 42px rgba(2, 6, 23, 0.62),
+      inset 0 1px 0 rgba(148, 163, 184, 0.08);
+  }
+
+  .bandit-metric {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    transition: transform 180ms ease, border-color 180ms ease;
+  }
+
+  .bandit-metric:hover {
+    transform: translateY(-2px);
+    border-color: rgba(59, 130, 246, 0.45);
+  }
+
+  .bandit-action-btn {
+    backdrop-filter: blur(4px);
+    transition: transform 160ms ease, box-shadow 200ms ease;
+  }
+
+  .bandit-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(2, 6, 23, 0.45);
+  }
+
+  .bandit-arm-card {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(180deg, rgba(39, 42, 55, 0.96), rgba(14, 18, 29, 0.98));
+    border-color: rgba(148, 163, 184, 0.24);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -10px 22px rgba(2, 6, 23, 0.5),
+      0 14px 26px rgba(2, 6, 23, 0.48);
+    transition: transform 200ms ease, box-shadow 240ms ease;
+  }
+
+  .bandit-arm-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      inset 0 -12px 24px rgba(2, 6, 23, 0.56),
+      0 18px 30px rgba(2, 6, 23, 0.54);
+  }
+
+  .slot-machine-shell {
+    border-radius: 0.9rem;
+    padding: 0.5rem;
+    background: linear-gradient(155deg, rgba(137, 149, 173, 0.72), rgba(59, 69, 90, 0.78));
+    border: 1px solid rgba(148, 163, 184, 0.48);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(2, 6, 23, 0.4),
+      0 9px 18px rgba(2, 6, 23, 0.44);
+  }
+
+  .slot-marquee {
+    border-radius: 0.72rem;
+    border: 1px solid rgba(250, 204, 21, 0.34);
+    background: linear-gradient(180deg, rgba(106, 27, 154, 0.38), rgba(30, 35, 70, 0.84));
+    padding: 0.38rem 0.5rem 0.42rem;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.13),
+      inset 0 -6px 16px rgba(2, 6, 23, 0.3);
+  }
+
+  .slot-marquee-title {
+    margin-top: 0.18rem;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(245, 248, 255, 0.94);
+    text-shadow: 0 0 10px rgba(147, 197, 253, 0.44);
+  }
+
+  .slot-marquee-lights {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0.2rem;
+  }
+
+  .slot-bulb {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #fef08a 0%, #facc15 55%, #a16207 100%);
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+    animation: slotBulbFlicker 1.9s ease-in-out infinite;
+  }
+
+  .slot-bulb:nth-child(3n + 1) {
+    animation-delay: 80ms;
+  }
+
+  .slot-bulb:nth-child(3n + 2) {
+    animation-delay: 160ms;
+  }
+
+  .slot-bulb:nth-child(3n) {
+    animation-delay: 240ms;
+  }
+
+  .bandit-arm-0 .slot-bulb:nth-child(odd) {
+    background: radial-gradient(circle at 30% 30%, #fef9c3 0%, #f59e0b 60%, #92400e 100%);
+  }
+
+  .bandit-arm-1 .slot-bulb:nth-child(odd) {
+    background: radial-gradient(circle at 30% 30%, #cffafe 0%, #22d3ee 60%, #155e75 100%);
+    box-shadow: 0 0 8px rgba(34, 211, 238, 0.55);
+  }
+
+  .bandit-arm-2 .slot-bulb:nth-child(odd) {
+    background: radial-gradient(circle at 30% 30%, #d1fae5 0%, #34d399 60%, #065f46 100%);
+    box-shadow: 0 0 8px rgba(52, 211, 153, 0.55);
+  }
+
+  .slot-body {
+    margin-top: 0.46rem;
+    display: flex;
+    align-items: stretch;
+    gap: 0.56rem;
+  }
+
+  .slot-reels {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.42rem;
+    border-radius: 0.72rem;
+    padding: 0.44rem;
+    border: 1px solid rgba(71, 85, 105, 0.8);
+    background: linear-gradient(180deg, rgba(2, 6, 23, 0.95), rgba(15, 23, 42, 0.92));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      inset 0 -7px 18px rgba(2, 6, 23, 0.82);
+  }
+
+  .slot-reel-cell {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid rgba(148, 163, 184, 0.42);
+    background: linear-gradient(180deg, rgba(245, 247, 255, 0.94), rgba(198, 206, 224, 0.96));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.72),
+      inset 0 -5px 10px rgba(71, 85, 105, 0.4);
+    overflow: hidden;
+  }
+
+  .slot-symbol {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #111827;
+    text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+    transition: transform 150ms ease, filter 150ms ease;
+  }
+
+  .slot-lever {
+    width: 26px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .slot-lever-stick {
+    width: 6px;
+    height: 72%;
+    border-radius: 999px;
+    background: linear-gradient(180deg, #dbe5f5 0%, #8793a8 60%, #475569 100%);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    transform-origin: bottom center;
+    transition: transform 220ms ease;
+  }
+
+  .slot-lever-knob {
+    position: absolute;
+    top: 4px;
+    width: 15px;
+    height: 15px;
+    border-radius: 999px;
+    background: radial-gradient(circle at 30% 30%, #fef9c3 0%, #fb7185 55%, #9f1239 100%);
+    box-shadow:
+      0 0 0 2px rgba(15, 23, 42, 0.35),
+      0 0 10px rgba(251, 113, 133, 0.6);
+    transition: transform 200ms ease;
+  }
+
+  [data-slot-cabinet].is-spinning .slot-symbol {
+    animation: slotReelSpin 120ms linear infinite;
+    filter: blur(0.5px);
+  }
+
+  [data-slot-cabinet].is-spinning .slot-lever-stick {
+    transform: rotate(16deg);
+  }
+
+  [data-slot-cabinet].is-spinning .slot-lever-knob {
+    transform: translate(8px, 4px);
+  }
+
+  [data-slot-cabinet].is-win {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.24),
+      inset 0 -1px 0 rgba(2, 6, 23, 0.4),
+      0 0 0 1px rgba(52, 211, 153, 0.5),
+      0 0 20px rgba(52, 211, 153, 0.3),
+      0 9px 18px rgba(2, 6, 23, 0.44);
+  }
+
+  [data-slot-cabinet].is-win .slot-bulb {
+    animation: slotWinPulse 240ms ease-in-out infinite;
+  }
+
+  [data-slot-cabinet].is-win .slot-symbol {
+    color: #166534;
+    text-shadow: 0 0 8px rgba(34, 197, 94, 0.35);
+  }
+
+  @keyframes slotReelSpin {
+    0% {
+      transform: translateY(-8px);
+    }
+    100% {
+      transform: translateY(8px);
+    }
+  }
+
+  @keyframes slotBulbFlicker {
+    0%,
+    100% {
+      filter: brightness(1);
+      transform: scale(1);
+    }
+    50% {
+      filter: brightness(1.2);
+      transform: scale(1.06);
+    }
+  }
+
+  @keyframes slotWinPulse {
+    0%,
+    100% {
+      filter: brightness(1.1);
+      transform: scale(1);
+    }
+    50% {
+      filter: brightness(1.35);
+      transform: scale(1.16);
+    }
+  }
+
+  .bandit-pull-btn {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    backdrop-filter: blur(4px);
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  .bandit-pull-0 {
+    border-color: rgba(234, 179, 8, 0.5);
+    background: rgba(234, 179, 8, 0.16);
+    color: #fef3c7;
+  }
+
+  .bandit-pull-1 {
+    border-color: rgba(34, 211, 238, 0.52);
+    background: rgba(34, 211, 238, 0.13);
+    color: #cffafe;
+  }
+
+  .bandit-pull-2 {
+    border-color: rgba(52, 211, 153, 0.52);
+    background: rgba(52, 211, 153, 0.13);
+    color: #d1fae5;
+  }
+
+  .bandit-pull-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+    box-shadow: 0 10px 18px rgba(2, 6, 23, 0.48);
+  }
+
+  .bandit-score-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .bandit-status-pill {
+    animation: banditStatusPulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes banditStatusPulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.32);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(96, 165, 250, 0);
+    }
+  }
+</style>

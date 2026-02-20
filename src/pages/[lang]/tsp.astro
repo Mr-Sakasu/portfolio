@@ -1,0 +1,498 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { ui, languages } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const t = ui[lang as keyof typeof ui] ?? ui.en;
+
+const labels = {
+  statusReady: t['tsp.status.ready'],
+  statusDrawing: t['tsp.status.drawing'],
+  statusDone: t['tsp.status.done'],
+  completeHint: t['tsp.completeHint'],
+  clickCity: t['tsp.clickCity'],
+  distanceUnit: t['tsp.distanceUnit'],
+};
+---
+
+<Layout title={`${t['tsp.title']} | Sakasu Portfolio`} lang={lang}>
+  <section class="py-10 md:py-14 relative overflow-hidden">
+    <div aria-hidden="true" class="pointer-events-none absolute -top-24 -left-12 w-72 h-72 rounded-full bg-blue-500/12 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 right-0 w-72 h-72 rounded-full bg-emerald-500/10 blur-3xl"></div>
+
+    <div class="relative rounded-2xl border border-cyan-500/20 bg-[#0e1a2a]/70 backdrop-blur-sm p-6 md:p-8 shadow-[0_0_0_1px_rgba(34,211,238,0.08),0_18px_50px_rgba(2,6,23,0.72)]">
+      <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white via-cyan-100 to-emerald-300 bg-clip-text text-transparent">
+        {t['tsp.title']}
+      </h1>
+      <p class="mt-4 text-gray-200 max-w-2xl leading-relaxed">
+        {t['tsp.subtitle']}
+      </p>
+      <p class="mt-2 text-sm text-gray-400">{t['tsp.instructions']}</p>
+    </div>
+
+    <section id="tsp-lab" class="tsp-lab-shell mt-8 space-y-6 rounded-2xl border border-gray-800/80 bg-[#10131d]/88 p-4 md:p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <article class="tsp-metric-card rounded-xl border border-blue-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-blue-200/70">{t['tsp.progress']}</p>
+          <p id="tsp-progress" class="mt-2 text-3xl font-bold text-white">0/7</p>
+        </article>
+        <article class="tsp-metric-card rounded-xl border border-cyan-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-cyan-200/70">{t['tsp.cities']}</p>
+          <p id="tsp-city-count" class="mt-2 text-3xl font-bold text-white">7</p>
+        </article>
+        <article class="tsp-metric-card rounded-xl border border-emerald-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-emerald-200/70">{t['tsp.seed']}</p>
+          <p id="tsp-seed" class="mt-2 text-3xl font-bold text-white">--</p>
+        </article>
+      </div>
+
+      <div class="flex flex-wrap gap-2">
+        <button
+          id="tsp-new-map"
+          type="button"
+          class="tsp-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-blue-600/40 bg-blue-600/10 text-blue-100 hover:text-white hover:border-blue-400 transition-colors"
+        >
+          {t['tsp.newMap']}
+        </button>
+        <button
+          id="tsp-reset-route"
+          type="button"
+          class="tsp-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-cyan-600/40 bg-cyan-600/10 text-cyan-100 hover:text-white hover:border-cyan-400 transition-colors"
+        >
+          {t['tsp.resetRoute']}
+        </button>
+        <button
+          id="tsp-undo"
+          type="button"
+          class="tsp-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-emerald-600/40 bg-emerald-600/10 text-emerald-100 hover:text-white hover:border-emerald-400 transition-colors"
+        >
+          {t['tsp.undo']}
+        </button>
+      </div>
+
+      <div class="tsp-canvas-shell rounded-xl border border-blue-900/50 bg-[#070b16] p-2 md:p-3">
+        <canvas id="tsp-canvas" class="w-full h-[360px] md:h-[460px] touch-none"></canvas>
+      </div>
+
+      <div class="flex flex-wrap gap-4 text-xs text-gray-400">
+        <span class="inline-flex items-center gap-2">
+          <span class="block w-6 h-[2px] bg-blue-400"></span>
+          {t['tsp.legend.you']}
+        </span>
+        <span class="inline-flex items-center gap-2">
+          <span class="block w-6 h-[2px] bg-green-400"></span>
+          {t['tsp.legend.opt']}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <article class="tsp-result-card rounded-xl border border-blue-500/20 bg-[#0d1321]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-blue-200/70">{t['tsp.userLength']}</p>
+          <p id="tsp-user-length" class="mt-2 text-2xl font-bold text-white">--</p>
+        </article>
+        <article class="tsp-result-card rounded-xl border border-cyan-500/20 bg-[#0d1321]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-cyan-200/70">{t['tsp.twoOptLength']}</p>
+          <p id="tsp-opt-length" class="mt-2 text-2xl font-bold text-white">--</p>
+        </article>
+        <article class="tsp-result-card rounded-xl border border-emerald-500/20 bg-[#0d1321]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-emerald-200/70">{t['tsp.improvement']}</p>
+          <p id="tsp-improvement" class="mt-2 text-2xl font-bold text-green-300">--</p>
+        </article>
+      </div>
+
+      <p id="tsp-status" class="tsp-status-pill inline-flex text-sm text-blue-300">{t['tsp.status.ready']}</p>
+      <p id="tsp-hint" class="text-xs text-gray-500">{t['tsp.completeHint']}</p>
+      <p id="tsp-route-order" class="text-xs text-gray-400"></p>
+    </section>
+  </section>
+</Layout>
+
+<script define:vars={{ labels }}>
+  const CITY_COUNT = 7;
+  const VIEW_WIDTH = 900;
+  const VIEW_HEIGHT = 560;
+  const EDGE_MARGIN = 56;
+  const MIN_DIST = 80;
+  const CITY_RADIUS = 14;
+
+  function mulberry32(seed) {
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6d2b79f5;
+      let x = t;
+      x = Math.imul(x ^ (x >>> 15), x | 1);
+      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function getSeed() {
+    if (window.crypto?.getRandomValues) {
+      const data = new Uint32Array(1);
+      window.crypto.getRandomValues(data);
+      return data[0];
+    }
+    return Math.floor(Math.random() * 4294967295);
+  }
+
+  function distance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.hypot(dx, dy);
+  }
+
+  function tourLength(route, cities) {
+    if (!route || route.length < 2) return 0;
+    let total = 0;
+    for (let i = 0; i < route.length; i += 1) {
+      const from = cities[route[i]];
+      const to = cities[route[(i + 1) % route.length]];
+      total += distance(from, to);
+    }
+    return total;
+  }
+
+  function twoOpt(initialRoute, cities) {
+    let bestRoute = initialRoute.slice();
+    let bestDist = tourLength(bestRoute, cities);
+    let improved = true;
+    let loops = 0;
+
+    while (improved && loops < 1800) {
+      improved = false;
+      loops += 1;
+      for (let i = 1; i < bestRoute.length - 1; i += 1) {
+        for (let j = i + 1; j < bestRoute.length; j += 1) {
+          if (j - i <= 1) continue;
+          const candidate = bestRoute
+            .slice(0, i)
+            .concat(bestRoute.slice(i, j + 1).reverse(), bestRoute.slice(j + 1));
+          const candidateDist = tourLength(candidate, cities);
+          if (candidateDist + 1e-6 < bestDist) {
+            bestRoute = candidate;
+            bestDist = candidateDist;
+            improved = true;
+          }
+        }
+      }
+    }
+
+    return { route: bestRoute, length: bestDist };
+  }
+
+  function generateCities(seed) {
+    const random = mulberry32(seed);
+    const cities = [];
+    let attempts = 0;
+
+    while (cities.length < CITY_COUNT && attempts < 8000) {
+      attempts += 1;
+      const city = {
+        x: EDGE_MARGIN + random() * (VIEW_WIDTH - EDGE_MARGIN * 2),
+        y: EDGE_MARGIN + random() * (VIEW_HEIGHT - EDGE_MARGIN * 2),
+      };
+      const isFarEnough = cities.every((other) => distance(city, other) >= MIN_DIST);
+      if (isFarEnough) {
+        cities.push(city);
+      }
+    }
+
+    while (cities.length < CITY_COUNT) {
+      cities.push({
+        x: EDGE_MARGIN + random() * (VIEW_WIDTH - EDGE_MARGIN * 2),
+        y: EDGE_MARGIN + random() * (VIEW_HEIGHT - EDGE_MARGIN * 2),
+      });
+    }
+
+    return cities;
+  }
+
+  function toFixedText(value) {
+    return `${value.toFixed(1)} ${labels.distanceUnit}`;
+  }
+
+  function initTspLab() {
+    const root = document.getElementById('tsp-lab');
+    if (!root || root.dataset.ready === 'true') return;
+    root.dataset.ready = 'true';
+
+    const progressEl = root.querySelector('#tsp-progress');
+    const cityCountEl = root.querySelector('#tsp-city-count');
+    const seedEl = root.querySelector('#tsp-seed');
+    const userLengthEl = root.querySelector('#tsp-user-length');
+    const optLengthEl = root.querySelector('#tsp-opt-length');
+    const improvementEl = root.querySelector('#tsp-improvement');
+    const statusEl = root.querySelector('#tsp-status');
+    const hintEl = root.querySelector('#tsp-hint');
+    const routeOrderEl = root.querySelector('#tsp-route-order');
+    const canvas = root.querySelector('#tsp-canvas');
+
+    const newMapBtn = root.querySelector('#tsp-new-map');
+    const resetRouteBtn = root.querySelector('#tsp-reset-route');
+    const undoBtn = root.querySelector('#tsp-undo');
+
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    let seed = 0;
+    let cities = [];
+    let route = [];
+    let userLength = null;
+    let optLength = null;
+    let optRoute = [];
+
+    function isComplete() {
+      return route.length === CITY_COUNT;
+    }
+
+    function setText(node, value) {
+      if (node) node.textContent = value;
+    }
+
+    function resetMetrics() {
+      userLength = null;
+      optLength = null;
+      optRoute = [];
+    }
+
+    function computeComparison() {
+      if (!isComplete()) {
+        resetMetrics();
+        return;
+      }
+      userLength = tourLength(route, cities);
+      const optimized = twoOpt(route, cities);
+      optRoute = optimized.route;
+      optLength = optimized.length;
+    }
+
+    function resizeCanvas() {
+      const ratio = Math.max(window.devicePixelRatio || 1, 1);
+      canvas.width = Math.floor(VIEW_WIDTH * ratio);
+      canvas.height = Math.floor(VIEW_HEIGHT * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    }
+
+    function drawBackground() {
+      context.clearRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+      const gradient = context.createLinearGradient(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+      gradient.addColorStop(0, '#090f1b');
+      gradient.addColorStop(1, '#111111');
+      context.fillStyle = gradient;
+      context.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+
+      context.strokeStyle = 'rgba(90, 110, 150, 0.12)';
+      context.lineWidth = 1;
+      for (let x = 60; x < VIEW_WIDTH; x += 60) {
+        context.beginPath();
+        context.moveTo(x, 0);
+        context.lineTo(x, VIEW_HEIGHT);
+        context.stroke();
+      }
+      for (let y = 60; y < VIEW_HEIGHT; y += 60) {
+        context.beginPath();
+        context.moveTo(0, y);
+        context.lineTo(VIEW_WIDTH, y);
+        context.stroke();
+      }
+    }
+
+    function drawRoute(routeIndices, color, width, closePath) {
+      if (!routeIndices.length) return;
+      context.strokeStyle = color;
+      context.lineWidth = width;
+      context.lineJoin = 'round';
+      context.lineCap = 'round';
+      context.beginPath();
+      const first = cities[routeIndices[0]];
+      context.moveTo(first.x, first.y);
+      for (let i = 1; i < routeIndices.length; i += 1) {
+        const city = cities[routeIndices[i]];
+        context.lineTo(city.x, city.y);
+      }
+      if (closePath && routeIndices.length > 1) {
+        context.lineTo(first.x, first.y);
+      }
+      context.stroke();
+    }
+
+    function drawCities() {
+      const orderByCity = new Map();
+      route.forEach((cityIndex, order) => {
+        orderByCity.set(cityIndex, order + 1);
+      });
+
+      for (let i = 0; i < cities.length; i += 1) {
+        const city = cities[i];
+        const visited = orderByCity.has(i);
+        const order = orderByCity.get(i);
+
+        context.beginPath();
+        context.fillStyle = visited ? '#3b82f6' : '#22242a';
+        context.strokeStyle = visited ? '#93c5fd' : '#4b5563';
+        context.lineWidth = visited ? 2.5 : 2;
+        context.arc(city.x, city.y, CITY_RADIUS, 0, Math.PI * 2);
+        context.fill();
+        context.stroke();
+
+        context.fillStyle = '#ffffff';
+        context.font = '12px sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillText(String(i + 1), city.x, city.y);
+
+        if (order) {
+          context.beginPath();
+          context.fillStyle = '#22c55e';
+          context.arc(city.x + CITY_RADIUS - 2, city.y - CITY_RADIUS + 2, 8, 0, Math.PI * 2);
+          context.fill();
+          context.fillStyle = '#04130a';
+          context.font = '10px sans-serif';
+          context.fillText(String(order), city.x + CITY_RADIUS - 2, city.y - CITY_RADIUS + 2);
+        }
+      }
+    }
+
+    function draw() {
+      drawBackground();
+      if (isComplete() && optRoute.length) {
+        drawRoute(optRoute, 'rgba(74, 222, 128, 0.85)', 4, true);
+      }
+      drawRoute(route, 'rgba(96, 165, 250, 0.95)', 3, isComplete());
+      drawCities();
+    }
+
+    function renderText() {
+      setText(progressEl, `${route.length}/${CITY_COUNT}`);
+      setText(cityCountEl, String(CITY_COUNT));
+      setText(seedEl, String(seed));
+
+      if (userLength === null || optLength === null) {
+        setText(userLengthEl, '--');
+        setText(optLengthEl, '--');
+        setText(improvementEl, '--');
+      } else {
+        const gain = userLength > 0 ? ((userLength - optLength) / userLength) * 100 : 0;
+        setText(userLengthEl, toFixedText(userLength));
+        setText(optLengthEl, toFixedText(optLength));
+        setText(improvementEl, `${gain.toFixed(1)}%`);
+      }
+
+      if (route.length === 0) {
+        setText(statusEl, labels.statusReady);
+      } else if (isComplete()) {
+        setText(statusEl, labels.statusDone);
+      } else {
+        setText(statusEl, labels.statusDrawing);
+      }
+
+      setText(hintEl, isComplete() ? '' : labels.completeHint);
+
+      if (!route.length) {
+        setText(routeOrderEl, `${labels.clickCity} 1`);
+      } else {
+        const order = route.map((cityIndex) => cityIndex + 1).join(' -> ');
+        setText(routeOrderEl, isComplete() ? `${order} -> ${route[0] + 1}` : order);
+      }
+    }
+
+    function render() {
+      computeComparison();
+      renderText();
+      draw();
+    }
+
+    function toCanvasCoords(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: ((event.clientX - rect.left) / rect.width) * VIEW_WIDTH,
+        y: ((event.clientY - rect.top) / rect.height) * VIEW_HEIGHT,
+      };
+    }
+
+    function findUnvisitedCity(x, y) {
+      let selected = -1;
+      let bestDist = Infinity;
+      for (let i = 0; i < cities.length; i += 1) {
+        if (route.includes(i)) continue;
+        const city = cities[i];
+        const d = Math.hypot(city.x - x, city.y - y);
+        if (d < CITY_RADIUS * 1.7 && d < bestDist) {
+          bestDist = d;
+          selected = i;
+        }
+      }
+      return selected;
+    }
+
+    function resetRoute() {
+      route = [];
+      resetMetrics();
+      render();
+    }
+
+    function resetMap() {
+      seed = getSeed();
+      cities = generateCities(seed);
+      route = [];
+      resetMetrics();
+      render();
+    }
+
+    canvas.addEventListener('pointerdown', (event) => {
+      if (isComplete()) return;
+      const point = toCanvasCoords(event);
+      const cityIndex = findUnvisitedCity(point.x, point.y);
+      if (cityIndex === -1) return;
+      route.push(cityIndex);
+      render();
+    });
+
+    if (newMapBtn) {
+      newMapBtn.addEventListener('click', resetMap);
+    }
+    if (resetRouteBtn) {
+      resetRouteBtn.addEventListener('click', resetRoute);
+    }
+    if (undoBtn) {
+      undoBtn.addEventListener('click', () => {
+        if (!route.length) return;
+        route.pop();
+        render();
+      });
+    }
+
+    function handleResize() {
+      resizeCanvas();
+      draw();
+    }
+
+    window.__tspLabResizeHandler = handleResize;
+    if (!window.__tspLabResizeListener) {
+      window.addEventListener('resize', () => {
+        if (typeof window.__tspLabResizeHandler === 'function') {
+          window.__tspLabResizeHandler();
+        }
+      });
+      window.__tspLabResizeListener = true;
+    }
+
+    resizeCanvas();
+    resetMap();
+  }
+
+  function bootTspLab() {
+    initTspLab();
+  }
+
+  bootTspLab();
+  if (!window.__tspLabPageLoadListener) {
+    document.addEventListener('astro:page-load', bootTspLab);
+    window.__tspLabPageLoadListener = true;
+  }
+</script>

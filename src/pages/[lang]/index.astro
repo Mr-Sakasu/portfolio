@@ -38,6 +38,9 @@ const projects = projectData[lang] || projectData['en'];
                 
                 <div class="mt-6 flex gap-4 justify-center md:justify-start">
                     <a href="https://github.com/Mr-Sakasu/" target="_blank" class="text-gray-400 hover:text-white transition-colors">GitHub</a>
+                    <a href={`/${lang}/stars/`} class="text-gray-400 hover:text-blue-400 transition-colors">{t['nav.stars']}</a>
+                    <a href={`/${lang}/bandit/`} class="text-gray-400 hover:text-blue-400 transition-colors">{t['nav.bandit']}</a>
+                    <a href={`/${lang}/tsp/`} class="text-gray-400 hover:text-blue-400 transition-colors">{t['nav.tsp']}</a>
                 </div>
             </div>
         </div>

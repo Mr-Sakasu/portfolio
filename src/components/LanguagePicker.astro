@@ -3,12 +3,14 @@ import { languages } from '../i18n/ui';
 
 // Get current language from the URL params
 const { lang: currentLang } = Astro.params;
+const currentPath = Astro.url.pathname;
+const pathWithoutLang = currentPath.replace(/^\/[^/]+/, '') || '/';
 ---
 
 <div class="flex gap-2 bg-[#222] p-1 rounded-md border border-gray-800">
   {Object.entries(languages).map(([lang, label]) => (
     <a
-      href={`/${lang}/`}
+      href={`/${lang}${pathWithoutLang}`}
       class={`px-3 py-1 text-xs font-medium rounded transition-all duration-200 ${
         lang === currentLang 
           ? "bg-blue-600 text-white shadow-lg" 

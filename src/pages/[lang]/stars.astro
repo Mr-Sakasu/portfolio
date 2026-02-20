@@ -1,0 +1,1334 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { ui, languages } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const t = ui[lang as keyof typeof ui] ?? ui.en;
+const localeByLang = {
+  en: 'en-US',
+  zh: 'zh-CN',
+  jp: 'ja-JP',
+} as const;
+const locale = localeByLang[lang as keyof typeof localeByLang] ?? 'en-US';
+const starNamesByLang = {
+  en: {},
+  zh: {
+    Mercury: '水星',
+    Venus: '金星',
+    Mars: '火星',
+    Jupiter: '木星',
+    Saturn: '土星',
+    Sirius: '天狼星',
+    Canopus: '老人星',
+    Arcturus: '大角星',
+    Vega: '织女星',
+    Capella: '五车二',
+    Rigel: '参宿七',
+    Procyon: '南河三',
+    Betelgeuse: '参宿四',
+    Altair: '牛郎星',
+    Aldebaran: '毕宿五',
+    Spica: '角宿一',
+    Antares: '心宿二',
+    Pollux: '北河三',
+    Fomalhaut: '北落师门',
+    Deneb: '天津四',
+    Regulus: '轩辕十四',
+    Adhara: '弧矢七',
+    Castor: '北河二',
+    Bellatrix: '参宿五',
+    Elnath: '五车五',
+    Alnilam: '参宿二',
+    Alnitak: '参宿一',
+    Alioth: '玉衡',
+    Mirfak: '英仙座α',
+    Dubhe: '天枢',
+    Mizar: '开阳',
+    Alkaid: '摇光',
+    Polaris: '北极星',
+    Saiph: '参宿六',
+    Alpheratz: '壁宿二',
+    Algol: '大陵五',
+    Denebola: '狮子座β',
+    Mintaka: '参宿三',
+    Merak: '天璇',
+    Phecda: '天玑',
+    Scheat: '飞马座β',
+    Markab: '飞马座α',
+    Megrez: '天权',
+  },
+  jp: {
+    Mercury: '水星',
+    Venus: '金星',
+    Mars: '火星',
+    Jupiter: '木星',
+    Saturn: '土星',
+    Sirius: 'シリウス',
+    Canopus: 'カノープス',
+    Arcturus: 'アルクトゥルス',
+    Vega: 'ベガ',
+    Capella: 'カペラ',
+    Rigel: 'リゲル',
+    Procyon: 'プロキオン',
+    Betelgeuse: 'ベテルギウス',
+    Altair: 'アルタイル',
+    Aldebaran: 'アルデバラン',
+    Spica: 'スピカ',
+    Antares: 'アンタレス',
+    Pollux: 'ポルックス',
+    Fomalhaut: 'フォーマルハウト',
+    Deneb: 'デネブ',
+    Regulus: 'レグルス',
+    Adhara: 'アダラ',
+    Castor: 'カストル',
+    Bellatrix: 'ベラトリックス',
+    Elnath: 'エルナト',
+    Alnilam: 'アルニラム',
+    Alnitak: 'アルニタク',
+    Alioth: 'アリオト',
+    Mirfak: 'ミルファク',
+    Dubhe: 'ドゥーベ',
+    Mizar: 'ミザール',
+    Alkaid: 'アルカイド',
+    Polaris: '北極星',
+    Saiph: 'サイフ',
+    Alpheratz: 'アルフェラッツ',
+    Algol: 'アルゴル',
+    Denebola: 'デネボラ',
+    Mintaka: 'ミンタカ',
+    Merak: 'メラク',
+    Phecda: 'フェクダ',
+    Scheat: 'シェアト',
+    Markab: 'マルカブ',
+    Megrez: 'メグレズ',
+  },
+} as const;
+const starNames = starNamesByLang[lang as keyof typeof starNamesByLang] ?? starNamesByLang.en;
+
+const labels = {
+  loading: t['stars.loading'],
+  error: t['stars.error'],
+  poor: t['stars.quality.poor'],
+  fair: t['stars.quality.fair'],
+  good: t['stars.quality.good'],
+  excellent: t['stars.quality.excellent'],
+  moonNew: t['stars.moon.new'],
+  moonWaxing: t['stars.moon.waxing'],
+  moonFull: t['stars.moon.full'],
+  moonWaning: t['stars.moon.waning'],
+  play: t['stars.sky.play'],
+  pause: t['stars.sky.pause'],
+  none: t['stars.sky.none'],
+  heading: t['stars.sky.heading'],
+  pitch: t['stars.sky.pitch'],
+  fov: t['stars.sky.fov'],
+  dirN: t['stars.sky.dir.n'],
+  dirE: t['stars.sky.dir.e'],
+  dirS: t['stars.sky.dir.s'],
+  dirW: t['stars.sky.dir.w'],
+};
+---
+
+<Layout title={`${t['stars.title']} | Sakasu Portfolio`} lang={lang}>
+  <section class="py-10 md:py-14">
+    <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent">
+      {t['stars.title']}
+    </h1>
+    <p class="mt-4 text-gray-300 max-w-2xl leading-relaxed">
+      {t['stars.subtitle']}
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-blue-400">
+              {t['stars.tonightScore']}
+            </p>
+            <p id="stars-score" class="text-4xl font-extrabold mt-2 text-white">--</p>
+          </div>
+          <button
+            id="stars-refresh"
+            type="button"
+            class="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-700 text-gray-200 hover:text-white hover:border-blue-500 transition-colors"
+          >
+            {t['stars.refresh']}
+          </button>
+        </div>
+        <p id="stars-summary" class="text-sm text-gray-300 mt-4">{t['stars.loading']}</p>
+      </article>
+
+      <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
+        <dl class="space-y-3 text-sm">
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.cloud']}</dt>
+            <dd id="stars-cloud" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.visibility']}</dt>
+            <dd id="stars-visibility" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.precipitation']}</dt>
+            <dd id="stars-precipitation" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.sunset']}</dt>
+            <dd id="stars-sunset" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.bestHour']}</dt>
+            <dd id="stars-best-hour" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.moon']}</dt>
+            <dd id="stars-moon" class="font-semibold text-white">--</dd>
+          </div>
+        </dl>
+      </article>
+    </div>
+
+    <section class="mt-8 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-xl md:text-2xl font-bold text-white">{t['stars.sky.title']}</h2>
+          <p class="text-sm text-gray-400 mt-1">{t['stars.sky.hint']}</p>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            id="sky-now"
+            type="button"
+            class="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-700 text-gray-200 hover:text-white hover:border-blue-500 transition-colors"
+          >
+            {t['stars.sky.now']}
+          </button>
+          <button
+            id="sky-play"
+            type="button"
+            class="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-700 text-gray-200 hover:text-white hover:border-blue-500 transition-colors"
+          >
+            {t['stars.sky.play']}
+          </button>
+          <button
+            id="sky-reset"
+            type="button"
+            class="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-700 text-gray-200 hover:text-white hover:border-blue-500 transition-colors"
+          >
+            {t['stars.sky.reset']}
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
+          <span>{t['stars.sky.time']}</span>
+          <span id="sky-time-label" class="font-semibold text-gray-200">--</span>
+        </div>
+
+        <input
+          id="sky-time-slider"
+          type="range"
+          min="-12"
+          max="12"
+          step="0.25"
+          value="0"
+          class="w-full accent-blue-500"
+        />
+      </div>
+
+      <p class="mt-3 text-xs text-gray-500">{t['stars.sky.instructions']}</p>
+
+      <div class="mt-4 relative rounded-xl border border-blue-900/40 bg-[#060913] overflow-hidden">
+        <canvas id="sky-canvas" class="w-full h-[480px] md:h-[560px] touch-none"></canvas>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+        <article class="rounded-lg border border-gray-800 bg-[#121212]/90 p-3">
+          <p class="text-xs text-gray-500">{t['stars.sky.star']}</p>
+          <p id="sky-info-name" class="mt-1 font-semibold text-white">{t['stars.sky.none']}</p>
+        </article>
+        <article class="rounded-lg border border-gray-800 bg-[#121212]/90 p-3">
+          <p class="text-xs text-gray-500">{t['stars.sky.altitude']}</p>
+          <p id="sky-info-alt" class="mt-1 font-semibold text-white">--</p>
+        </article>
+        <article class="rounded-lg border border-gray-800 bg-[#121212]/90 p-3">
+          <p class="text-xs text-gray-500">{t['stars.sky.azimuth']}</p>
+          <p id="sky-info-az" class="mt-1 font-semibold text-white">--</p>
+        </article>
+        <article class="rounded-lg border border-gray-800 bg-[#121212]/90 p-3">
+          <p class="text-xs text-gray-500">{t['stars.sky.magnitude']}</p>
+          <p id="sky-info-mag" class="mt-1 font-semibold text-white">--</p>
+        </article>
+      </div>
+
+      <div class="mt-3 rounded-lg border border-gray-800 bg-[#11141d]/90 p-3">
+        <p class="text-xs text-gray-500">{t['stars.sky.magbands.title']}</p>
+        <dl class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+          <div class="flex items-center justify-between gap-3">
+            <dt class="text-gray-400">{t['stars.sky.magbands.first']}</dt>
+            <dd id="sky-mag1" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <dt class="text-gray-400">{t['stars.sky.magbands.second']}</dt>
+            <dd id="sky-mag2" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <dt class="text-gray-400">{t['stars.sky.magbands.third']}</dt>
+            <dd id="sky-mag3" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <dt class="text-gray-400">{t['stars.sky.magbands.fourth']}</dt>
+            <dd id="sky-mag4" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <dt class="text-gray-400">{t['stars.sky.magbands.fifth']}</dt>
+            <dd id="sky-mag5" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <dt class="text-gray-400">{t['stars.sky.magbands.sixth']}</dt>
+            <dd id="sky-mag6" class="font-semibold text-white">--</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </section>
+</Layout>
+
+<script
+  id="stars-config"
+  type="application/json"
+  set:html={JSON.stringify({ labels, locale, starNames })}
+></script>
+
+<script>
+  import { Body, Equator, Horizon, Illumination, Observer } from 'astronomy-engine';
+
+  const configEl = document.getElementById('stars-config');
+  let config = {};
+  if (configEl?.textContent) {
+    try {
+      config = JSON.parse(configEl.textContent);
+    } catch (error) {
+      console.warn('Failed to parse stars config JSON.', error);
+    }
+  }
+  const labels = config.labels ?? {};
+  const locale = config.locale ?? 'en-US';
+  const starNames = config.starNames ?? {};
+
+  const TOKYO = {
+    latitude: 35.6764,
+    longitude: 139.65,
+    timezone: 'Asia/Tokyo',
+  };
+
+  const ONE_DAY = 24 * 60 * 60 * 1000;
+  const HOUR = 60 * 60 * 1000;
+  const DEG_TO_RAD = Math.PI / 180;
+  const RAD_TO_DEG = 180 / Math.PI;
+
+  const BRIGHT_STARS = [
+    { name: 'Sirius', ra: 6.752, dec: -16.716, mag: -1.46, color: '#d8e7ff' },
+    { name: 'Canopus', ra: 6.399, dec: -52.695, mag: -0.74, color: '#fef4e2' },
+    { name: 'Arcturus', ra: 14.261, dec: 19.182, mag: -0.05, color: '#ffd7a3' },
+    { name: 'Vega', ra: 18.615, dec: 38.783, mag: 0.03, color: '#d0dcff' },
+    { name: 'Capella', ra: 5.278, dec: 45.998, mag: 0.08, color: '#fff0c8' },
+    { name: 'Rigel', ra: 5.243, dec: -8.202, mag: 0.13, color: '#dce7ff' },
+    { name: 'Procyon', ra: 7.655, dec: 5.225, mag: 0.38, color: '#f3f6ff' },
+    { name: 'Betelgeuse', ra: 5.919, dec: 7.407, mag: 0.5, color: '#ffc38a' },
+    { name: 'Altair', ra: 19.846, dec: 8.868, mag: 0.76, color: '#e8ecff' },
+    { name: 'Aldebaran', ra: 4.598, dec: 16.509, mag: 0.85, color: '#ffbb82' },
+    { name: 'Spica', ra: 13.42, dec: -11.161, mag: 0.98, color: '#dce4ff' },
+    { name: 'Antares', ra: 16.49, dec: -26.432, mag: 1.06, color: '#ff986b' },
+    { name: 'Pollux', ra: 7.756, dec: 28.026, mag: 1.14, color: '#ffdca7' },
+    { name: 'Fomalhaut', ra: 22.961, dec: -29.622, mag: 1.16, color: '#e7ecff' },
+    { name: 'Deneb', ra: 20.691, dec: 45.28, mag: 1.25, color: '#e3e9ff' },
+    { name: 'Regulus', ra: 10.139, dec: 11.967, mag: 1.35, color: '#dce4ff' },
+    { name: 'Adhara', ra: 6.977, dec: -28.972, mag: 1.5, color: '#e4e9ff' },
+    { name: 'Castor', ra: 7.576, dec: 31.888, mag: 1.58, color: '#ecefff' },
+    { name: 'Bellatrix', ra: 5.418, dec: 6.349, mag: 1.64, color: '#e6ecff' },
+    { name: 'Elnath', ra: 5.438, dec: 28.607, mag: 1.65, color: '#eef1ff' },
+    { name: 'Alnilam', ra: 5.603, dec: -1.201, mag: 1.69, color: '#dfe8ff' },
+    { name: 'Alnitak', ra: 5.679, dec: -1.942, mag: 1.74, color: '#dde7ff' },
+    { name: 'Alioth', ra: 12.901, dec: 55.959, mag: 1.76, color: '#f4f7ff' },
+    { name: 'Mirfak', ra: 3.405, dec: 49.861, mag: 1.79, color: '#fff0cc' },
+    { name: 'Dubhe', ra: 11.062, dec: 61.751, mag: 1.79, color: '#ffe2b4' },
+    { name: 'Mizar', ra: 13.398, dec: 54.925, mag: 2.23, color: '#e6ecff' },
+    { name: 'Alkaid', ra: 13.792, dec: 49.313, mag: 1.85, color: '#dbe5ff' },
+    { name: 'Polaris', ra: 2.53, dec: 89.264, mag: 1.97, color: '#f5f7ff' },
+    { name: 'Saiph', ra: 5.795, dec: -9.669, mag: 2.07, color: '#e0e8ff' },
+    { name: 'Alpheratz', ra: 0.139, dec: 29.09, mag: 2.06, color: '#e4e9ff' },
+    { name: 'Algol', ra: 3.137, dec: 40.955, mag: 2.12, color: '#e7ebff' },
+    { name: 'Denebola', ra: 11.817, dec: 14.572, mag: 2.14, color: '#e9edff' },
+    { name: 'Mintaka', ra: 5.533, dec: -0.3, mag: 2.25, color: '#dce7ff' },
+    { name: 'Merak', ra: 11.03, dec: 56.382, mag: 2.37, color: '#eef1ff' },
+    { name: 'Phecda', ra: 11.897, dec: 53.694, mag: 2.44, color: '#edf1ff' },
+    { name: 'Scheat', ra: 23.063, dec: 28.082, mag: 2.42, color: '#ffe0b8' },
+    { name: 'Markab', ra: 23.079, dec: 15.205, mag: 2.49, color: '#dfebff' },
+    { name: 'Megrez', ra: 12.257, dec: 57.032, mag: 3.31, color: '#eef2ff' },
+  ];
+
+  const STAR_LINES = [
+    ['Betelgeuse', 'Bellatrix'],
+    ['Bellatrix', 'Alnilam'],
+    ['Alnilam', 'Saiph'],
+    ['Saiph', 'Rigel'],
+    ['Rigel', 'Mintaka'],
+    ['Mintaka', 'Betelgeuse'],
+    ['Betelgeuse', 'Alnitak'],
+    ['Alnitak', 'Alnilam'],
+    ['Alnilam', 'Mintaka'],
+    ['Vega', 'Deneb'],
+    ['Deneb', 'Altair'],
+    ['Altair', 'Vega'],
+    ['Sirius', 'Procyon'],
+    ['Procyon', 'Betelgeuse'],
+    ['Betelgeuse', 'Sirius'],
+    ['Dubhe', 'Merak'],
+    ['Merak', 'Phecda'],
+    ['Phecda', 'Megrez'],
+    ['Megrez', 'Alioth'],
+    ['Alioth', 'Mizar'],
+    ['Mizar', 'Alkaid'],
+  ];
+
+  const PLANET_DEFS = [
+    {
+      name: 'Mercury',
+      body: Body.Mercury,
+      color: '#d3c6a8',
+    },
+    {
+      name: 'Venus',
+      body: Body.Venus,
+      color: '#f7e8c8',
+    },
+    {
+      name: 'Mars',
+      body: Body.Mars,
+      color: '#f3a27a',
+    },
+    {
+      name: 'Jupiter',
+      body: Body.Jupiter,
+      color: '#f1d8b6',
+    },
+    {
+      name: 'Saturn',
+      body: Body.Saturn,
+      color: '#e8d8a7',
+    },
+  ];
+
+  const tokyoFormatter = new Intl.DateTimeFormat(locale, {
+    timeZone: TOKYO.timezone,
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+
+  const scoreEl = document.getElementById('stars-score');
+  const summaryEl = document.getElementById('stars-summary');
+  const cloudEl = document.getElementById('stars-cloud');
+  const visibilityEl = document.getElementById('stars-visibility');
+  const precipitationEl = document.getElementById('stars-precipitation');
+  const sunsetEl = document.getElementById('stars-sunset');
+  const bestHourEl = document.getElementById('stars-best-hour');
+  const moonEl = document.getElementById('stars-moon');
+  const refreshBtn = document.getElementById('stars-refresh');
+
+  const skyCanvas = document.getElementById('sky-canvas');
+  const skyTimeSlider = document.getElementById('sky-time-slider');
+  const skyTimeLabel = document.getElementById('sky-time-label');
+  const skyNowBtn = document.getElementById('sky-now');
+  const skyPlayBtn = document.getElementById('sky-play');
+  const skyResetBtn = document.getElementById('sky-reset');
+  const skyInfoNameEl = document.getElementById('sky-info-name');
+  const skyInfoAltEl = document.getElementById('sky-info-alt');
+  const skyInfoAzEl = document.getElementById('sky-info-az');
+  const skyInfoMagEl = document.getElementById('sky-info-mag');
+  const skyMag1El = document.getElementById('sky-mag1');
+  const skyMag2El = document.getElementById('sky-mag2');
+  const skyMag3El = document.getElementById('sky-mag3');
+  const skyMag4El = document.getElementById('sky-mag4');
+  const skyMag5El = document.getElementById('sky-mag5');
+  const skyMag6El = document.getElementById('sky-mag6');
+
+  function setText(el, value) {
+    if (el) el.textContent = value;
+  }
+
+  function displayStarName(name) {
+    return starNames?.[name] ?? name;
+  }
+
+  function average(values) {
+    if (!values.length) return 0;
+    return values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function randomRange(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function normalizeDegrees(degrees) {
+    let result = degrees % 360;
+    if (result < 0) result += 360;
+    return result;
+  }
+
+  function seededRandom(seed) {
+    let state = seed >>> 0;
+    return () => {
+      state += 0x6d2b79f5;
+      let t = state;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function createFaintStars(count, seed) {
+    const rand = seededRandom(seed);
+    const stars = [];
+    for (let i = 0; i < count; i += 1) {
+      const u = rand() * 2 - 1;
+      const dec = Math.asin(u) * RAD_TO_DEG;
+      const ra = rand() * 24;
+      const mag = 3.6 + rand() * 2.8;
+      stars.push({
+        kind: 'star',
+        name: '',
+        ra,
+        dec,
+        mag,
+        color: '#cfd8ff',
+        twinklePhase: rand() * Math.PI * 2,
+        twinkleSpeed: 0.7 + rand() * 1.2,
+      });
+    }
+    return stars;
+  }
+
+  const NAMED_STARS = BRIGHT_STARS.map((star, index) => ({
+    kind: 'star',
+    ...star,
+    twinklePhase: (index * 0.71) % (Math.PI * 2),
+    twinkleSpeed: 1 + (index % 5) * 0.24,
+  }));
+  const ALL_STARS = [...NAMED_STARS, ...createFaintStars(320, 7331)];
+  const STAR_BY_NAME = new Map(NAMED_STARS.map((star) => [star.name, star]));
+
+  const tokyoObserver = new Observer(TOKYO.latitude, TOKYO.longitude, 40);
+  let planetCacheKey = '';
+  let planetCache = [];
+
+  function getPlanetObjects(date) {
+    const key = `${Math.round(date.getTime() / 60000)}`;
+    if (key === planetCacheKey && planetCache.length) return planetCache;
+
+    const planetObjects = PLANET_DEFS.map((planetDef) => {
+      const equ = Equator(planetDef.body, date, tokyoObserver, true, true);
+      const hor = Horizon(date, tokyoObserver, equ.ra, equ.dec, 'normal');
+      const illum = Illumination(planetDef.body, date);
+      return {
+        kind: 'planet',
+        name: planetDef.name,
+        ra: equ.ra,
+        dec: equ.dec,
+        mag: illum.mag,
+        color: planetDef.color,
+        twinklePhase: 0,
+        twinkleSpeed: 0,
+        horizontal: {
+          altitude: hor.altitude * DEG_TO_RAD,
+          azimuth: hor.azimuth * DEG_TO_RAD,
+        },
+      };
+    });
+
+    planetCacheKey = key;
+    planetCache = planetObjects;
+    return planetObjects;
+  }
+
+  function getDateInTokyo(date = new Date()) {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: TOKYO.timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+    const parts = formatter.formatToParts(date);
+    const year = parts.find((part) => part.type === 'year')?.value ?? '1970';
+    const month = parts.find((part) => part.type === 'month')?.value ?? '01';
+    const day = parts.find((part) => part.type === 'day')?.value ?? '01';
+    return `${year}-${month}-${day}`;
+  }
+
+  function formatClock(timeISO) {
+    if (!timeISO || typeof timeISO !== 'string' || !timeISO.includes('T')) return '--';
+    return timeISO.split('T')[1]?.slice(0, 5) ?? '--';
+  }
+
+  function numeric(series, index, fallback = 0) {
+    if (!Array.isArray(series)) return fallback;
+    const value = Number(series[index]);
+    return Number.isFinite(value) ? value : fallback;
+  }
+
+  function getMoonPhaseInfo(now = new Date()) {
+    const synodicMonth = 29.53058867;
+    const referenceNewMoon = Date.UTC(2000, 0, 6, 18, 14, 0);
+    const days = (now.getTime() - referenceNewMoon) / 86400000;
+    const normalized = ((days % synodicMonth) + synodicMonth) % synodicMonth;
+    const phase = normalized / synodicMonth;
+    const illumination = 0.5 * (1 - Math.cos(2 * Math.PI * phase));
+
+    let label = labels.moonWaxing;
+    if (phase < 0.03 || phase > 0.97) label = labels.moonNew;
+    else if (phase >= 0.47 && phase <= 0.53) label = labels.moonFull;
+    else if (phase > 0.53) label = labels.moonWaning;
+
+    return { label, illumination };
+  }
+
+  function qualityMessage(score) {
+    if (score >= 85) return labels.excellent;
+    if (score >= 65) return labels.good;
+    if (score >= 40) return labels.fair;
+    return labels.poor;
+  }
+
+  function localSiderealDegrees(date, longitude) {
+    const julianDate = date.getTime() / 86400000 + 2440587.5;
+    const gmstHours = 18.697374558 + 24.06570982441908 * (julianDate - 2451545.0);
+    return normalizeDegrees(gmstHours * 15 + longitude);
+  }
+
+  function equatorialToHorizontal(raHours, decDegrees, when) {
+    const latitude = TOKYO.latitude * DEG_TO_RAD;
+    const hourAngle = (localSiderealDegrees(when, TOKYO.longitude) - raHours * 15) * DEG_TO_RAD;
+    const dec = decDegrees * DEG_TO_RAD;
+
+    const east = -Math.cos(dec) * Math.sin(hourAngle);
+    const north = Math.sin(dec) * Math.cos(latitude) - Math.cos(dec) * Math.sin(latitude) * Math.cos(hourAngle);
+    const up = Math.sin(dec) * Math.sin(latitude) + Math.cos(dec) * Math.cos(latitude) * Math.cos(hourAngle);
+
+    let azimuth = Math.atan2(east, north);
+    if (azimuth < 0) azimuth += Math.PI * 2;
+
+    return {
+      altitude: Math.asin(clamp(up, -1, 1)),
+      azimuth,
+    };
+  }
+
+  const skyState = {
+    hourOffset: 0,
+    yaw: 0,
+    pitch: 0.2,
+    fov: 88,
+    isPlaying: false,
+    isDragging: false,
+    dragStartX: 0,
+    dragStartY: 0,
+    dragMoved: false,
+    lastFrameTime: performance.now(),
+    selectedName: '',
+    hoverName: '',
+    visibleNamed: [],
+    animationId: 0,
+    dpr: window.devicePixelRatio || 1,
+    shootingStars: [],
+    nextShootingStarMs: performance.now() + 2400,
+    shootingLastFrameMs: performance.now(),
+  };
+
+  function formatTokyoDateTime(date) {
+    return tokyoFormatter.format(date);
+  }
+
+  function getSimulationDate() {
+    return new Date(Date.now() + skyState.hourOffset * HOUR);
+  }
+
+  function spawnShootingStar(width, height, horizonY) {
+    const skyBottom = clamp(horizonY - 8, 40, height * 0.82);
+    const startX = randomRange(width * 0.35, width + 120);
+    const startY = randomRange(24, Math.max(36, skyBottom * 0.68));
+    const angle = randomRange(132, 158) * DEG_TO_RAD;
+    const speed = randomRange(430, 760);
+
+    return {
+      x: startX,
+      y: startY,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      age: 0,
+      life: randomRange(0.48, 0.95),
+      length: randomRange(90, 180),
+      width: randomRange(1.15, 2.15),
+    };
+  }
+
+  function resizeSkyCanvas() {
+    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+    const rect = skyCanvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+
+    skyCanvas.width = Math.max(1, Math.floor(rect.width * dpr));
+    skyCanvas.height = Math.max(1, Math.floor(rect.height * dpr));
+    skyState.dpr = dpr;
+  }
+
+  function findNearestVisibleStar(x, y) {
+    let nearest = null;
+    let bestDistance = 16;
+
+    for (const starPoint of skyState.visibleNamed) {
+      const distance = Math.hypot(starPoint.x - x, starPoint.y - y);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        nearest = starPoint;
+      }
+    }
+
+    return nearest;
+  }
+
+  function setPlayButtonLabel() {
+    setText(skyPlayBtn, skyState.isPlaying ? labels.pause : labels.play);
+  }
+
+  function updateStarInfo(date) {
+    if (!skyState.selectedName) {
+      setText(skyInfoNameEl, labels.none);
+      setText(skyInfoAltEl, '--');
+      setText(skyInfoAzEl, '--');
+      setText(skyInfoMagEl, '--');
+      return;
+    }
+
+    const star = STAR_BY_NAME.get(skyState.selectedName);
+    let selectedObject = star;
+    if (!selectedObject) {
+      const planet = getPlanetObjects(date).find((item) => item.name === skyState.selectedName);
+      if (planet) selectedObject = planet;
+    }
+
+    if (!selectedObject) {
+      setText(skyInfoNameEl, labels.none);
+      return;
+    }
+
+    const horizontal = selectedObject.horizontal ?? equatorialToHorizontal(selectedObject.ra, selectedObject.dec, date);
+    const altitudeDeg = horizontal.altitude * RAD_TO_DEG;
+    const azimuthDeg = horizontal.azimuth * RAD_TO_DEG;
+
+    setText(skyInfoNameEl, displayStarName(selectedObject.name));
+    setText(skyInfoAltEl, `${altitudeDeg.toFixed(1)}°`);
+    setText(skyInfoAzEl, `${Math.round(azimuthDeg)}°`);
+    setText(skyInfoMagEl, `${selectedObject.mag.toFixed(2)}`);
+  }
+
+  function drawSky(nowMs) {
+    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+    const ctx = skyCanvas.getContext('2d');
+    if (!ctx) return;
+
+    const dpr = skyState.dpr;
+    const width = skyCanvas.width / dpr;
+    const height = skyCanvas.height / dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const yaw = skyState.yaw;
+    const pitch = skyState.pitch;
+    const fovRad = skyState.fov * DEG_TO_RAD;
+    const focal = (width * 0.5) / Math.tan(fovRad * 0.5);
+
+    ctx.fillStyle = '#030712';
+    ctx.fillRect(0, 0, width, height);
+
+    const horizonY = centerY + Math.tan(pitch) * focal;
+
+    const skyGradient = ctx.createLinearGradient(0, 0, 0, Math.max(0, horizonY));
+    skyGradient.addColorStop(0, '#0d1c44');
+    skyGradient.addColorStop(0.45, '#091736');
+    skyGradient.addColorStop(1, '#050d22');
+    ctx.fillStyle = skyGradient;
+    ctx.fillRect(0, 0, width, Math.max(0, horizonY));
+
+    if (horizonY < height) {
+      const groundGradient = ctx.createLinearGradient(0, Math.max(0, horizonY), 0, height);
+      groundGradient.addColorStop(0, '#111521');
+      groundGradient.addColorStop(1, '#090b12');
+      ctx.fillStyle = groundGradient;
+      ctx.fillRect(0, Math.max(0, horizonY), width, height - Math.max(0, horizonY));
+    }
+
+    ctx.strokeStyle = 'rgba(155, 185, 255, 0.35)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, horizonY + 0.5);
+    ctx.lineTo(width, horizonY + 0.5);
+    ctx.stroke();
+
+    const frameDeltaSec = clamp((nowMs - skyState.shootingLastFrameMs) / 1000, 0, 0.08);
+    skyState.shootingLastFrameMs = nowMs;
+
+    if (horizonY > 20 && nowMs >= skyState.nextShootingStarMs && skyState.shootingStars.length < 2) {
+      skyState.shootingStars.push(spawnShootingStar(width, height, horizonY));
+      skyState.nextShootingStarMs = nowMs + randomRange(3200, 9200);
+    } else if (horizonY <= 20) {
+      skyState.shootingStars = [];
+      skyState.nextShootingStarMs = nowMs + randomRange(2600, 6200);
+    }
+
+    const simulationDate = getSimulationDate();
+    const planetObjects = getPlanetObjects(simulationDate);
+    const renderObjects = [...ALL_STARS, ...planetObjects];
+    const visibleStars = [];
+    const visibleNamedByName = new Map();
+    const belowHorizonLimitRad = 14 * DEG_TO_RAD;
+    const magBandCounts = [0, 0, 0, 0, 0, 0];
+
+    const forwardEast = Math.cos(pitch) * Math.sin(yaw);
+    const forwardNorth = Math.cos(pitch) * Math.cos(yaw);
+    const forwardUp = Math.sin(pitch);
+
+    const rightEast = Math.cos(yaw);
+    const rightNorth = -Math.sin(yaw);
+    const rightUp = 0;
+
+    const upEast = -Math.sin(yaw) * Math.sin(pitch);
+    const upNorth = -Math.cos(yaw) * Math.sin(pitch);
+    const upUp = Math.cos(pitch);
+
+    for (const star of renderObjects) {
+      const horizontal = star.horizontal ?? equatorialToHorizontal(star.ra, star.dec, simulationDate);
+      if (star.kind === 'star' && horizontal.altitude > 0 && star.mag <= 6) {
+        const band = Math.min(Math.max(Math.ceil(star.mag), 1), 6);
+        magBandCounts[band - 1] += 1;
+      }
+      if (horizontal.altitude <= -belowHorizonLimitRad) continue;
+      const horizonVisibility = horizontal.altitude >= 0
+        ? 1
+        : clamp(1 + horizontal.altitude / belowHorizonLimitRad, 0, 1);
+      if (horizonVisibility <= 0) continue;
+
+      const starEast = Math.cos(horizontal.altitude) * Math.sin(horizontal.azimuth);
+      const starNorth = Math.cos(horizontal.altitude) * Math.cos(horizontal.azimuth);
+      const starUp = Math.sin(horizontal.altitude);
+
+      const cameraX = starEast * rightEast + starNorth * rightNorth + starUp * rightUp;
+      const cameraY = starEast * upEast + starNorth * upNorth + starUp * upUp;
+      const cameraZ = starEast * forwardEast + starNorth * forwardNorth + starUp * forwardUp;
+      if (cameraZ <= 0.02) continue;
+
+      const x = centerX + (cameraX / cameraZ) * focal;
+      const y = centerY - (cameraY / cameraZ) * focal;
+      if (x < -20 || x > width + 20 || y < -20 || y > height + 20) continue;
+
+      visibleStars.push({
+        star,
+        horizontal,
+        horizonVisibility,
+        cameraZ,
+        x,
+        y,
+      });
+
+      if (star.name) {
+        visibleNamedByName.set(star.name, {
+          star,
+          horizontal,
+          horizonVisibility,
+          cameraZ,
+          x,
+          y,
+        });
+      }
+    }
+
+    for (const [from, to] of STAR_LINES) {
+      const start = visibleNamedByName.get(from);
+      const end = visibleNamedByName.get(to);
+      if (!start || !end) continue;
+      const lineVisibility = Math.min(start.horizonVisibility, end.horizonVisibility);
+      if (lineVisibility <= 0.12) continue;
+
+      ctx.strokeStyle = `rgba(90, 140, 255, ${0.28 * lineVisibility})`;
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+    }
+
+    visibleStars.sort((a, b) => b.cameraZ - a.cameraZ);
+
+    for (const point of visibleStars) {
+      const { star, x, y, cameraZ, horizonVisibility } = point;
+      const isPlanet = star.kind === 'planet';
+      const twinkle = isPlanet
+        ? 1
+        : 0.82 + 0.18 * Math.sin(nowMs * 0.001 * star.twinkleSpeed + star.twinklePhase);
+      const alphaBase = clamp(1.2 - (star.mag + 1.6) / 6.8, 0.08, 1);
+      const alpha = clamp(alphaBase * twinkle * (0.9 + 0.1 * cameraZ) * horizonVisibility, 0.03, 1);
+      const baseRadius = isPlanet
+        ? clamp(5 - star.mag * 0.45, 1.6, 5.4)
+        : star.name
+        ? clamp(5.1 - star.mag, 1.2, 4.8)
+        : clamp(2.1 - star.mag * 0.3, 0.45, 1.5);
+      const radiusPx = baseRadius * clamp(0.6 + 0.8 / cameraZ, 0.45, 1.8) * (0.7 + 0.3 * horizonVisibility);
+
+      if (isPlanet) {
+        ctx.beginPath();
+        ctx.fillStyle = `${star.color}${Math.round(26 + 58 * horizonVisibility).toString(16).padStart(2, '0')}`;
+        ctx.arc(x, y, radiusPx * 2.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.fillStyle = isPlanet ? star.color : `rgba(255, 255, 255, ${alpha})`;
+      ctx.arc(x, y, radiusPx, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (!isPlanet && star.name && star.mag <= 1.3) {
+        ctx.beginPath();
+        ctx.fillStyle = `${star.color}${Math.round(20 + 48 * horizonVisibility).toString(16).padStart(2, '0')}`;
+        ctx.arc(x, y, radiusPx * 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    // Draw subtle labels for brighter named stars while avoiding overlap.
+    const labelCandidates = visibleStars
+      .filter((point) => point.star.name && ((point.star.kind === 'planet') || (point.star.mag <= 2.5 && point.horizonVisibility >= 0.45) || point.star.name === skyState.selectedName))
+      .sort((a, b) => {
+        const aSelected = a.star.name === skyState.selectedName;
+        const bSelected = b.star.name === skyState.selectedName;
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return a.star.mag - b.star.mag;
+      });
+
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+
+    const labelBoxes = [];
+    let labelsDrawn = 0;
+    for (const point of labelCandidates) {
+      if (labelsDrawn >= 16 && point.star.name !== skyState.selectedName) break;
+      const { star, x, y, cameraZ } = point;
+      const labelX = x + 8;
+      const labelY = y - 5;
+      const text = displayStarName(star.name);
+      const isSelectedLabel = star.name === skyState.selectedName;
+      const textWidth = ctx.measureText(text).width;
+      const box = {
+        x: labelX - 2,
+        y: labelY - 10,
+        w: textWidth + 4,
+        h: 12,
+      };
+
+      if (box.x < 6 || box.x + box.w > width - 6 || box.y < 6 || box.y + box.h > height - 6) {
+        if (!isSelectedLabel) continue;
+      }
+
+      let overlaps = false;
+      for (const existing of labelBoxes) {
+        const separate =
+          box.x + box.w < existing.x ||
+          existing.x + existing.w < box.x ||
+          box.y + box.h < existing.y ||
+          existing.y + existing.h < box.y;
+        if (!separate) {
+          overlaps = true;
+          break;
+        }
+      }
+      if (overlaps && !isSelectedLabel) continue;
+
+      labelBoxes.push(box);
+      if (!isSelectedLabel) labelsDrawn += 1;
+
+      const calmAlpha = clamp(0.26 + (2.5 - star.mag) * 0.08 + (1 / cameraZ) * 0.04, 0.22, 0.58);
+      ctx.fillStyle = isSelectedLabel
+        ? 'rgba(198, 213, 236, 0.9)'
+        : `rgba(166, 189, 222, ${calmAlpha})`;
+      ctx.fillText(text, labelX, labelY);
+
+      if (isSelectedLabel) {
+        ctx.strokeStyle = 'rgba(198, 213, 236, 0.6)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(labelX, labelY + 2);
+        ctx.lineTo(labelX + textWidth, labelY + 2);
+        ctx.stroke();
+      }
+    }
+
+    const highlight = skyState.selectedName ? visibleNamedByName.get(skyState.selectedName) : null;
+    if (highlight) {
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255, 223, 122, 0.95)';
+      ctx.lineWidth = 2;
+      ctx.arc(highlight.x, highlight.y, 8, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    if (skyState.shootingStars.length) {
+      const activeMeteors = [];
+      for (const meteor of skyState.shootingStars) {
+        meteor.age += frameDeltaSec;
+        meteor.x += meteor.vx * frameDeltaSec;
+        meteor.y += meteor.vy * frameDeltaSec;
+
+        const progress = meteor.age / meteor.life;
+        if (progress >= 1) continue;
+        if (meteor.y > horizonY + 24) continue;
+        if (meteor.x < -meteor.length - 50 || meteor.x > width + meteor.length + 50) continue;
+
+        const intensity = Math.sin(progress * Math.PI);
+        if (intensity <= 0.02) continue;
+
+        const speed = Math.hypot(meteor.vx, meteor.vy) || 1;
+        const dirX = meteor.vx / speed;
+        const dirY = meteor.vy / speed;
+        const tailX = meteor.x - dirX * meteor.length;
+        const tailY = meteor.y - dirY * meteor.length;
+
+        const trail = ctx.createLinearGradient(tailX, tailY, meteor.x, meteor.y);
+        trail.addColorStop(0, 'rgba(165, 194, 255, 0)');
+        trail.addColorStop(0.45, `rgba(178, 210, 255, ${0.18 + intensity * 0.28})`);
+        trail.addColorStop(1, `rgba(245, 248, 255, ${0.55 + intensity * 0.35})`);
+
+        ctx.strokeStyle = trail;
+        ctx.lineWidth = meteor.width;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(meteor.x, meteor.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(245, 248, 255, ${0.42 + intensity * 0.5})`;
+        ctx.arc(meteor.x, meteor.y, meteor.width * 0.95, 0, Math.PI * 2);
+        ctx.fill();
+
+        activeMeteors.push(meteor);
+      }
+
+      skyState.shootingStars = activeMeteors;
+    }
+
+    const headingDeg = normalizeDegrees(yaw * RAD_TO_DEG);
+    ctx.fillStyle = 'rgba(200, 220, 255, 0.92)';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillText(`${labels.heading}: ${Math.round(headingDeg)}°`, 12, 10);
+    ctx.fillText(`${labels.pitch}: ${Math.round(pitch * RAD_TO_DEG)}°`, 12, 26);
+    ctx.fillText(`${labels.fov}: ${Math.round(skyState.fov)}°`, 12, 42);
+
+    const cardinal = [
+      { label: labels.dirN, azimuth: 0 },
+      { label: labels.dirE, azimuth: Math.PI / 2 },
+      { label: labels.dirS, azimuth: Math.PI },
+      { label: labels.dirW, azimuth: Math.PI * 1.5 },
+    ];
+
+    ctx.fillStyle = 'rgba(200, 220, 255, 0.9)';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    for (const point of cardinal) {
+      const dirEast = Math.sin(point.azimuth);
+      const dirNorth = Math.cos(point.azimuth);
+      const dirUp = 0;
+
+      const cameraX = dirEast * rightEast + dirNorth * rightNorth + dirUp * rightUp;
+      const cameraY = dirEast * upEast + dirNorth * upNorth + dirUp * upUp;
+      const cameraZ = dirEast * forwardEast + dirNorth * forwardNorth + dirUp * forwardUp;
+      if (cameraZ <= 0.02) continue;
+
+      const projectedX = centerX + (cameraX / cameraZ) * focal;
+      const projectedY = centerY - (cameraY / cameraZ) * focal;
+      if (projectedX < -30 || projectedX > width + 30) continue;
+      const markerY = clamp(projectedY + 12, 16, height - 12);
+      ctx.fillText(point.label, projectedX, markerY);
+    }
+
+    skyState.visibleNamed = Array.from(visibleNamedByName.values());
+    setText(skyMag1El, `${magBandCounts[0]}`);
+    setText(skyMag2El, `${magBandCounts[1]}`);
+    setText(skyMag3El, `${magBandCounts[2]}`);
+    setText(skyMag4El, `${magBandCounts[3]}`);
+    setText(skyMag5El, `${magBandCounts[4]}`);
+    setText(skyMag6El, `${magBandCounts[5]}`);
+    setText(skyTimeLabel, formatTokyoDateTime(simulationDate));
+    updateStarInfo(simulationDate);
+  }
+
+  function tick(nowMs) {
+    if (skyState.isPlaying) {
+      const deltaSeconds = (nowMs - skyState.lastFrameTime) / 1000;
+      skyState.hourOffset += deltaSeconds * 0.45;
+      if (skyState.hourOffset > 12) skyState.hourOffset = -12;
+      if (skyTimeSlider instanceof HTMLInputElement) {
+        skyTimeSlider.value = skyState.hourOffset.toFixed(2);
+      }
+    }
+
+    skyState.lastFrameTime = nowMs;
+    drawSky(nowMs);
+    skyState.animationId = requestAnimationFrame(tick);
+  }
+
+  function loadTokyoSky() {
+    setText(summaryEl, labels.loading);
+
+    const url = new URL('https://api.open-meteo.com/v1/forecast');
+    url.searchParams.set('latitude', String(TOKYO.latitude));
+    url.searchParams.set('longitude', String(TOKYO.longitude));
+    url.searchParams.set('hourly', 'cloud_cover,visibility,precipitation');
+    url.searchParams.set('daily', 'sunset');
+    url.searchParams.set('timezone', TOKYO.timezone);
+    url.searchParams.set('forecast_days', '2');
+
+    fetch(url.toString())
+      .then((response) => {
+        if (!response.ok) throw new Error(`Weather API status ${response.status}`);
+        return response.json();
+      })
+      .then((data) => {
+        const times = data?.hourly?.time;
+        const cloudSeries = data?.hourly?.cloud_cover ?? data?.hourly?.cloudcover;
+        const visibilitySeries = data?.hourly?.visibility;
+        const precipitationSeries = data?.hourly?.precipitation;
+        const sunset = Array.isArray(data?.daily?.sunset) ? data.daily.sunset[0] : null;
+
+        if (!Array.isArray(times) || !times.length) throw new Error('Missing hourly times');
+
+        const today = getDateInTokyo();
+        const tomorrow = getDateInTokyo(new Date(Date.now() + ONE_DAY));
+        const tonightRows = [];
+
+        for (let i = 0; i < times.length; i += 1) {
+          const stamp = times[i];
+          if (typeof stamp !== 'string' || !stamp.includes('T')) continue;
+          const [datePart, timePart] = stamp.split('T');
+          const hour = Number(timePart.slice(0, 2));
+          const inTonight = (datePart === today && hour >= 20) || (datePart === tomorrow && hour <= 4);
+          if (!inTonight) continue;
+
+          tonightRows.push({
+            time: stamp,
+            cloud: numeric(cloudSeries, i, 100),
+            visibility: numeric(visibilitySeries, i, 0),
+            precipitation: numeric(precipitationSeries, i, 0),
+          });
+        }
+
+        if (!tonightRows.length) throw new Error('No rows for tonight');
+
+        const avgCloud = average(tonightRows.map((row) => row.cloud));
+        const avgVisibility = average(tonightRows.map((row) => row.visibility));
+        const avgPrecipitation = average(tonightRows.map((row) => row.precipitation));
+
+        let bestRow = tonightRows[0];
+        let bestRowScore = -Infinity;
+        for (const row of tonightRows) {
+          const rowScore = 100 - row.cloud * 0.7 - row.precipitation * 8 + row.visibility / 1500;
+          if (rowScore > bestRowScore) {
+            bestRowScore = rowScore;
+            bestRow = row;
+          }
+        }
+
+        const moon = getMoonPhaseInfo();
+        const moonPenalty = moon.illumination * 25;
+        const totalScore = clamp(Math.round(100 - avgCloud * 0.65 - avgPrecipitation * 8 - moonPenalty), 0, 100);
+
+        setText(scoreEl, `${totalScore}/100`);
+        setText(summaryEl, qualityMessage(totalScore));
+        setText(cloudEl, `${Math.round(avgCloud)}%`);
+        setText(visibilityEl, `${(avgVisibility / 1000).toFixed(1)} km`);
+        setText(precipitationEl, `${avgPrecipitation.toFixed(1)} mm/h`);
+        setText(sunsetEl, formatClock(sunset));
+        setText(bestHourEl, formatClock(bestRow.time));
+        setText(moonEl, `${moon.label} (${Math.round(moon.illumination * 100)}%)`);
+      })
+      .catch((error) => {
+        setText(scoreEl, '--');
+        setText(summaryEl, labels.error);
+        setText(cloudEl, '--');
+        setText(visibilityEl, '--');
+        setText(precipitationEl, '--');
+        setText(sunsetEl, '--');
+        setText(bestHourEl, '--');
+        setText(moonEl, '--');
+        console.error(error);
+      });
+  }
+
+  if (typeof window.__tokyoSkyCleanup === 'function') {
+    window.__tokyoSkyCleanup();
+  }
+
+  resizeSkyCanvas();
+
+  let skyResizeObserver = null;
+  if (skyCanvas instanceof HTMLCanvasElement && 'ResizeObserver' in window) {
+    skyResizeObserver = new ResizeObserver(() => {
+      resizeSkyCanvas();
+    });
+    skyResizeObserver.observe(skyCanvas);
+  }
+
+  const onSkySliderInput = () => {
+    if (!(skyTimeSlider instanceof HTMLInputElement)) return;
+    skyState.hourOffset = Number(skyTimeSlider.value);
+  };
+
+  const onSkyNowClick = () => {
+    skyState.hourOffset = 0;
+    if (skyTimeSlider instanceof HTMLInputElement) {
+      skyTimeSlider.value = '0';
+    }
+  };
+
+  const onSkyPlayClick = () => {
+    skyState.isPlaying = !skyState.isPlaying;
+    setPlayButtonLabel();
+  };
+
+  const onSkyResetClick = () => {
+    skyState.yaw = 0;
+    skyState.pitch = 0.2;
+    skyState.fov = 88;
+  };
+
+  const onCanvasPointerDown = (event) => {
+    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+    skyState.isDragging = true;
+    skyState.dragStartX = event.clientX;
+    skyState.dragStartY = event.clientY;
+    skyState.dragMoved = false;
+    skyCanvas.setPointerCapture(event.pointerId);
+  };
+
+  const onCanvasPointerMove = (event) => {
+    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+    const rect = skyCanvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    if (skyState.isDragging) {
+      const deltaX = event.clientX - skyState.dragStartX;
+      const deltaY = event.clientY - skyState.dragStartY;
+      skyState.dragStartX = event.clientX;
+      skyState.dragStartY = event.clientY;
+      if (Math.abs(deltaX) > 0.6 || Math.abs(deltaY) > 0.6) skyState.dragMoved = true;
+      skyState.yaw -= deltaX * 0.0055;
+      skyState.pitch = clamp(skyState.pitch - deltaY * 0.0045, -1.25, 1.25);
+      skyState.hoverName = '';
+      skyCanvas.style.cursor = 'grabbing';
+      return;
+    }
+
+    const nearest = findNearestVisibleStar(x, y);
+    skyState.hoverName = nearest?.star?.name ?? '';
+    skyCanvas.style.cursor = nearest ? 'pointer' : 'grab';
+  };
+
+  const onCanvasPointerUp = (event) => {
+    if (!(skyCanvas instanceof HTMLCanvasElement)) return;
+    if (skyState.isDragging) {
+      skyState.isDragging = false;
+      if (skyCanvas.hasPointerCapture(event.pointerId)) {
+        skyCanvas.releasePointerCapture(event.pointerId);
+      }
+    }
+
+    if (!skyState.dragMoved && skyState.hoverName) {
+      skyState.selectedName = skyState.hoverName;
+    }
+
+    skyCanvas.style.cursor = 'grab';
+  };
+
+  const onCanvasWheel = (event) => {
+    event.preventDefault();
+    skyState.fov = clamp(skyState.fov + event.deltaY * 0.03, 42, 110);
+  };
+
+  const onRefreshClick = () => {
+    loadTokyoSky();
+  };
+
+  if (skyTimeSlider instanceof HTMLInputElement) {
+    skyTimeSlider.addEventListener('input', onSkySliderInput);
+  }
+  if (skyNowBtn) skyNowBtn.addEventListener('click', onSkyNowClick);
+  if (skyPlayBtn) skyPlayBtn.addEventListener('click', onSkyPlayClick);
+  if (skyResetBtn) skyResetBtn.addEventListener('click', onSkyResetClick);
+
+  if (skyCanvas instanceof HTMLCanvasElement) {
+    skyCanvas.style.cursor = 'grab';
+    skyCanvas.addEventListener('pointerdown', onCanvasPointerDown);
+    skyCanvas.addEventListener('pointermove', onCanvasPointerMove);
+    skyCanvas.addEventListener('pointerup', onCanvasPointerUp);
+    skyCanvas.addEventListener('pointerleave', onCanvasPointerUp);
+    skyCanvas.addEventListener('wheel', onCanvasWheel, { passive: false });
+  }
+
+  if (refreshBtn) refreshBtn.addEventListener('click', onRefreshClick);
+
+  setPlayButtonLabel();
+  loadTokyoSky();
+  skyState.animationId = requestAnimationFrame(tick);
+
+  window.__tokyoSkyCleanup = () => {
+    if (skyState.animationId) cancelAnimationFrame(skyState.animationId);
+
+    if (refreshBtn) refreshBtn.removeEventListener('click', onRefreshClick);
+
+    if (skyTimeSlider instanceof HTMLInputElement) {
+      skyTimeSlider.removeEventListener('input', onSkySliderInput);
+    }
+    if (skyNowBtn) skyNowBtn.removeEventListener('click', onSkyNowClick);
+    if (skyPlayBtn) skyPlayBtn.removeEventListener('click', onSkyPlayClick);
+    if (skyResetBtn) skyResetBtn.removeEventListener('click', onSkyResetClick);
+
+    if (skyCanvas instanceof HTMLCanvasElement) {
+      skyCanvas.removeEventListener('pointerdown', onCanvasPointerDown);
+      skyCanvas.removeEventListener('pointermove', onCanvasPointerMove);
+      skyCanvas.removeEventListener('pointerup', onCanvasPointerUp);
+      skyCanvas.removeEventListener('pointerleave', onCanvasPointerUp);
+      skyCanvas.removeEventListener('wheel', onCanvasWheel);
+    }
+
+    if (skyResizeObserver) skyResizeObserver.disconnect();
+  };
+</script>

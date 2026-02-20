@@ -2,8 +2,13 @@
 import { ClientRouter } from 'astro:transitions';
 import LanguagePicker from '../components/LanguagePicker.astro';
 import Background from '../components/Background.astro';
+import { ui } from '../i18n/ui';
 
 const { title, lang } = Astro.props;
+const t = ui[lang as keyof typeof ui] ?? ui.en;
+const isStarsPage = Astro.url.pathname.includes('/stars');
+const isBanditPage = Astro.url.pathname.includes('/bandit');
+const isTspPage = Astro.url.pathname.includes('/tsp');
 ---
 
 <!DOCTYPE html>
@@ -23,6 +28,36 @@ const { title, lang } = Astro.props;
             <div class="flex items-center gap-4">
                 <a href={`/${lang}/`} class="font-bold tracking-wider hover:text-blue-400 transition-colors">
                     Sakasu's note
+                </a>
+                <a
+                    href={`/${lang}/stars/`}
+                    class={`text-xs md:text-sm transition-colors ${
+                        isStarsPage
+                            ? 'text-blue-400'
+                            : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                    {t['nav.stars']}
+                </a>
+                <a
+                    href={`/${lang}/bandit/`}
+                    class={`text-xs md:text-sm transition-colors ${
+                        isBanditPage
+                            ? 'text-blue-400'
+                            : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                    {t['nav.bandit']}
+                </a>
+                <a
+                    href={`/${lang}/tsp/`}
+                    class={`text-xs md:text-sm transition-colors ${
+                        isTspPage
+                            ? 'text-blue-400'
+                            : 'text-gray-400 hover:text-white'
+                    }`}
+                >
+                    {t['nav.tsp']}
                 </a>
                 </div>
 
