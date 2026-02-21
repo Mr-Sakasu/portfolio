@@ -130,6 +130,10 @@ const labels = {
   dirE: t['stars.sky.dir.e'],
   dirS: t['stars.sky.dir.s'],
   dirW: t['stars.sky.dir.w'],
+  weeklyNoData: t['stars.weekly.nodata'],
+  weeklyHigh: t['stars.weekly.high'],
+  weeklyLow: t['stars.weekly.low'],
+  weeklyPrecip: t['stars.weekly.precip'],
 };
 ---
 
@@ -142,63 +146,8 @@ const labels = {
       {t['stars.subtitle']}
     </p>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-      <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="text-xs uppercase tracking-widest text-blue-400">
-              {t['stars.tonightScore']}
-            </p>
-            <p id="stars-score" class="text-4xl font-extrabold mt-2 text-white">--</p>
-          </div>
-          <button
-            id="stars-refresh"
-            type="button"
-            class="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-700 text-gray-200 hover:text-white hover:border-blue-500 transition-colors"
-          >
-            {t['stars.refresh']}
-          </button>
-        </div>
-        <p id="stars-summary" class="text-sm text-gray-300 mt-4">{t['stars.loading']}</p>
-      </article>
-
-      <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
-        <dl class="space-y-3 text-sm">
-          <div class="flex items-center justify-between gap-6">
-            <dt class="text-gray-400">{t['stars.cloud']}</dt>
-            <dd id="stars-cloud" class="font-semibold text-white">--</dd>
-          </div>
-          <div class="flex items-center justify-between gap-6">
-            <dt class="text-gray-400">{t['stars.visibility']}</dt>
-            <dd id="stars-visibility" class="font-semibold text-white">--</dd>
-          </div>
-          <div class="flex items-center justify-between gap-6">
-            <dt class="text-gray-400">{t['stars.precipitation']}</dt>
-            <dd id="stars-precipitation" class="font-semibold text-white">--</dd>
-          </div>
-          <div class="flex items-center justify-between gap-6">
-            <dt class="text-gray-400">{t['stars.sunset']}</dt>
-            <dd id="stars-sunset" class="font-semibold text-white">--</dd>
-          </div>
-          <div class="flex items-center justify-between gap-6">
-            <dt class="text-gray-400">{t['stars.bestHour']}</dt>
-            <dd id="stars-best-hour" class="font-semibold text-white">--</dd>
-          </div>
-          <div class="flex items-center justify-between gap-6">
-            <dt class="text-gray-400">{t['stars.moon']}</dt>
-            <dd id="stars-moon" class="font-semibold text-white">--</dd>
-          </div>
-        </dl>
-      </article>
-    </div>
-
-    <section class="mt-8 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h2 class="text-xl md:text-2xl font-bold text-white">{t['stars.sky.title']}</h2>
-          <p class="text-sm text-gray-400 mt-1">{t['stars.sky.hint']}</p>
-        </div>
-
+    <section class="mt-8 relative left-1/2 w-[88vw] md:w-[80vw] max-w-none -translate-x-1/2 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-6">
+      <div class="flex justify-end">
         <div class="flex flex-wrap gap-2">
           <button
             id="sky-now"
@@ -243,8 +192,8 @@ const labels = {
 
       <p class="mt-3 text-xs text-gray-500">{t['stars.sky.instructions']}</p>
 
-      <div class="mt-4 relative rounded-xl border border-blue-900/40 bg-[#060913] overflow-hidden">
-        <canvas id="sky-canvas" class="w-full h-[480px] md:h-[560px] touch-none"></canvas>
+      <div class="mt-4 -mx-4 md:-mx-6 relative rounded-xl border border-blue-900/40 bg-[#060913] overflow-hidden">
+        <canvas id="sky-canvas" class="block w-full h-[480px] md:h-[560px] touch-none"></canvas>
       </div>
 
       <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
@@ -295,6 +244,62 @@ const labels = {
           </div>
         </dl>
       </div>
+    </section>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+      <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <p class="text-xs uppercase tracking-widest text-blue-400">
+              {t['stars.sky.title']}
+            </p>
+            <p id="stars-score" class="text-4xl font-extrabold mt-2 text-white">--</p>
+          </div>
+          <button
+            id="stars-refresh"
+            type="button"
+            class="px-3 py-2 text-xs md:text-sm rounded-md border border-gray-700 text-gray-200 hover:text-white hover:border-blue-500 transition-colors"
+          >
+            {t['stars.refresh']}
+          </button>
+        </div>
+        <p id="stars-summary" class="text-sm text-gray-300 mt-4">{t['stars.loading']}</p>
+      </article>
+
+      <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
+        <dl class="space-y-3 text-sm">
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.cloud']}</dt>
+            <dd id="stars-cloud" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.visibility']}</dt>
+            <dd id="stars-visibility" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.precipitation']}</dt>
+            <dd id="stars-precipitation" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.sunset']}</dt>
+            <dd id="stars-sunset" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.bestHour']}</dt>
+            <dd id="stars-best-hour" class="font-semibold text-white">--</dd>
+          </div>
+          <div class="flex items-center justify-between gap-6">
+            <dt class="text-gray-400">{t['stars.moon']}</dt>
+            <dd id="stars-moon" class="font-semibold text-white">--</dd>
+          </div>
+        </dl>
+      </article>
+    </div>
+
+    <section class="mt-8 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-5">
+      <h2 class="text-lg md:text-xl font-bold text-white">{t['stars.weekly.title']}</h2>
+      <p id="stars-weekly-loading" class="mt-2 text-xs text-gray-400">{t['stars.loading']}</p>
+      <div id="stars-weekly" class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2" aria-live="polite"></div>
     </section>
   </section>
 </Layout>
@@ -435,6 +440,12 @@ const labels = {
     minute: '2-digit',
     hour12: false,
   });
+  let weeklyDayFormatter = new Intl.DateTimeFormat(locale, {
+    timeZone: TOKYO.timezone,
+    weekday: 'short',
+    month: 'numeric',
+    day: 'numeric',
+  });
 
   let scoreEl = null;
   let summaryEl = null;
@@ -445,6 +456,8 @@ const labels = {
   let bestHourEl = null;
   let moonEl = null;
   let refreshBtn = null;
+  let weeklyEl = null;
+  let weeklyLoadingEl = null;
 
   let skyCanvas = null;
   let skyTimeSlider = null;
@@ -480,6 +493,12 @@ const labels = {
       minute: '2-digit',
       hour12: false,
     });
+    weeklyDayFormatter = new Intl.DateTimeFormat(locale, {
+      timeZone: TOKYO.timezone,
+      weekday: 'short',
+      month: 'numeric',
+      day: 'numeric',
+    });
   }
 
   function bindStarsDom() {
@@ -492,6 +511,8 @@ const labels = {
     bestHourEl = document.getElementById('stars-best-hour');
     moonEl = document.getElementById('stars-moon');
     refreshBtn = document.getElementById('stars-refresh');
+    weeklyEl = document.getElementById('stars-weekly');
+    weeklyLoadingEl = document.getElementById('stars-weekly-loading');
 
     skyCanvas = document.getElementById('sky-canvas');
     skyTimeSlider = document.getElementById('sky-time-slider');
@@ -630,6 +651,25 @@ const labels = {
   function formatClock(timeISO) {
     if (!timeISO || typeof timeISO !== 'string' || !timeISO.includes('T')) return '--';
     return timeISO.split('T')[1]?.slice(0, 5) ?? '--';
+  }
+
+  function formatForecastDay(dateISO) {
+    if (typeof dateISO !== 'string' || !dateISO) return '--';
+    const date = new Date(`${dateISO}T12:00:00+09:00`);
+    if (Number.isNaN(date.getTime())) return dateISO;
+    return weeklyDayFormatter.format(date);
+  }
+
+  function weatherCodeIcon(code) {
+    if (code === 0) return '☀️';
+    if (code === 1 || code === 2) return '🌤️';
+    if (code === 3) return '☁️';
+    if (code === 45 || code === 48) return '🌫️';
+    if ([51, 53, 55, 56, 57].includes(code)) return '🌦️';
+    if ([61, 63, 65, 66, 67, 80, 81, 82].includes(code)) return '🌧️';
+    if ([71, 73, 75, 77, 85, 86].includes(code)) return '❄️';
+    if ([95, 96, 99].includes(code)) return '⛈️';
+    return '🌥️';
   }
 
   function numeric(series, index, fallback = 0) {
@@ -1160,9 +1200,9 @@ const labels = {
     url.searchParams.set('latitude', String(TOKYO.latitude));
     url.searchParams.set('longitude', String(TOKYO.longitude));
     url.searchParams.set('hourly', 'cloud_cover,visibility,precipitation');
-    url.searchParams.set('daily', 'sunset');
+    url.searchParams.set('daily', 'sunset,weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum');
     url.searchParams.set('timezone', TOKYO.timezone);
-    url.searchParams.set('forecast_days', '2');
+    url.searchParams.set('forecast_days', '7');
     return url;
   }
 
@@ -1225,6 +1265,28 @@ const labels = {
     };
   }
 
+  function buildWeeklyForecast(data) {
+    const dates = data?.daily?.time;
+    const weatherCodes = data?.daily?.weather_code ?? data?.daily?.weathercode;
+    const maxTemps = data?.daily?.temperature_2m_max;
+    const minTemps = data?.daily?.temperature_2m_min;
+    const precipitationSums = data?.daily?.precipitation_sum;
+    if (!Array.isArray(dates) || !dates.length) return [];
+
+    const rows = [];
+    const count = Math.min(7, dates.length);
+    for (let i = 0; i < count; i += 1) {
+      rows.push({
+        date: String(dates[i] ?? ''),
+        weatherCode: numeric(weatherCodes, i, 0),
+        tempMax: numeric(maxTemps, i, 0),
+        tempMin: numeric(minTemps, i, 0),
+        precipitationSum: numeric(precipitationSums, i, 0),
+      });
+    }
+    return rows;
+  }
+
   function renderWeatherSummary(summary) {
     const moon = getMoonPhaseInfo();
     setText(scoreEl, `${summary.totalScore}/100`);
@@ -1235,6 +1297,50 @@ const labels = {
     setText(sunsetEl, formatClock(summary.sunset));
     setText(bestHourEl, formatClock(summary.bestHour));
     setText(moonEl, `${moon.label} (${Math.round(moon.illumination * 100)}%)`);
+  }
+
+  function renderWeeklyForecast(forecastRows) {
+    if (!(weeklyEl instanceof HTMLElement)) return;
+    weeklyEl.replaceChildren();
+
+    if (!Array.isArray(forecastRows) || !forecastRows.length) {
+      if (weeklyLoadingEl instanceof HTMLElement) {
+        setText(weeklyLoadingEl, labels.weeklyNoData);
+        weeklyLoadingEl.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (weeklyLoadingEl instanceof HTMLElement) {
+      weeklyLoadingEl.classList.add('hidden');
+    }
+
+    for (const row of forecastRows) {
+      const card = document.createElement('article');
+      card.className = 'rounded-md border border-gray-800 bg-[#121212]/90 px-2.5 py-2';
+
+      const dateEl = document.createElement('p');
+      dateEl.className = 'text-[11px] font-semibold text-gray-300 leading-tight';
+      dateEl.textContent = formatForecastDay(row.date);
+
+      const iconRowEl = document.createElement('div');
+      iconRowEl.className = 'mt-1.5 flex items-center';
+      const iconEl = document.createElement('p');
+      iconEl.className = 'text-lg leading-none';
+      iconEl.textContent = weatherCodeIcon(Math.round(row.weatherCode));
+      iconRowEl.append(iconEl);
+
+      const tempEl = document.createElement('p');
+      tempEl.className = 'mt-1.5 text-[11px] text-gray-300 leading-tight';
+      tempEl.textContent = `${labels.weeklyHigh} ${Math.round(row.tempMax)}°C / ${labels.weeklyLow} ${Math.round(row.tempMin)}°C`;
+
+      const precipEl = document.createElement('p');
+      precipEl.className = 'mt-1 text-[11px] text-blue-300 leading-tight';
+      precipEl.textContent = `${labels.weeklyPrecip}: ${row.precipitationSum.toFixed(1)} mm`;
+
+      card.append(dateEl, iconRowEl, tempEl, precipEl);
+      weeklyEl.append(card);
+    }
   }
 
   function renderWeatherError() {
@@ -1248,6 +1354,16 @@ const labels = {
     setText(moonEl, '--');
   }
 
+  function renderWeeklyError() {
+    if (weeklyEl instanceof HTMLElement) {
+      weeklyEl.replaceChildren();
+    }
+    if (weeklyLoadingEl instanceof HTMLElement) {
+      setText(weeklyLoadingEl, labels.error);
+      weeklyLoadingEl.classList.remove('hidden');
+    }
+  }
+
   function fetchTokyoSkySummary() {
     if (weatherFetchPromise) return weatherFetchPromise;
 
@@ -1259,11 +1375,13 @@ const labels = {
       })
       .then((data) => {
         const summary = buildWeatherSummary(data);
+        const weekly = buildWeeklyForecast(data);
         weatherCache = {
           summary,
+          weekly,
           fetchedAt: Date.now(),
         };
-        return summary;
+        return { summary, weekly };
       })
       .finally(() => {
         weatherFetchPromise = null;
@@ -1272,32 +1390,43 @@ const labels = {
     return weatherFetchPromise;
   }
 
-  function getFreshWeatherSummary() {
+  function getFreshWeatherData() {
     if (!weatherCache?.summary) return null;
     if (Date.now() - weatherCache.fetchedAt > WEATHER_CACHE_TTL_MS) return null;
-    return weatherCache.summary;
+    return weatherCache;
   }
 
   function loadTokyoSky() {
-    const freshSummary = getFreshWeatherSummary();
-    if (freshSummary) {
-      renderWeatherSummary(freshSummary);
+    const freshWeather = getFreshWeatherData();
+    if (freshWeather) {
+      renderWeatherSummary(freshWeather.summary);
+      renderWeeklyForecast(freshWeather.weekly);
       return;
     }
 
     if (weatherCache?.summary) {
       renderWeatherSummary(weatherCache.summary);
+      renderWeeklyForecast(weatherCache.weekly);
     } else {
       setText(summaryEl, labels.loading);
+      if (weeklyLoadingEl instanceof HTMLElement) {
+        setText(weeklyLoadingEl, labels.loading);
+        weeklyLoadingEl.classList.remove('hidden');
+      }
+      if (weeklyEl instanceof HTMLElement) {
+        weeklyEl.replaceChildren();
+      }
     }
 
     fetchTokyoSkySummary()
-      .then((summary) => {
-        renderWeatherSummary(summary);
+      .then((weatherData) => {
+        renderWeatherSummary(weatherData.summary);
+        renderWeeklyForecast(weatherData.weekly);
       })
       .catch((error) => {
         if (weatherCache?.summary) return;
         renderWeatherError();
+        renderWeeklyError();
         console.error(error);
       });
   }
