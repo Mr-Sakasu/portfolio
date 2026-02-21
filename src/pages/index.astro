@@ -1,18 +1,5 @@
 ---
 import Background from '../components/Background.astro';
-
-// 1. Server-Side: Detect the language preference
-const acceptLanguage = Astro.request.headers.get("accept-language") || "";
-const langString = acceptLanguage.toLowerCase();
-let targetLang = "en"; 
-
-if (langString.includes("ja")) {
-  targetLang = "jp";
-} else if (langString.includes("zh")) {
-  targetLang = "zh";
-}
-
-// We pass this variable to the client-side script
 ---
 
 <!DOCTYPE html>
@@ -38,12 +25,29 @@ if (langString.includes("ja")) {
         
     </div>
 
-    <div id="redirect-data" data-url={`/${targetLang}/`}></div>
-
     <script>
-        // Get the target URL
-        const dataDiv = document.getElementById('redirect-data');
-        const targetUrl = dataDiv.dataset.url;
+        function toRouteLang(langTag) {
+            const tag = String(langTag || '').toLowerCase();
+            if (tag.startsWith('ja') || tag.startsWith('jp')) return 'jp';
+            if (tag.startsWith('zh')) return 'zh';
+            if (tag.startsWith('en')) return 'en';
+            return '';
+        }
+
+        function detectPreferredLang() {
+            const preferred = Array.isArray(navigator.languages) && navigator.languages.length
+                ? navigator.languages
+                : [navigator.language];
+
+            for (const langTag of preferred) {
+                const mapped = toRouteLang(langTag);
+                if (mapped) return mapped;
+            }
+
+            return 'en';
+        }
+
+        const targetUrl = `/${detectPreferredLang()}/`;
 
         // Wait 1.2 seconds for the animation to play, then switch
         setTimeout(() => {
