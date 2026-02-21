@@ -14,6 +14,7 @@ export function getStaticPaths() {
 const { lang } = Astro.params;
 const t = ui[lang as keyof typeof ui];
 const projects = projectData[lang] || projectData['en'];
+const heroTitle = t['hero.title'];
 ---
 
 <Layout title="Sakasu Portfolio" lang={lang} description={t['hero.subtitle']}>
@@ -37,7 +38,7 @@ const projects = projectData[lang] || projectData['en'];
 
             <div class="text-center md:text-left">
                 <h1 class="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-white to-gray-600 bg-clip-text text-transparent pb-2 md:pb-4 leading-tight break-words">
-                    {t['hero.title']}
+                    <span id="hero-typewriter" class="typewriter-title" data-text={heroTitle} aria-label={heroTitle}></span>
                 </h1>
                 
                 <p class="text-lg md:text-xl text-gray-400 mt-4 max-w-lg leading-relaxed mx-auto md:mx-0">
@@ -74,7 +75,7 @@ const projects = projectData[lang] || projectData['en'];
                 <div class="mt-4">
                     <div class="relative w-full overflow-hidden rounded-xl border border-sky-300/30 bg-[#050914]/80">
                         <iframe
-                            src={`/${lang}/stars/#sky-canvas`}
+                            src={`/${lang}/stars/`}
                             title={`${t['stars.title']} preview`}
                             loading="lazy"
                             class="pointer-events-none block h-[160px] sm:h-[190px] md:h-[240px] w-full"
@@ -180,3 +181,83 @@ const projects = projectData[lang] || projectData['en'];
     </section>
 
 </Layout>
+
+<script is:inline>
+    const runHeroTypewriter = () => {
+        const el = document.getElementById('hero-typewriter');
+        if (!(el instanceof HTMLElement)) return;
+
+        if (typeof window.__heroTypewriterDoneTimer === 'number') {
+            window.clearTimeout(window.__heroTypewriterDoneTimer);
+        }
+        if (typeof window.__heroTypewriterFinalTimer === 'number') {
+            window.clearTimeout(window.__heroTypewriterFinalTimer);
+        }
+
+        const fullText = el.dataset.text ?? '';
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (reduceMotion) {
+            el.textContent = fullText;
+            el.classList.add('done');
+            return;
+        }
+
+        el.textContent = '';
+        el.classList.remove('done');
+
+        let index = 0;
+        const typeNext = () => {
+            if (index >= fullText.length) {
+                el.classList.add('done');
+                window.__heroTypewriterDoneTimer = window.setTimeout(() => {
+                    el.classList.remove('done');
+                    window.__heroTypewriterFinalTimer = window.setTimeout(() => {
+                        el.classList.add('done');
+                    }, 1200);
+                }, 250);
+                return;
+            }
+            index += 1;
+            el.textContent = fullText.slice(0, index);
+            window.setTimeout(typeNext, 150);
+        };
+
+        window.setTimeout(typeNext, 180);
+    };
+
+    runHeroTypewriter();
+    if (!window.__heroTypewriterHookAttached) {
+        document.addEventListener('astro:page-load', runHeroTypewriter);
+        window.__heroTypewriterHookAttached = true;
+    }
+</script>
+
+<style>
+    .typewriter-title {
+        display: inline-block;
+        white-space: nowrap;
+        vertical-align: bottom;
+        min-height: 1em;
+        padding-right: 0.08em;
+        border-right: 0.08em solid rgba(226, 232, 240, 0.95);
+        animation: typewriter-caret 1.05s step-end infinite;
+    }
+
+    @keyframes typewriter-caret {
+        0%, 49% { border-right-color: rgba(226, 232, 240, 0.95); }
+        50%, 100% { border-right-color: transparent; }
+    }
+
+    .typewriter-title.done {
+        animation: none;
+        border-right-color: transparent;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .typewriter-title {
+            border-right: none;
+            animation: none;
+        }
+    }
+</style>
