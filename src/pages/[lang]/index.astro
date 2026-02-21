@@ -16,7 +16,7 @@ const t = ui[lang as keyof typeof ui];
 const projects = projectData[lang] || projectData['en'];
 ---
 
-<Layout title="Sakasu Portfolio" lang={lang}>
+<Layout title="Sakasu Portfolio" lang={lang} description={t['hero.subtitle']}>
 	
     <section class="py-12 md:py-32">
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-10">

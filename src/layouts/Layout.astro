@@ -4,7 +4,10 @@ import LanguagePicker from '../components/LanguagePicker.astro';
 import Background from '../components/Background.astro';
 import { ui } from '../i18n/ui';
 
-const { title, lang } = Astro.props;
+const { title, lang, description } = Astro.props;
+const pageDescription = typeof description === 'string' && description.trim().length
+  ? description.trim()
+  : 'Sakasu portfolio with interactive star watching and bandit optimization demos.';
 const t = ui[lang as keyof typeof ui] ?? ui.en;
 const isStarsPage = Astro.url.pathname.includes('/stars');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
@@ -13,12 +16,13 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
 
 <!DOCTYPE html>
 <html lang={lang} class="scroll-smooth bg-[#111]">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width" />
-		<title>{title}</title>
-		<ClientRouter />
-	</head>
+		<head>
+			<meta charset="UTF-8" />
+			<meta name="viewport" content="width=device-width" />
+			<meta name="description" content={pageDescription} />
+			<title>{title}</title>
+			<ClientRouter />
+		</head>
 	<body class="text-white font-sans antialiased min-h-screen flex flex-col relative">
 		
         <Background />
