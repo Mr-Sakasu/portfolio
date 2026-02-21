@@ -9,7 +9,7 @@ const t = ui[lang as keyof typeof ui] ?? ui.en;
 const isStarsPage = Astro.url.pathname.includes('/stars');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
 const isTspPage = Astro.url.pathname.includes('/tsp');
-const isMazePage = Astro.url.pathname.includes('/maze');
+const isFlowPage = Astro.url.pathname.includes('/flow');
 const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-xs md:text-sm transition-colors';
 ---
 
@@ -69,14 +69,14 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
                             {t['nav.tsp']}
                         </a>
                         <a
-                            href={`/${lang}/maze/`}
+                            href={`/${lang}/flow/`}
                             class={`${navBaseClass} ${
-                                isMazePage
-                                    ? 'border-cyan-300/70 bg-cyan-400/15 text-cyan-200'
-                                    : 'border-gray-700 text-gray-300 hover:border-cyan-300/60 hover:text-white'
+                                isFlowPage
+                                    ? 'border-orange-300/70 bg-orange-400/15 text-orange-200'
+                                    : 'border-gray-700 text-gray-300 hover:border-orange-300/60 hover:text-white'
                             }`}
                         >
-                            {t['nav.maze']}
+                            {t['nav.flow']}
                         </a>
                     </div>
                 </nav>

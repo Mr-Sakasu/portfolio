@@ -1,0 +1,885 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { ui, languages } from '../../i18n/ui';
+
+export function getStaticPaths() {
+  return Object.keys(languages).map((lang) => ({ params: { lang } }));
+}
+
+const { lang } = Astro.params;
+const t = ui[lang as keyof typeof ui] ?? ui.en;
+
+const labels = {
+  statusPlan: t['flow.status.plan'],
+  statusFinished: t['flow.status.finished'],
+  outcomeWin: t['flow.outcome.win'],
+  outcomeTie: t['flow.outcome.tie'],
+  outcomeLose: t['flow.outcome.lose'],
+  outcomePending: t['flow.outcome.pending'],
+  repairNone: t['flow.none'],
+  boostNone: t['flow.none'],
+  helpRepair: t['flow.help.repair'],
+  helpBoost: t['flow.help.boost'],
+  sourceName: t['flow.node.source'],
+  sinkName: t['flow.node.sink'],
+  roundLabel: t['flow.round'],
+  lineLabel: t['flow.line'],
+};
+---
+
+<Layout title={`${t['flow.title']} | Sakasu Portfolio`} lang={lang}>
+  <section class="py-10 md:py-14 relative overflow-hidden">
+    <div aria-hidden="true" class="pointer-events-none absolute -top-24 -left-12 w-72 h-72 rounded-full bg-orange-500/12 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 right-0 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
+
+    <div class="relative rounded-2xl border border-orange-500/20 bg-[#1a1411]/75 backdrop-blur-sm p-6 md:p-8 shadow-[0_0_0_1px_rgba(251,146,60,0.08),0_18px_50px_rgba(2,6,23,0.72)]">
+      <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white via-orange-100 to-cyan-300 bg-clip-text text-transparent">
+        {t['flow.title']}
+      </h1>
+      <p class="mt-4 text-gray-200 max-w-2xl leading-relaxed">
+        {t['flow.subtitle']}
+      </p>
+      <p class="mt-2 text-sm text-gray-400 max-w-2xl">{t['flow.instructions']}</p>
+    </div>
+
+    <section id="flow-lab" class="flow-lab-shell mt-8 space-y-6 rounded-2xl border border-gray-800/80 bg-[#10131d]/88 p-4 md:p-6">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+        <article class="flow-metric-card rounded-xl border border-blue-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-blue-200/70">{t['flow.round']}</p>
+          <p id="flow-round" class="mt-2 text-2xl md:text-3xl font-bold text-white">1/10</p>
+        </article>
+        <article class="flow-metric-card rounded-xl border border-cyan-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-cyan-200/70">{t['flow.roundFlow']}</p>
+          <p id="flow-round-flow" class="mt-2 text-2xl md:text-3xl font-bold text-white">0</p>
+        </article>
+        <article class="flow-metric-card rounded-xl border border-orange-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-orange-200/70">{t['flow.totalFlow']}</p>
+          <p id="flow-total-flow" class="mt-2 text-2xl md:text-3xl font-bold text-white">0</p>
+        </article>
+        <article class="flow-metric-card rounded-xl border border-rose-500/20 bg-[#0e1524]/90 p-4">
+          <p class="text-xs uppercase tracking-widest text-rose-200/70">{t['flow.brokenLinks']}</p>
+          <p id="flow-broken-count" class="mt-2 text-2xl md:text-3xl font-bold text-white">0</p>
+        </article>
+        <article class="flow-metric-card rounded-xl border border-emerald-500/20 bg-[#0e1524]/90 p-4 col-span-2 md:col-span-1">
+          <p class="text-xs uppercase tracking-widest text-emerald-200/70">{t['flow.seed']}</p>
+          <p id="flow-seed" class="mt-2 text-sm md:text-base font-semibold text-white break-all">--</p>
+        </article>
+      </div>
+
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="flex flex-wrap gap-2">
+          <button
+            id="flow-new-scenario"
+            type="button"
+            class="flow-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-orange-600/40 bg-orange-600/10 text-orange-100 hover:text-white hover:border-orange-400 transition-colors"
+          >
+            {t['flow.newScenario']}
+          </button>
+          <button
+            id="flow-dispatch"
+            type="button"
+            class="flow-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-cyan-600/40 bg-cyan-600/10 text-cyan-100 hover:text-white hover:border-cyan-400 transition-colors"
+          >
+            {t['flow.dispatch']}
+          </button>
+        </div>
+
+        <span
+          id="flow-status"
+          class="flow-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold text-xs md:text-sm"
+        >
+          {t['flow.status.plan']}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-[1.35fr_1fr] gap-4">
+        <article class="flow-network-card rounded-xl border border-blue-500/25 bg-[#0d1321]/90 p-4">
+          <h2 class="text-lg md:text-xl font-bold text-white">{t['flow.roundSummary']}</h2>
+          <p class="text-xs text-gray-400 mt-1">{t['flow.cutHint']}</p>
+
+          <div id="flow-network" class="flow-network mt-3"></div>
+
+          <div class="mt-3 flex flex-wrap gap-3 text-xs text-gray-300">
+            <span class="inline-flex items-center gap-2"><span class="flow-legend-swatch flow-legend-healthy"></span>{t['flow.legend.healthy']}</span>
+            <span class="inline-flex items-center gap-2"><span class="flow-legend-swatch flow-legend-broken"></span>{t['flow.legend.broken']}</span>
+            <span class="inline-flex items-center gap-2"><span class="flow-legend-swatch flow-legend-repaired"></span>{t['flow.legend.repaired']}</span>
+            <span class="inline-flex items-center gap-2"><span class="flow-legend-swatch flow-legend-boosted"></span>{t['flow.legend.boosted']}</span>
+            <span class="inline-flex items-center gap-2"><span class="flow-legend-swatch flow-legend-cut"></span>{t['flow.legend.cut']}</span>
+          </div>
+        </article>
+
+        <div class="space-y-4">
+          <article class="flow-choice-card rounded-xl border border-rose-500/20 bg-[#101726]/92 p-4">
+            <h3 class="text-sm font-semibold text-rose-100">{t['flow.repairTitle']}</h3>
+            <p class="text-xs text-gray-400 mt-1">{t['flow.help.repair']}</p>
+            <div id="flow-repair-options" class="mt-3 space-y-2"></div>
+          </article>
+
+          <article class="flow-choice-card rounded-xl border border-violet-500/20 bg-[#101726]/92 p-4">
+            <h3 class="text-sm font-semibold text-violet-100">{t['flow.boostTitle']}</h3>
+            <p class="text-xs text-gray-400 mt-1">{t['flow.help.boost']}</p>
+            <div id="flow-boost-options" class="mt-3 space-y-2"></div>
+          </article>
+        </div>
+      </div>
+
+      <article class="flow-score-card rounded-xl border border-gray-700/70 bg-[#0f1524]/88 p-4">
+        <h3 class="text-lg font-semibold text-white">{t['flow.scoreTitle']}</h3>
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+          <div class="rounded-md border border-blue-500/30 bg-[#102033] p-3 flex items-center justify-between">
+            <span class="text-blue-100">{t['flow.you']}</span>
+            <span id="flow-score-you" class="font-semibold text-white">0</span>
+          </div>
+          <div class="rounded-md border border-slate-500/30 bg-[#1a2232] p-3 flex items-center justify-between">
+            <span class="text-slate-200">{t['flow.baseline']}</span>
+            <span id="flow-score-baseline" class="font-semibold text-white">0</span>
+          </div>
+          <div class="rounded-md border border-emerald-500/30 bg-[#10271f] p-3 flex items-center justify-between">
+            <span class="text-emerald-100">{t['flow.best']}</span>
+            <span id="flow-score-best" class="font-semibold text-white">0</span>
+          </div>
+        </div>
+
+        <p id="flow-outcome" class="mt-4 text-sm text-blue-200">{t['flow.outcome.pending']}</p>
+
+        <div class="mt-4 border-t border-gray-700/80 pt-4">
+          <p class="text-xs uppercase tracking-widest text-gray-500">{t['flow.history']}</p>
+          <ul id="flow-history-list" class="mt-2 space-y-1 text-xs text-gray-300"></ul>
+        </div>
+      </article>
+    </section>
+  </section>
+</Layout>
+
+<script define:vars={{ labels }}>
+  const TOTAL_ROUNDS = 10;
+  const BOOST_AMOUNT = 2;
+  const FAIL_PROBABILITY = 0.25;
+
+  const NODES = [
+    { id: 0, label: 'S', x: 60, y: 180 },
+    { id: 1, label: 'A', x: 220, y: 90 },
+    { id: 2, label: 'B', x: 220, y: 270 },
+    { id: 3, label: 'C', x: 430, y: 90 },
+    { id: 4, label: 'D', x: 430, y: 270 },
+    { id: 5, label: 'T', x: 620, y: 180 },
+  ];
+
+  const EDGE_DEFS = [
+    { id: 'e0', from: 0, to: 1, capacity: 6, lx: 0, ly: -10 },
+    { id: 'e1', from: 0, to: 2, capacity: 5, lx: 0, ly: 12 },
+    { id: 'e2', from: 1, to: 3, capacity: 4, lx: 0, ly: -10 },
+    { id: 'e3', from: 1, to: 4, capacity: 3, lx: -12, ly: 0 },
+    { id: 'e4', from: 2, to: 3, capacity: 3, lx: 12, ly: 0 },
+    { id: 'e5', from: 2, to: 4, capacity: 4, lx: 0, ly: 12 },
+    { id: 'e6', from: 3, to: 5, capacity: 5, lx: 0, ly: -10 },
+    { id: 'e7', from: 4, to: 5, capacity: 6, lx: 0, ly: 12 },
+    { id: 'e8', from: 1, to: 2, capacity: 2, lx: -16, ly: 0 },
+    { id: 'e9', from: 3, to: 4, capacity: 2, lx: -16, ly: 0 },
+    { id: 'e10', from: 2, to: 5, capacity: 2, lx: 14, ly: 10 },
+  ];
+
+  const SOURCE_ID = 0;
+  const SINK_ID = 5;
+
+  function mulberry32(seed) {
+    let t = seed >>> 0;
+    return () => {
+      t += 0x6d2b79f5;
+      let x = t;
+      x = Math.imul(x ^ (x >>> 15), x | 1);
+      x ^= x + Math.imul(x ^ (x >>> 7), x | 61);
+      return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function getSeed() {
+    if (window.crypto?.getRandomValues) {
+      const data = new Uint32Array(1);
+      window.crypto.getRandomValues(data);
+      return data[0];
+    }
+    return Math.floor(Math.random() * 4294967295);
+  }
+
+  function edgeName(edge) {
+    return `${NODES[edge.from].label}->${NODES[edge.to].label}`;
+  }
+
+  function buildRoundFailures(random) {
+    const failed = {};
+    let failedCount = 0;
+
+    for (const edge of EDGE_DEFS) {
+      const isFailed = random() < FAIL_PROBABILITY;
+      failed[edge.id] = isFailed;
+      if (isFailed) failedCount += 1;
+    }
+
+    if (failedCount === 0) {
+      const index = Math.floor(random() * EDGE_DEFS.length);
+      failed[EDGE_DEFS[index].id] = true;
+      failedCount = 1;
+    }
+
+    const maxFailed = Math.floor(EDGE_DEFS.length * 0.55);
+    if (failedCount > maxFailed) {
+      const ids = EDGE_DEFS.map((edge) => edge.id);
+      while (failedCount > maxFailed) {
+        const id = ids[Math.floor(random() * ids.length)];
+        if (!failed[id]) continue;
+        failed[id] = false;
+        failedCount -= 1;
+      }
+    }
+
+    const sourceOutIds = EDGE_DEFS.filter((edge) => edge.from === SOURCE_ID).map((edge) => edge.id);
+    if (sourceOutIds.every((id) => failed[id])) {
+      const id = sourceOutIds[Math.floor(random() * sourceOutIds.length)];
+      failed[id] = false;
+    }
+
+    const sinkInIds = EDGE_DEFS.filter((edge) => edge.to === SINK_ID).map((edge) => edge.id);
+    if (sinkInIds.every((id) => failed[id])) {
+      const id = sinkInIds[Math.floor(random() * sinkInIds.length)];
+      failed[id] = false;
+    }
+
+    return failed;
+  }
+
+  function buildRounds(seed) {
+    const random = mulberry32(seed ^ 0x7f4a7c15);
+    return Array.from({ length: TOTAL_ROUNDS }, () => ({
+      failed: buildRoundFailures(random),
+    }));
+  }
+
+  function stateForPlan(roundData, repairId, boostId) {
+    return EDGE_DEFS.map((edge) => {
+      const isFailed = !!roundData.failed[edge.id];
+      const isRepaired = repairId === edge.id && isFailed;
+      const isActive = !isFailed || isRepaired;
+      const isBoosted = isActive && boostId === edge.id;
+      const capacity = isActive ? edge.capacity + (isBoosted ? BOOST_AMOUNT : 0) : 0;
+      return {
+        ...edge,
+        failed: isFailed,
+        repaired: isRepaired,
+        active: isActive,
+        boosted: isBoosted,
+        capacity,
+      };
+    });
+  }
+
+  function computeMaxFlow(edgeStates) {
+    const n = NODES.length;
+    const residual = Array.from({ length: n }, () => Array(n).fill(0));
+
+    for (const edge of edgeStates) {
+      if (edge.capacity > 0) {
+        residual[edge.from][edge.to] += edge.capacity;
+      }
+    }
+
+    let maxFlow = 0;
+    const parent = new Array(n).fill(-1);
+
+    while (true) {
+      parent.fill(-1);
+      parent[SOURCE_ID] = -2;
+
+      const queue = [{ node: SOURCE_ID, flow: Number.POSITIVE_INFINITY }];
+      let pathFlow = 0;
+
+      for (let head = 0; head < queue.length; head += 1) {
+        const { node, flow } = queue[head];
+
+        for (let next = 0; next < n; next += 1) {
+          if (parent[next] !== -1 || residual[node][next] <= 0) continue;
+
+          parent[next] = node;
+          const nextFlow = Math.min(flow, residual[node][next]);
+
+          if (next === SINK_ID) {
+            pathFlow = nextFlow;
+            break;
+          }
+
+          queue.push({ node: next, flow: nextFlow });
+        }
+
+        if (pathFlow > 0) break;
+      }
+
+      if (pathFlow <= 0) break;
+
+      maxFlow += pathFlow;
+      let current = SINK_ID;
+      while (current !== SOURCE_ID) {
+        const prev = parent[current];
+        residual[prev][current] -= pathFlow;
+        residual[current][prev] += pathFlow;
+        current = prev;
+      }
+    }
+
+    const reachable = Array(n).fill(false);
+    const reachQueue = [SOURCE_ID];
+    reachable[SOURCE_ID] = true;
+
+    for (let head = 0; head < reachQueue.length; head += 1) {
+      const node = reachQueue[head];
+      for (let next = 0; next < n; next += 1) {
+        if (reachable[next] || residual[node][next] <= 0) continue;
+        reachable[next] = true;
+        reachQueue.push(next);
+      }
+    }
+
+    const cutEdgeIds = new Set();
+    for (const edge of edgeStates) {
+      if (!edge.active || edge.capacity <= 0) continue;
+      if (reachable[edge.from] && !reachable[edge.to]) {
+        cutEdgeIds.add(edge.id);
+      }
+    }
+
+    return { flow: maxFlow, cutEdgeIds };
+  }
+
+  function getFailedEdges(roundData) {
+    return EDGE_DEFS.filter((edge) => roundData.failed[edge.id]);
+  }
+
+  function findBestPlan(roundData) {
+    const failedEdges = getFailedEdges(roundData);
+    const repairCandidates = [null, ...failedEdges.map((edge) => edge.id)];
+
+    let best = { flow: -1, repairId: null, boostId: null };
+
+    for (const repairId of repairCandidates) {
+      const repairedStates = stateForPlan(roundData, repairId, null);
+      const boostCandidates = [null, ...repairedStates.filter((edge) => edge.active).map((edge) => edge.id)];
+
+      for (const boostId of boostCandidates) {
+        const states = stateForPlan(roundData, repairId, boostId);
+        const { flow } = computeMaxFlow(states);
+        if (flow > best.flow) {
+          best = { flow, repairId, boostId };
+        }
+      }
+    }
+
+    return best;
+  }
+
+  function initFlowLab() {
+    const root = document.getElementById('flow-lab');
+    if (!root || root.dataset.ready === 'true') return;
+    root.dataset.ready = 'true';
+
+    const roundEl = root.querySelector('#flow-round');
+    const roundFlowEl = root.querySelector('#flow-round-flow');
+    const totalFlowEl = root.querySelector('#flow-total-flow');
+    const brokenCountEl = root.querySelector('#flow-broken-count');
+    const seedEl = root.querySelector('#flow-seed');
+
+    const scoreYouEl = root.querySelector('#flow-score-you');
+    const scoreBaselineEl = root.querySelector('#flow-score-baseline');
+    const scoreBestEl = root.querySelector('#flow-score-best');
+
+    const statusEl = root.querySelector('#flow-status');
+    const outcomeEl = root.querySelector('#flow-outcome');
+    const historyListEl = root.querySelector('#flow-history-list');
+
+    const networkEl = root.querySelector('#flow-network');
+    const repairOptionsEl = root.querySelector('#flow-repair-options');
+    const boostOptionsEl = root.querySelector('#flow-boost-options');
+
+    const newScenarioBtn = root.querySelector('#flow-new-scenario');
+    const dispatchBtn = root.querySelector('#flow-dispatch');
+
+    if (!networkEl || !repairOptionsEl || !boostOptionsEl) return;
+
+    let seed = 0;
+    let rounds = [];
+    let currentRound = 1;
+    let selectedRepair = null;
+    let selectedBoost = null;
+    let scoreYou = 0;
+    let scoreBaseline = 0;
+    let scoreBest = 0;
+    let history = [];
+    let finished = false;
+
+    function setText(node, value) {
+      if (node) node.textContent = value;
+    }
+
+    function currentRoundData() {
+      return rounds[currentRound - 1] ?? null;
+    }
+
+    function renderRepairOptions(roundData) {
+      const failedEdges = getFailedEdges(roundData);
+
+      const rows = [
+        `<label class="flow-choice-row ${selectedRepair === null ? 'is-selected' : ''}">
+          <input type="radio" name="flow-repair" value="" ${selectedRepair === null ? 'checked' : ''}>
+          <span>${labels.repairNone}</span>
+        </label>`,
+      ];
+
+      for (const edge of failedEdges) {
+        rows.push(
+          `<label class="flow-choice-row ${selectedRepair === edge.id ? 'is-selected' : ''}">
+            <input type="radio" name="flow-repair" value="${edge.id}" ${selectedRepair === edge.id ? 'checked' : ''}>
+            <span>${labels.lineLabel} ${edgeName(edge)} (c=${edge.capacity})</span>
+          </label>`
+        );
+      }
+
+      repairOptionsEl.innerHTML = rows.join('');
+    }
+
+    function renderBoostOptions(boostableEdges) {
+      const rows = [
+        `<label class="flow-choice-row ${selectedBoost === null ? 'is-selected' : ''}">
+          <input type="radio" name="flow-boost" value="" ${selectedBoost === null ? 'checked' : ''}>
+          <span>${labels.boostNone}</span>
+        </label>`,
+      ];
+
+      for (const edge of boostableEdges) {
+        rows.push(
+          `<label class="flow-choice-row ${selectedBoost === edge.id ? 'is-selected' : ''}">
+            <input type="radio" name="flow-boost" value="${edge.id}" ${selectedBoost === edge.id ? 'checked' : ''}>
+            <span>${labels.lineLabel} ${edgeName(edge)} (+${BOOST_AMOUNT})</span>
+          </label>`
+        );
+      }
+
+      boostOptionsEl.innerHTML = rows.join('');
+    }
+
+    function renderNetwork(edgeStates, cutEdgeIds) {
+      const lines = edgeStates.map((edge) => {
+        const from = NODES[edge.from];
+        const to = NODES[edge.to];
+
+        const x1 = from.x;
+        const y1 = from.y;
+        const x2 = to.x;
+        const y2 = to.y;
+
+        const mx = (x1 + x2) / 2 + edge.lx;
+        const my = (y1 + y2) / 2 + edge.ly;
+
+        let stroke = '#64748b';
+        let width = 3.4;
+        let dash = '';
+
+        if (!edge.active) {
+          stroke = '#ef4444';
+          dash = '8 7';
+          width = 3;
+        } else if (edge.boosted) {
+          stroke = '#8b5cf6';
+          width = 4.6;
+        } else if (edge.repaired) {
+          stroke = '#0ea5e9';
+          width = 4.2;
+        }
+
+        if (edge.active && cutEdgeIds.has(edge.id)) {
+          stroke = '#f59e0b';
+          width = Math.max(width, 5);
+        }
+
+        const label = !edge.active ? 'X' : edge.boosted ? `${edge.capacity}↑` : `${edge.capacity}`;
+        const boxWidth = Math.max(24, label.length * 8 + 10);
+
+        return `
+          <g>
+            <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${stroke}" stroke-width="${width}" stroke-linecap="round" ${dash ? `stroke-dasharray="${dash}"` : ''}></line>
+            <rect x="${mx - boxWidth / 2}" y="${my - 10}" width="${boxWidth}" height="18" rx="5" fill="rgba(15,23,42,0.88)" stroke="rgba(226,232,240,0.42)"></rect>
+            <text x="${mx}" y="${my + 3}" text-anchor="middle" fill="#f8fafc" font-size="11" font-weight="700">${label}</text>
+          </g>
+        `;
+      });
+
+      const nodes = NODES.map((node) => {
+        const isSource = node.id === SOURCE_ID;
+        const isSink = node.id === SINK_ID;
+        const fill = isSource ? '#0284c7' : isSink ? '#d97706' : '#0f172a';
+        const stroke = isSource ? '#7dd3fc' : isSink ? '#fde68a' : '#94a3b8';
+        const caption = isSource ? labels.sourceName : isSink ? labels.sinkName : '';
+
+        return `
+          <g>
+            <circle cx="${node.x}" cy="${node.y}" r="23" fill="${fill}" stroke="${stroke}" stroke-width="2.2"></circle>
+            <text x="${node.x}" y="${node.y + 5}" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="800">${node.label}</text>
+            ${caption ? `<text x="${node.x}" y="${node.y + 38}" text-anchor="middle" fill="#cbd5e1" font-size="10">${caption}</text>` : ''}
+          </g>
+        `;
+      });
+
+      networkEl.innerHTML = `
+        <svg viewBox="0 0 680 360" class="flow-network-svg" role="img" aria-label="flow network">
+          <defs>
+            <linearGradient id="flowGridGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="rgba(15,23,42,0.02)" />
+              <stop offset="100%" stop-color="rgba(15,23,42,0.08)" />
+            </linearGradient>
+          </defs>
+          <rect x="0" y="0" width="680" height="360" fill="url(#flowGridGrad)" rx="12"></rect>
+          ${lines.join('')}
+          ${nodes.join('')}
+        </svg>
+      `;
+    }
+
+    function renderHistory() {
+      if (!history.length) {
+        historyListEl.innerHTML = '<li class="text-gray-500">--</li>';
+        return;
+      }
+
+      historyListEl.innerHTML = history
+        .slice(0, 8)
+        .map(
+          (item) =>
+            `<li>${labels.roundLabel} ${item.round}: ${labels.lineLabel} ${item.you} | ${item.base} | ${item.best}</li>`
+        )
+        .join('');
+    }
+
+    function render() {
+      const roundData = currentRoundData();
+      if (!roundData) return;
+
+      const failedEdges = getFailedEdges(roundData);
+      if (selectedRepair && !roundData.failed[selectedRepair]) {
+        selectedRepair = null;
+      }
+
+      const statesWithoutBoost = stateForPlan(roundData, selectedRepair, null);
+      const boostableEdges = statesWithoutBoost.filter((edge) => edge.active);
+      if (selectedBoost && !boostableEdges.some((edge) => edge.id === selectedBoost)) {
+        selectedBoost = null;
+      }
+
+      const userStates = stateForPlan(roundData, selectedRepair, selectedBoost);
+      const userResult = computeMaxFlow(userStates);
+
+      setText(roundEl, `${currentRound}/${TOTAL_ROUNDS}`);
+      setText(roundFlowEl, String(userResult.flow));
+      setText(totalFlowEl, String(scoreYou));
+      setText(brokenCountEl, String(failedEdges.length));
+      setText(seedEl, String(seed));
+
+      setText(scoreYouEl, String(scoreYou));
+      setText(scoreBaselineEl, String(scoreBaseline));
+      setText(scoreBestEl, String(scoreBest));
+
+      if (statusEl) {
+        statusEl.textContent = finished ? labels.statusFinished : labels.statusPlan;
+        statusEl.className = finished
+          ? 'flow-status-pill px-2 py-1 rounded border border-emerald-600/50 bg-emerald-500/10 text-emerald-300 font-semibold text-xs md:text-sm'
+          : 'flow-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold text-xs md:text-sm';
+      }
+
+      if (outcomeEl) {
+        if (!finished) {
+          outcomeEl.textContent = labels.outcomePending;
+        } else if (scoreYou > scoreBaseline) {
+          outcomeEl.textContent = labels.outcomeWin;
+        } else if (scoreYou === scoreBaseline) {
+          outcomeEl.textContent = labels.outcomeTie;
+        } else {
+          outcomeEl.textContent = labels.outcomeLose;
+        }
+      }
+
+      if (dispatchBtn) {
+        dispatchBtn.disabled = finished;
+        dispatchBtn.classList.toggle('opacity-50', finished);
+        dispatchBtn.classList.toggle('cursor-not-allowed', finished);
+      }
+
+      renderRepairOptions(roundData);
+      renderBoostOptions(boostableEdges);
+      renderNetwork(userStates, userResult.cutEdgeIds);
+      renderHistory();
+    }
+
+    function startScenario() {
+      seed = getSeed();
+      rounds = buildRounds(seed);
+      currentRound = 1;
+      selectedRepair = null;
+      selectedBoost = null;
+      scoreYou = 0;
+      scoreBaseline = 0;
+      scoreBest = 0;
+      history = [];
+      finished = false;
+      render();
+    }
+
+    function dispatchRound() {
+      if (finished) return;
+
+      const roundData = currentRoundData();
+      if (!roundData) return;
+
+      const userStates = stateForPlan(roundData, selectedRepair, selectedBoost);
+      const baseStates = stateForPlan(roundData, null, null);
+      const bestPlan = findBestPlan(roundData);
+
+      const userFlow = computeMaxFlow(userStates).flow;
+      const baselineFlow = computeMaxFlow(baseStates).flow;
+
+      scoreYou += userFlow;
+      scoreBaseline += baselineFlow;
+      scoreBest += bestPlan.flow;
+
+      history.unshift({
+        round: currentRound,
+        you: userFlow,
+        base: baselineFlow,
+        best: bestPlan.flow,
+      });
+
+      if (currentRound >= TOTAL_ROUNDS) {
+        finished = true;
+      } else {
+        currentRound += 1;
+        selectedRepair = null;
+        selectedBoost = null;
+      }
+
+      render();
+    }
+
+    repairOptionsEl.addEventListener('change', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      selectedRepair = target.value || null;
+      selectedBoost = null;
+      render();
+    });
+
+    boostOptionsEl.addEventListener('change', (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLInputElement)) return;
+      selectedBoost = target.value || null;
+      render();
+    });
+
+    if (newScenarioBtn) {
+      newScenarioBtn.addEventListener('click', startScenario);
+    }
+
+    if (dispatchBtn) {
+      dispatchBtn.addEventListener('click', dispatchRound);
+    }
+
+    startScenario();
+  }
+
+  function bootFlowLab() {
+    initFlowLab();
+  }
+
+  bootFlowLab();
+  if (!window.__flowLabPageLoadListener) {
+    document.addEventListener('astro:page-load', bootFlowLab);
+    window.__flowLabPageLoadListener = true;
+  }
+</script>
+
+<style is:global>
+  .flow-lab-shell {
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(251, 146, 60, 0.11), transparent 42%),
+      radial-gradient(circle at 100% 0%, rgba(34, 211, 238, 0.1), transparent 40%),
+      linear-gradient(180deg, rgba(15, 23, 42, 0.4), rgba(2, 6, 23, 0.56));
+    box-shadow:
+      0 18px 40px rgba(2, 6, 23, 0.64),
+      inset 0 1px 0 rgba(148, 163, 184, 0.08);
+  }
+
+  .flow-metric-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: transform 170ms ease, border-color 170ms ease;
+  }
+
+  .flow-metric-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 189, 248, 0.52);
+  }
+
+  .flow-action-btn {
+    backdrop-filter: blur(4px);
+    transition: transform 160ms ease, box-shadow 200ms ease;
+  }
+
+  .flow-action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(2, 6, 23, 0.42);
+  }
+
+  .flow-network-card {
+    background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.78), rgba(2, 6, 23, 0.76));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 12px 26px rgba(2, 6, 23, 0.52);
+  }
+
+  .flow-network {
+    border-radius: 0.8rem;
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0.95), rgba(226, 232, 240, 0.92));
+    padding: 0.45rem;
+  }
+
+  .flow-network-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  .flow-choice-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .flow-choice-row {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    border: 1px solid rgba(71, 85, 105, 0.6);
+    border-radius: 0.5rem;
+    padding: 0.45rem 0.6rem;
+    background: rgba(15, 23, 42, 0.55);
+    color: rgba(226, 232, 240, 0.96);
+    font-size: 0.78rem;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  }
+
+  .flow-choice-row:hover {
+    border-color: rgba(56, 189, 248, 0.65);
+    background: rgba(15, 23, 42, 0.8);
+    transform: translateY(-1px);
+  }
+
+  .flow-choice-row.is-selected {
+    border-color: rgba(56, 189, 248, 0.8);
+    background: rgba(14, 116, 144, 0.26);
+    box-shadow: inset 0 0 0 1px rgba(125, 211, 252, 0.34);
+  }
+
+  .flow-choice-row input[type='radio'] {
+    accent-color: #38bdf8;
+    width: 0.9rem;
+    height: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .flow-score-card {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .flow-status-pill {
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+    animation: flowStatusPulse 2.4s ease-in-out infinite;
+  }
+
+  .flow-status-pill::before {
+    content: '';
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 999px;
+    background: currentColor;
+    box-shadow: 0 0 12px currentColor;
+  }
+
+  .flow-legend-swatch {
+    width: 1.05rem;
+    height: 1.05rem;
+    border-radius: 0.28rem;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .flow-legend-healthy {
+    background: #64748b;
+    border-color: rgba(203, 213, 225, 0.9);
+  }
+
+  .flow-legend-broken {
+    background: repeating-linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.95) 0 4px,
+      rgba(127, 29, 29, 0.92) 4px 8px
+    );
+    border-color: rgba(252, 165, 165, 0.96);
+  }
+
+  .flow-legend-repaired {
+    background: #0ea5e9;
+    border-color: rgba(186, 230, 253, 0.94);
+  }
+
+  .flow-legend-boosted {
+    background: #8b5cf6;
+    border-color: rgba(216, 180, 254, 0.9);
+  }
+
+  .flow-legend-cut {
+    background: #f59e0b;
+    border-color: rgba(253, 230, 138, 0.9);
+  }
+
+  @keyframes flowStatusPulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.28);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgba(56, 189, 248, 0);
+    }
+  }
+
+  @media (max-width: 640px) {
+    .flow-lab-shell {
+      padding: 0.82rem;
+      gap: 1rem;
+    }
+
+    .flow-metric-card {
+      padding: 0.74rem;
+      border-radius: 0.75rem;
+    }
+
+    .flow-choice-row {
+      font-size: 0.72rem;
+      padding: 0.38rem 0.5rem;
+    }
+
+    .flow-status-pill {
+      font-size: 0.75rem;
+      padding: 0.24rem 0.64rem;
+      gap: 0.42rem;
+    }
+  }
+</style>
