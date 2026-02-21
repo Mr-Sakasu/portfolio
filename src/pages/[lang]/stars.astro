@@ -138,16 +138,16 @@ const labels = {
 ---
 
 <Layout title={`${t['stars.title']} | Sakasu Portfolio`} lang={lang} description={t['stars.subtitle']}>
-  <section class="py-10 md:py-14">
-    <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent">
+  <section class="py-10 md:py-14" data-stars-root>
+    <h1 data-preview-hide class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent">
       {t['stars.title']}
     </h1>
-    <p class="mt-4 text-gray-300 max-w-2xl leading-relaxed">
+    <p data-preview-hide class="mt-4 text-gray-300 max-w-2xl leading-relaxed">
       {t['stars.subtitle']}
     </p>
 
-    <section class="mt-8 relative left-1/2 w-[88vw] md:w-[80vw] max-w-none -translate-x-1/2 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-6">
-      <div class="flex justify-end">
+    <section data-preview-sky class="mt-8 relative left-1/2 w-[88vw] md:w-[80vw] max-w-none -translate-x-1/2 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-6">
+      <div data-preview-hide class="flex justify-end">
         <div class="flex flex-wrap gap-2">
           <button
             id="sky-now"
@@ -173,7 +173,7 @@ const labels = {
         </div>
       </div>
 
-      <div class="mt-4">
+      <div data-preview-hide class="mt-4">
         <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
           <span>{t['stars.sky.time']}</span>
           <span id="sky-time-label" class="font-semibold text-gray-200">--</span>
@@ -190,13 +190,13 @@ const labels = {
         />
       </div>
 
-      <p class="mt-3 text-xs text-gray-500">{t['stars.sky.instructions']}</p>
+      <p data-preview-hide class="mt-3 text-xs text-gray-500">{t['stars.sky.instructions']}</p>
 
-      <div class="mt-4 -mx-4 md:-mx-6 relative rounded-xl border border-blue-900/40 bg-[#060913] overflow-hidden">
+      <div data-preview-canvas class="mt-4 -mx-4 md:-mx-6 relative rounded-xl border border-blue-900/40 bg-[#060913] overflow-hidden">
         <canvas id="sky-canvas" class="block w-full h-[480px] md:h-[560px] touch-none"></canvas>
       </div>
 
-      <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+      <div data-preview-hide class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
         <article class="rounded-lg border border-gray-800 bg-[#121212]/90 p-3">
           <p class="text-xs text-gray-500">{t['stars.sky.star']}</p>
           <p id="sky-info-name" class="mt-1 font-semibold text-white">{t['stars.sky.none']}</p>
@@ -215,7 +215,7 @@ const labels = {
         </article>
       </div>
 
-      <div class="mt-3 rounded-lg border border-gray-800 bg-[#11141d]/90 p-3">
+      <div data-preview-hide class="mt-3 rounded-lg border border-gray-800 bg-[#11141d]/90 p-3">
         <p class="text-xs text-gray-500">{t['stars.sky.magbands.title']}</p>
         <dl class="mt-2 grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
           <div class="flex items-center justify-between gap-3">
@@ -246,7 +246,7 @@ const labels = {
       </div>
     </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+    <div data-preview-hide class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
       <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
         <div class="flex items-start justify-between gap-4">
           <div>
@@ -296,7 +296,7 @@ const labels = {
       </article>
     </div>
 
-    <section class="mt-8 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-5">
+    <section data-preview-hide class="mt-8 rounded-xl border border-gray-800 bg-[#151515]/90 p-4 md:p-5">
       <h2 class="text-lg md:text-xl font-bold text-white">{t['stars.weekly.title']}</h2>
       <p id="stars-weekly-loading" class="mt-2 text-xs text-gray-400">{t['stars.loading']}</p>
       <div id="stars-weekly" class="mt-3 grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-2" aria-live="polite"></div>
@@ -530,6 +530,70 @@ const labels = {
     skyMag4El = document.getElementById('sky-mag4');
     skyMag5El = document.getElementById('sky-mag5');
     skyMag6El = document.getElementById('sky-mag6');
+  }
+
+  function isPreviewMode() {
+    try {
+      return new URLSearchParams(window.location.search).get('preview') === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function applyPreviewModeLayout() {
+    if (!isPreviewMode()) return;
+
+    const header = document.querySelector('header');
+    if (header instanceof HTMLElement) {
+      header.style.display = 'none';
+    }
+
+    const footer = document.querySelector('footer');
+    if (footer instanceof HTMLElement) {
+      footer.style.display = 'none';
+    }
+
+    const main = document.querySelector('main');
+    if (main instanceof HTMLElement) {
+      main.style.maxWidth = 'none';
+      main.style.padding = '0';
+      main.style.width = '100%';
+    }
+
+    const root = document.querySelector('[data-stars-root]');
+    if (root instanceof HTMLElement) {
+      root.style.paddingTop = '0';
+      root.style.paddingBottom = '0';
+    }
+
+    document.querySelectorAll('[data-preview-hide]').forEach((node) => {
+      if (node instanceof HTMLElement) node.style.display = 'none';
+    });
+
+    const skyPanel = document.querySelector('[data-preview-sky]');
+    if (skyPanel instanceof HTMLElement) {
+      skyPanel.style.marginTop = '0';
+      skyPanel.style.position = 'static';
+      skyPanel.style.left = 'auto';
+      skyPanel.style.width = '100%';
+      skyPanel.style.maxWidth = 'none';
+      skyPanel.style.transform = 'none';
+      skyPanel.style.border = '0';
+      skyPanel.style.background = 'transparent';
+      skyPanel.style.padding = '0';
+    }
+
+    const canvasWrap = document.querySelector('[data-preview-canvas]');
+    if (canvasWrap instanceof HTMLElement) {
+      canvasWrap.style.margin = '0';
+      canvasWrap.style.border = '0';
+      canvasWrap.style.borderRadius = '0';
+      canvasWrap.style.background = 'transparent';
+    }
+
+    if (skyCanvas instanceof HTMLCanvasElement) {
+      skyCanvas.style.height = '220px';
+    }
   }
 
   function setText(el, value) {
@@ -1439,6 +1503,7 @@ const labels = {
     bindStarsDom();
     if (!(skyCanvas instanceof HTMLCanvasElement)) return;
     applyStarsConfigFromDom();
+    applyPreviewModeLayout();
 
     planetCacheKey = '';
     planetCache = [];
@@ -1576,7 +1641,9 @@ const labels = {
 
     setPlayButtonLabel();
     drawSky(performance.now());
-    loadTokyoSky();
+    if (!isPreviewMode()) {
+      loadTokyoSky();
+    }
     skyState.animationId = requestAnimationFrame(tick);
 
     window.__tokyoSkyCleanup = () => {
