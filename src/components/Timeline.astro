@@ -3,42 +3,80 @@ import { CURRENT_MONTH_TOKEN, timelineData } from '../data/timeline';
 
 const { lang } = Astro.props;
 const events = timelineData[lang] || timelineData['en'];
+
+const toneByColor = {
+    blue: {
+        dot: 'bg-blue-300',
+        card: 'border-slate-700/90 hover:border-blue-300/35',
+        badge: 'border-blue-300/30 bg-blue-500/10 text-blue-100',
+    },
+    yellow: {
+        dot: 'bg-amber-300',
+        card: 'border-slate-700/90 hover:border-amber-300/35',
+        badge: 'border-amber-300/30 bg-amber-500/10 text-amber-100',
+    },
+    green: {
+        dot: 'bg-emerald-300',
+        card: 'border-slate-700/90 hover:border-emerald-300/35',
+        badge: 'border-emerald-300/30 bg-emerald-500/10 text-emerald-100',
+    },
+    gray: {
+        dot: 'bg-slate-300',
+        card: 'border-slate-700/90 hover:border-slate-300/35',
+        badge: 'border-slate-300/30 bg-slate-500/10 text-slate-100',
+    },
+    red: {
+        dot: 'bg-rose-300',
+        card: 'border-slate-700/90 hover:border-rose-300/35',
+        badge: 'border-rose-300/30 bg-rose-500/10 text-rose-100',
+    },
+} as const;
 ---
 
-<div class="relative wrap overflow-hidden p-4 md:py-10">
-    
-    <div class="border-2-2 absolute border-opacity-20 border-blue-500 h-full border" style="left: 50%"></div>
+<div class="relative overflow-hidden px-1 py-2 md:px-3 md:py-6">
+    <div aria-hidden="true" class="pointer-events-none absolute left-[1.375rem] md:left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-slate-300/85 to-transparent"></div>
 
-    {events.map((event, index) => (
-        <div class={`mb-8 flex justify-between items-center w-full ${index % 2 === 0 ? 'flex-row-reverse left-timeline' : 'right-timeline'}`}>
-            
-            <div class="order-1 w-5/12 timeline-spacer"></div>
-            
-            <div class={`z-20 flex items-center order-1 shadow-xl w-8 h-8 rounded-full border-4 timeline-dot
-                ${event.color === 'blue' ? 'bg-blue-500 border-blue-900' : ''}
-                ${event.color === 'yellow' ? 'bg-yellow-500 border-yellow-900' : ''}
-                ${event.color === 'green' ? 'bg-green-500 border-green-900' : ''} 
-                ${event.color === 'gray' ? 'bg-gray-500 border-gray-900' : ''}
-                ${event.color === 'red' ? 'bg-red-500 border-red-900' : ''}
-            `}></div>
-            
-            <div class={`order-1 w-5/12 px-6 py-4 rounded-lg border border-gray-800 bg-[#161616]/80 backdrop-blur-md shadow-xl hover:border-blue-500/50 transition-all timeline-content ${index % 2 === 0 ? 'text-right' : 'text-left'}`}>
-                <p class="mb-1 text-sm text-blue-400 font-bold">
-                    {event.date === CURRENT_MONTH_TOKEN ? (
-                        <time data-current-month aria-label="Current month"></time>
-                    ) : (
-                        event.date
-                    )}
-                </p>
-                <h3 class="mb-2 font-bold text-white text-lg flex items-center gap-2 justify-end md:justify-start" style={index % 2 === 0 ? 'flex-direction: row' : 'flex-direction: row-reverse'}>
-                    {event.title} <span class="text-xl">{event.icon}</span>
-                </h3>
-                <p class="text-sm leading-snug tracking-wide text-gray-400 text-opacity-100">
-                    {event.desc}
-                </p>
-            </div>
-        </div>
-    ))}
+    {events.map((event, index) => {
+        const isLeft = index % 2 === 0;
+        const tone = toneByColor[event.color] ?? toneByColor.blue;
+
+        return (
+            <article
+                class="timeline-item relative mb-6 last:mb-0 md:mb-8 opacity-0 translate-y-2 animate-[timelineFade_.6s_ease-out_forwards]"
+                style={`animation-delay: ${index * 90}ms;`}
+            >
+                <div class="relative grid grid-cols-[2.25rem_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] items-start">
+                    <div class="relative col-start-1 md:col-start-2 flex justify-center pt-2">
+                        <span class="z-10 grid h-8 w-8 place-items-center rounded-full border border-slate-600/80 bg-[#0f131d]">
+                            <span class={`h-2.5 w-2.5 rounded-full ${tone.dot}`}></span>
+                        </span>
+                    </div>
+
+                    <div class={`col-start-2 ${isLeft ? 'md:col-start-1 md:pr-6 md:text-right' : 'md:col-start-3 md:pl-6 md:text-left'}`}>
+                        <div class={`rounded-xl border bg-[#161616]/85 backdrop-blur-md px-4 py-3 md:px-5 md:py-4 shadow-[0_16px_35px_-22px_rgba(2,6,23,0.95)] transition-all duration-300 ${tone.card}`}>
+                            <p class="mb-2">
+                                <span class={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide ${tone.badge}`}>
+                                    {event.date === CURRENT_MONTH_TOKEN ? (
+                                        <time data-current-month aria-label="Current month"></time>
+                                    ) : (
+                                        event.date
+                                    )}
+                                </span>
+                            </p>
+
+                            <h3 class="text-base md:text-lg font-bold text-white leading-snug">
+                                {event.title}
+                            </h3>
+
+                            <p class="mt-1.5 text-sm leading-relaxed text-gray-300">
+                                {event.desc}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        );
+    })}
 </div>
 
 <script is:inline>
@@ -64,42 +102,22 @@ const events = timelineData[lang] || timelineData['en'];
 </script>
 
 <style>
-    /* MOBILE ADJUSTMENTS (< 768px) */
-    @media (max-width: 425px) {
-        
-        /* 1. Move the line to the left */
-        .border-2-2 { 
-            left: 30px !important; 
+    @keyframes timelineFade {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
         }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-        /* 2. Hide the empty spacer div completely */
-        .timeline-spacer {
-            display: none;
-        }
-
-        /* 3. Force the DOT to align with the line */
-        /* Line is at 30px. Dot is 32px wide. Center is 30 - 16 = 14px */
-        .timeline-dot {
-            position: absolute;
-            left: 14px !important;
-        }
-
-        /* 4. Make content take full width and sit to the right */
-        .timeline-content {
-            width: calc(100% - 70px) !important; /* Full width minus space for dot */
-            margin-left: 70px !important; /* Push away from the dot */
-            text-align: left !important;
-        }
-
-        /* 5. Reset Layout Direction */
-        .flex-row-reverse { 
-            flex-direction: row !important; 
-        }
-        
-        /* 6. Fix Icon Alignment inside the card */
-        h3 { 
-            justify-content: flex-start !important; 
-            flex-direction: row-reverse !important; 
+    @media (prefers-reduced-motion: reduce) {
+        .timeline-item {
+            opacity: 1 !important;
+            transform: none !important;
+            animation: none !important;
         }
     }
 </style>
