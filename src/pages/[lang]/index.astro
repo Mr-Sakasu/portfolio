@@ -186,41 +186,36 @@ const heroTitle = t['hero.title'];
     const runHeroTypewriter = () => {
         const el = document.getElementById('hero-typewriter');
         if (!(el instanceof HTMLElement)) return;
-
-        if (typeof window.__heroTypewriterDoneTimer === 'number') {
-            window.clearTimeout(window.__heroTypewriterDoneTimer);
-        }
-        if (typeof window.__heroTypewriterFinalTimer === 'number') {
-            window.clearTimeout(window.__heroTypewriterFinalTimer);
-        }
+        const typingIntervalMs = 280;
 
         const fullText = el.dataset.text ?? '';
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         if (reduceMotion) {
             el.textContent = fullText;
+            el.classList.remove('typing', 'post-blink');
             el.classList.add('done');
             return;
         }
 
         el.textContent = '';
-        el.classList.remove('done');
+        el.classList.remove('done', 'post-blink');
+        el.classList.add('typing');
 
         let index = 0;
         const typeNext = () => {
             if (index >= fullText.length) {
-                el.classList.add('done');
-                window.__heroTypewriterDoneTimer = window.setTimeout(() => {
-                    el.classList.remove('done');
-                    window.__heroTypewriterFinalTimer = window.setTimeout(() => {
-                        el.classList.add('done');
-                    }, 1200);
-                }, 250);
+                el.classList.remove('typing');
+                el.classList.add('post-blink');
+                el.addEventListener('animationend', () => {
+                    el.classList.remove('post-blink');
+                    el.classList.add('done');
+                }, { once: true });
                 return;
             }
             index += 1;
             el.textContent = fullText.slice(0, index);
-            window.setTimeout(typeNext, 150);
+            window.setTimeout(typeNext, typingIntervalMs);
         };
 
         window.setTimeout(typeNext, 180);
@@ -241,12 +236,19 @@ const heroTitle = t['hero.title'];
         min-height: 1em;
         padding-right: 0.08em;
         border-right: 0.08em solid rgba(226, 232, 240, 0.95);
-        animation: typewriter-caret 1.05s step-end infinite;
     }
 
     @keyframes typewriter-caret {
         0%, 49% { border-right-color: rgba(226, 232, 240, 0.95); }
         50%, 100% { border-right-color: transparent; }
+    }
+
+    .typewriter-title.typing {
+        animation: typewriter-caret 0.95s step-end infinite;
+    }
+
+    .typewriter-title.post-blink {
+        animation: typewriter-caret 0.95s step-end 1 forwards;
     }
 
     .typewriter-title.done {
