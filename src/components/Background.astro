@@ -8,8 +8,9 @@
     width: 100%;
     height: 100%;
     z-index: -1;
-    background-color: #111;
+    background-color: var(--site-bg, #111);
     pointer-events: none;
+    transition: background-color 180ms ease;
   }
 </style>
 
@@ -28,6 +29,23 @@
     let particles = [];
     const particleCount = 60;
     const connectionDistance = 150;
+
+    function readThemeColors() {
+      const isLight = document.documentElement.dataset.theme === 'light';
+      return isLight
+        ? {
+            particle: 'rgba(37, 99, 235, 0.78)',
+            particleShadow: 'rgba(37, 99, 235, 0.26)',
+            connection: '37, 99, 235',
+            connectionAlpha: 0.2,
+          }
+        : {
+            particle: 'rgba(130, 200, 255, 1)',
+            particleShadow: 'rgba(0, 150, 255, 0.8)',
+            connection: '100, 200, 255',
+            connectionAlpha: 0.5,
+          };
+    }
 
     // --- CLEANUP PREVIOUS ANIMATION ---
     // This prevents the animation from running 2x speed if you switch pages fast
@@ -60,15 +78,15 @@
         if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
       }
 
-      draw() {
+      draw(colors) {
         if (!ctx) return;
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         
         // Style
         ctx.shadowBlur = 15;
-        ctx.shadowColor = 'rgba(0, 150, 255, 0.8)';
-        ctx.fillStyle = 'rgba(130, 200, 255, 1)';
+        ctx.shadowColor = colors.particleShadow;
+        ctx.fillStyle = colors.particle;
         
         ctx.fill();
         ctx.shadowBlur = 0;
@@ -83,11 +101,12 @@
     // --- ANIMATION LOOP ---
     function animate() {
       if (!ctx) return;
+      const colors = readThemeColors();
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = 0; i < particles.length; i++) {
         particles[i].update();
-        particles[i].draw();
+        particles[i].draw(colors);
 
         for (let j = i; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -97,7 +116,7 @@
           if (distance < connectionDistance) {
             ctx.beginPath();
             const opacity = 1 - distance / connectionDistance;
-            ctx.strokeStyle = `rgba(100, 200, 255, ${opacity * 0.5})`;
+            ctx.strokeStyle = `rgba(${colors.connection}, ${opacity * colors.connectionAlpha})`;
             ctx.lineWidth = 1;
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
