@@ -138,8 +138,11 @@ def simplify_youtube_item(item: dict[str, Any], playlist_id: str) -> dict[str, A
     resource = snippet.get("resourceId") if isinstance(snippet.get("resourceId"), dict) else {}
     content_details = item.get("contentDetails") if isinstance(item.get("contentDetails"), dict) else {}
     video_id = str(resource.get("videoId") or content_details.get("videoId") or item.get("id") or "")
+    snippet_published_at = str(snippet.get("publishedAt") or "")
+    video_published_at = str(content_details.get("videoPublishedAt") or "")
+    is_playlist_item = bool(resource.get("videoId") or content_details.get("videoId"))
 
-    return {
+    track = {
         "videoId": video_id,
         "title": str(snippet.get("title") or "Untitled"),
         "artists": str(snippet.get("videoOwnerChannelTitle") or snippet.get("channelTitle") or ""),
@@ -148,6 +151,13 @@ def simplify_youtube_item(item: dict[str, Any], playlist_id: str) -> dict[str, A
         "thumbnail": pick_youtube_thumbnail(snippet.get("thumbnails")),
         "url": f"https://www.youtube.com/watch?v={video_id}&list={playlist_id}" if video_id else "",
     }
+    if video_published_at or (snippet_published_at and not is_playlist_item):
+        published_at = video_published_at or snippet_published_at
+        track["publishedAt"] = published_at
+        track["uploadedAt"] = published_at
+    if snippet_published_at and is_playlist_item:
+        track["addedAt"] = snippet_published_at
+    return track
 
 
 def empty_payload() -> dict[str, Any]:

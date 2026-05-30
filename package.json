@@ -8,7 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "playlist:auth": ".venv/bin/python scripts/setup_ytmusic_oauth.py",
-    "playlist:update": ".venv/bin/python scripts/fetch_ytmusic_playlist.py"
+    "playlist:update": ".venv/bin/python scripts/update_ytmusic_playlists.py"
   },
   "dependencies": {
     "@astrojs/tailwind": "^6.0.2",
