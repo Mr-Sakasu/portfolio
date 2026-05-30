@@ -115,7 +115,10 @@ const trackListClass = variant === 'page'
 
     <div class="space-y-4">
       {visiblePlaylists.map((playlist) => (
-        <div class="overflow-hidden rounded-lg bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]">
+        <div
+          class="overflow-hidden rounded-lg bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]"
+          data-playlist-card
+        >
           {playlist.hasTracks ? (
             <>
               <a
@@ -150,14 +153,44 @@ const trackListClass = variant === 'page'
                 </div>
               </a>
 
+              <div class="hidden border-y border-white/10 bg-black/25 p-3" data-playlist-player>
+                <div class="mb-2 truncate text-xs font-semibold text-rose-100/80" data-player-title></div>
+                <div class="aspect-video overflow-hidden rounded-md bg-black">
+                  <iframe
+                    title="YouTube player"
+                    class="h-full w-full"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowfullscreen
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    data-player-frame
+                  ></iframe>
+                </div>
+              </div>
+
               <div class={trackListClass}>
                 {playlist.tracks.map((track, index) => (
-                  <a
-                    href={track.url || playlist.playlistUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    class="group flex min-h-20 items-center gap-4 px-5 py-3 transition-colors hover:bg-white/[0.04]"
-                  >
+                  <div class="group flex min-h-20 items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.04] sm:gap-4 sm:px-5">
+                    {track.videoId && (
+                      <button
+                        type="button"
+                        class="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-rose-200/20 bg-rose-300/10 text-rose-100 transition hover:border-rose-100/60 hover:bg-rose-200/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-200"
+                        aria-label={`Play ${track.title}`}
+                        aria-pressed="false"
+                        data-play-button
+                        data-video-id={track.videoId}
+                        data-playlist-id={playlist.playlistId}
+                        data-track-title={track.title}
+                      >
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          class="ml-0.5 h-4 w-4 fill-current"
+                        >
+                          <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"></path>
+                        </svg>
+                      </button>
+                    )}
                     <span class="w-6 shrink-0 text-right text-sm font-mono text-rose-100/45">
                       {String(index + 1).padStart(2, '0')}
                     </span>
@@ -172,18 +205,23 @@ const trackListClass = variant === 'page'
                     ) : (
                       <span class="h-12 w-12 shrink-0 rounded bg-white/[0.04]"></span>
                     )}
-                    <span class="min-w-0 flex-1">
+                    <a
+                      href={track.url || playlist.playlistUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      class="min-w-0 flex-1"
+                    >
                       <span class="block truncate text-sm font-semibold text-white group-hover:text-rose-100">
                         {track.title}
                       </span>
                       <span class="mt-1 block truncate text-xs text-gray-400">
                         {[track.artists, track.album].filter(Boolean).join(' / ') || t['playlist.unknownArtist']}
                       </span>
-                    </span>
+                    </a>
                     {track.duration && (
                       <span class="shrink-0 text-xs tabular-nums text-gray-500">{track.duration}</span>
                     )}
-                  </a>
+                  </div>
                 ))}
               </div>
             </>
@@ -198,3 +236,50 @@ const trackListClass = variant === 'page'
     </div>
   </section>
 )}
+
+<script>
+  const buildEmbedUrl = (videoId: string, playlistId: string) => {
+    const params = new URLSearchParams({
+      autoplay: '1',
+      rel: '0',
+      playsinline: '1',
+    });
+    if (playlistId) {
+      params.set('list', playlistId);
+    }
+    return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`;
+  };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-play-button]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const card = button.closest<HTMLElement>('[data-playlist-card]');
+      const player = card?.querySelector<HTMLElement>('[data-playlist-player]');
+      const frame = card?.querySelector<HTMLIFrameElement>('[data-player-frame]');
+      const title = card?.querySelector<HTMLElement>('[data-player-title]');
+      const videoId = button.dataset.videoId ?? '';
+
+      if (!card || !player || !frame || !videoId) {
+        return;
+      }
+
+      card.querySelectorAll<HTMLButtonElement>('[data-play-button]').forEach((item) => {
+        item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+      });
+
+      if (title) {
+        title.textContent = button.dataset.trackTitle ?? '';
+      }
+      frame.src = buildEmbedUrl(videoId, button.dataset.playlistId ?? '');
+      player.classList.remove('hidden');
+      player.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+  });
+</script>
+
+<style>
+  [data-play-button][aria-pressed='true'] {
+    border-color: rgb(254 205 211 / 0.8);
+    background: rgb(254 205 211 / 0.22);
+    color: rgb(255 241 242);
+  }
+</style>
