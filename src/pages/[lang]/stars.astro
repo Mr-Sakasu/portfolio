@@ -1057,13 +1057,13 @@ const labels = {
       const twinkle = isPlanet
         ? 1
         : 0.82 + 0.18 * Math.sin(nowMs * 0.001 * star.twinkleSpeed + star.twinklePhase);
-      const alphaBase = clamp(1.2 - (star.mag + 1.6) / 6.8, 0.08, 1);
-      const alpha = clamp(alphaBase * twinkle * (0.9 + 0.1 * cameraZ) * horizonVisibility, 0.03, 1);
+      const alphaBase = clamp(1.45 - (star.mag + 1.4) / 6.6, 0.18, 1);
+      const alpha = clamp(alphaBase * twinkle * (0.92 + 0.12 * cameraZ) * horizonVisibility, 0.12, 1);
       const baseRadius = isPlanet
         ? clamp(5 - star.mag * 0.45, 1.6, 5.4)
         : star.name
-        ? clamp(5.1 - star.mag, 1.2, 4.8)
-        : clamp(2.1 - star.mag * 0.3, 0.45, 1.5);
+        ? clamp(5.8 - star.mag, 1.5, 5.4)
+        : clamp(2.8 - star.mag * 0.32, 0.7, 1.85);
       const radiusPx = baseRadius * clamp(0.6 + 0.8 / cameraZ, 0.45, 1.8) * (0.7 + 0.3 * horizonVisibility);
 
       if (isPlanet) {
