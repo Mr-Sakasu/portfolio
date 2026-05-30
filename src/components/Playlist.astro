@@ -238,6 +238,10 @@ const trackListClass = variant === 'page'
 )}
 
 <script>
+  const playlistWindow = window as Window & {
+    __playlistPlayerHookAttached?: boolean;
+  };
+
   const buildEmbedUrl = (videoId: string, playlistId: string) => {
     const params = new URLSearchParams({
       autoplay: '1',
@@ -250,8 +254,23 @@ const trackListClass = variant === 'page'
     return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}?${params.toString()}`;
   };
 
-  document.querySelectorAll<HTMLButtonElement>('[data-play-button]').forEach((button) => {
-    button.addEventListener('click', () => {
+  const clearPlaylistPlayers = () => {
+    document.querySelectorAll<HTMLIFrameElement>('[data-player-frame]').forEach((frame) => {
+      frame.src = '';
+    });
+  };
+
+  if (!playlistWindow.__playlistPlayerHookAttached) {
+    document.addEventListener('click', (event) => {
+      const target = event.target;
+      const button = target instanceof Element
+        ? target.closest<HTMLButtonElement>('[data-play-button]')
+        : null;
+
+      if (!button) {
+        return;
+      }
+
       const card = button.closest<HTMLElement>('[data-playlist-card]');
       const player = card?.querySelector<HTMLElement>('[data-playlist-player]');
       const frame = card?.querySelector<HTMLIFrameElement>('[data-player-frame]');
@@ -273,7 +292,10 @@ const trackListClass = variant === 'page'
       player.classList.remove('hidden');
       player.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     });
-  });
+
+    document.addEventListener('astro:before-swap', clearPlaylistPlayers);
+    playlistWindow.__playlistPlayerHookAttached = true;
+  }
 </script>
 
 <style>
