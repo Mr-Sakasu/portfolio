@@ -105,26 +105,24 @@ const trackListClass = variant === 'page'
 {shouldRender && (
   <section class={sectionClass}>
     {showHeading && (
-      <div class="mb-2 flex items-end justify-between gap-4">
-        <div>
-          <h2 class="text-2xl md:text-3xl font-bold text-rose-300">
-            {t['playlist.eyebrow']}
-          </h2>
-          <p class="mt-2 text-sm text-gray-400">{t['playlist.subtitle']}</p>
-        </div>
+      <div class="mb-4 border-b border-slate-700/70 pb-3">
+        <h2 class="text-2xl md:text-3xl font-bold text-rose-300">
+          {t['playlist.eyebrow']}
+        </h2>
+        <p class="mt-2 text-sm text-gray-400">{t['playlist.subtitle']}</p>
       </div>
     )}
 
     <div class="space-y-4">
       {visiblePlaylists.map((playlist) => (
-        <div class="overflow-hidden rounded-lg border border-slate-800/80 bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]">
+        <div class="overflow-hidden rounded-lg bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]">
           {playlist.hasTracks ? (
             <>
               <a
                 href={playlist.playlistUrl}
                 target="_blank"
                 rel="noreferrer"
-                class="group flex items-center gap-3 border-b border-white/10 p-4 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-rose-200/70 sm:gap-4 sm:p-5"
+                class="group flex items-center gap-3 p-4 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-rose-200/70 sm:gap-4 sm:p-5"
               >
                 {playlist.featuredThumbnail && (
                   <img
@@ -132,7 +130,7 @@ const trackListClass = variant === 'page'
                     alt=""
                     loading="lazy"
                     decoding="async"
-                    class="h-16 w-16 shrink-0 rounded-lg object-cover border border-white/10 sm:h-20 sm:w-20"
+                    class="h-16 w-16 shrink-0 rounded-md object-cover sm:h-20 sm:w-20"
                   />
                 )}
                 <div class="min-w-0 flex-1">
@@ -169,10 +167,10 @@ const trackListClass = variant === 'page'
                         alt=""
                         loading="lazy"
                         decoding="async"
-                        class="h-12 w-12 shrink-0 rounded-md object-cover border border-white/10"
+                        class="h-12 w-12 shrink-0 rounded object-cover"
                       />
                     ) : (
-                      <span class="h-12 w-12 shrink-0 rounded-md border border-white/10 bg-white/[0.04]"></span>
+                      <span class="h-12 w-12 shrink-0 rounded bg-white/[0.04]"></span>
                     )}
                     <span class="min-w-0 flex-1">
                       <span class="block truncate text-sm font-semibold text-white group-hover:text-rose-100">
