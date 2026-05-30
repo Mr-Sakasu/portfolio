@@ -6,7 +6,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "playlist:auth": ".venv/bin/python scripts/setup_ytmusic_oauth.py",
+    "playlist:update": ".venv/bin/python scripts/fetch_ytmusic_playlist.py"
   },
   "dependencies": {
     "@astrojs/tailwind": "^6.0.2",

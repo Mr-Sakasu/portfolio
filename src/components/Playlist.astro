@@ -1,0 +1,194 @@
+---
+import playlistData from '../data/ytmusic-playlist.json';
+import { ui } from '../i18n/ui';
+
+interface Props {
+  lang: keyof typeof ui;
+}
+
+interface PlaylistTrack {
+  videoId?: string;
+  title?: string;
+  artists?: string;
+  album?: string;
+  duration?: string;
+  thumbnail?: string;
+  url?: string;
+  publishedAt?: string;
+  uploadedAt?: string;
+  addedAt?: string;
+}
+
+interface PlaylistData {
+  configured?: boolean;
+  byLang?: Partial<Record<keyof typeof ui, PlaylistData>>;
+  playlists?: PlaylistData[];
+  playlistId?: string;
+  title?: string;
+  description?: string;
+  author?: string;
+  trackCount?: number;
+  duration?: string;
+  thumbnail?: string;
+  url?: string;
+  updatedAt?: string;
+  tracks?: PlaylistTrack[];
+}
+
+const { lang } = Astro.props;
+const t = ui[lang] ?? ui.en;
+const playlistRoot = playlistData as PlaylistData;
+const playlistCollection = playlistRoot.byLang?.[lang] ?? playlistRoot;
+const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
+  jp: [
+    'PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le',
+    'PLiz-kupUIzB6fO7Svf1w3dUi3GSss_H6f',
+    'PLiz-kupUIzB5R2QlsvnTmpFMWXiLVvxtw',
+  ],
+};
+const unsortedSourcePlaylists = Array.isArray(playlistCollection.playlists) && playlistCollection.playlists.length > 0
+  ? playlistCollection.playlists
+  : [playlistCollection];
+const playlistOrder = playlistOrderByLang[lang] ?? [];
+const sourcePlaylists = playlistOrder.length > 0
+  ? [...unsortedSourcePlaylists].sort((first, second) => {
+      const firstOrder = playlistOrder.indexOf(first.playlistId ?? '');
+      const secondOrder = playlistOrder.indexOf(second.playlistId ?? '');
+      return (firstOrder === -1 ? Number.MAX_SAFE_INTEGER : firstOrder)
+        - (secondOrder === -1 ? Number.MAX_SAFE_INTEGER : secondOrder);
+    })
+  : unsortedSourcePlaylists;
+const trackTime = (track: PlaylistTrack) => {
+  const rawDate = track.publishedAt || track.uploadedAt || track.addedAt || '';
+  const timestamp = Date.parse(rawDate);
+  return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+};
+const normalizePlaylist = (playlist: PlaylistData) => {
+  const tracks = Array.isArray(playlist.tracks)
+    ? playlist.tracks
+        .filter((track) => track?.title)
+        .map((track, index) => ({ track, index }))
+        .sort((first, second) => {
+          const dateDifference = trackTime(second.track) - trackTime(first.track);
+          return dateDifference || first.index - second.index;
+        })
+        .map(({ track }) => track)
+    : [];
+  const playlistUrl = playlist.url || (playlist.playlistId ? `https://music.youtube.com/playlist?list=${playlist.playlistId}` : '');
+
+  return {
+    ...playlist,
+    tracks,
+    playlistUrl,
+    featuredThumbnail: playlist.thumbnail || tracks.find((track) => track.thumbnail)?.thumbnail || '',
+    metaItems: [
+      playlist.trackCount ? t['playlist.trackCount'].replace('{count}', String(playlist.trackCount)) : '',
+      playlist.duration || '',
+    ].filter(Boolean),
+    isConfigured: Boolean(playlist.configured && playlist.playlistId),
+    hasTracks: Boolean(playlist.configured && playlist.playlistId && tracks.length > 0),
+  };
+};
+const configuredPlaylists = sourcePlaylists.map(normalizePlaylist).filter((playlist) => playlist.isConfigured);
+const visiblePlaylists = configuredPlaylists.length > 0
+  ? configuredPlaylists
+  : [normalizePlaylist(playlistCollection)];
+const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
+---
+
+{shouldRender && (
+  <section class="mt-4 md:mt-8">
+    <div class="mb-2 flex items-end justify-between gap-4">
+      <div>
+        <h2 class="text-sm font-bold text-rose-300 uppercase tracking-widest">
+          {t['playlist.eyebrow']}
+        </h2>
+        <p class="mt-2 text-sm text-gray-400">{t['playlist.subtitle']}</p>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      {visiblePlaylists.map((playlist) => (
+        <div class="overflow-hidden rounded-xl border border-rose-400/20 bg-[#171313]/85 backdrop-blur-md shadow-[0_18px_60px_-40px_rgba(251,113,133,0.75)]">
+          {playlist.hasTracks ? (
+            <>
+              <a
+                href={playlist.playlistUrl}
+                target="_blank"
+                rel="noreferrer"
+                class="group flex flex-col gap-4 border-b border-white/10 p-5 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-rose-200/70 sm:flex-row sm:items-center"
+              >
+                {playlist.featuredThumbnail && (
+                  <img
+                    src={playlist.featuredThumbnail}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    class="h-20 w-20 rounded-lg object-cover border border-white/10"
+                  />
+                )}
+                <div class="min-w-0 flex-1">
+                  <h3 class="text-xl font-black leading-tight text-white break-words group-hover:text-rose-100">
+                    {playlist.title || t['playlist.titleFallback']}
+                  </h3>
+                  {playlist.metaItems.length > 0 && (
+                    <p class="mt-2 text-xs uppercase tracking-widest text-rose-100/65">
+                      {playlist.metaItems.join(' / ')}
+                    </p>
+                  )}
+                  {playlist.description && (
+                    <p class="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-300">
+                      {playlist.description}
+                    </p>
+                  )}
+                </div>
+              </a>
+
+              <div class="max-h-72 divide-y divide-white/10 overflow-y-auto overscroll-contain">
+                {playlist.tracks.map((track, index) => (
+                  <a
+                    href={track.url || playlist.playlistUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="group flex min-h-20 items-center gap-4 px-5 py-3 transition-colors hover:bg-white/[0.04]"
+                  >
+                    <span class="w-6 shrink-0 text-right text-sm font-mono text-rose-100/45">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                    {track.thumbnail ? (
+                      <img
+                        src={track.thumbnail}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        class="h-12 w-12 shrink-0 rounded-md object-cover border border-white/10"
+                      />
+                    ) : (
+                      <span class="h-12 w-12 shrink-0 rounded-md border border-white/10 bg-white/[0.04]"></span>
+                    )}
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate text-sm font-semibold text-white group-hover:text-rose-100">
+                        {track.title}
+                      </span>
+                      <span class="mt-1 block truncate text-xs text-gray-400">
+                        {[track.artists, track.album].filter(Boolean).join(' / ') || t['playlist.unknownArtist']}
+                      </span>
+                    </span>
+                    {track.duration && (
+                      <span class="shrink-0 text-xs tabular-nums text-gray-500">{track.duration}</span>
+                    )}
+                  </a>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div class="p-5">
+              <h3 class="text-lg font-bold text-white">{t['playlist.titleFallback']}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-gray-400">{t['playlist.empty']}</p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </section>
+)}

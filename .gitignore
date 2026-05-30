@@ -3,9 +3,13 @@ dist/
 
 # generated types
 .astro/
+artifacts/
 
 # dependencies
 node_modules/
+.venv/
+__pycache__/
+*.py[cod]
 
 # logs
 npm-debug.log*
@@ -16,6 +20,9 @@ pnpm-debug.log*
 # environment variables
 .env
 .env.production
+.ytmusic-oauth.json
+oauth.json
+client_secret*.json
 
 # macOS-specific files
 .DS_Store
