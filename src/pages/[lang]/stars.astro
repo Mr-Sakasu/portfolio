@@ -1139,14 +1139,14 @@ const labels = {
       labelBoxes.push(box);
       if (!isSelectedLabel) labelsDrawn += 1;
 
-      const calmAlpha = clamp(0.26 + (2.5 - star.mag) * 0.08 + (1 / cameraZ) * 0.04, 0.22, 0.58);
+      const calmAlpha = clamp(0.34 + (2.5 - star.mag) * 0.1 + (1 / cameraZ) * 0.05, 0.3, 0.74);
       ctx.fillStyle = isSelectedLabel
-        ? 'rgba(198, 213, 236, 0.9)'
-        : `rgba(166, 189, 222, ${calmAlpha})`;
+        ? 'rgba(235, 244, 255, 0.96)'
+        : `rgba(211, 226, 250, ${calmAlpha})`;
       ctx.fillText(text, labelX, labelY);
 
       if (isSelectedLabel) {
-        ctx.strokeStyle = 'rgba(198, 213, 236, 0.6)';
+        ctx.strokeStyle = 'rgba(235, 244, 255, 0.68)';
         ctx.lineWidth = 1;
         ctx.beginPath();
         ctx.moveTo(labelX, labelY + 2);
