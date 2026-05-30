@@ -134,6 +134,9 @@ const labels = {
   weeklyHigh: t['stars.weekly.high'],
   weeklyLow: t['stars.weekly.low'],
   weeklyPrecip: t['stars.weekly.precip'],
+  sourceLoading: t['stars.source.loading'],
+  sourceLive: t['stars.source.live'],
+  sourceError: t['stars.source.error'],
 };
 ---
 
@@ -264,6 +267,7 @@ const labels = {
           </button>
         </div>
         <p id="stars-summary" class="text-sm text-gray-300 mt-4">{t['stars.loading']}</p>
+        <p id="stars-source-status" class="mt-2 text-xs text-gray-500">{t['stars.source.loading']}</p>
       </article>
 
       <article class="rounded-xl border border-gray-800 bg-[#151515]/90 p-6">
@@ -449,6 +453,7 @@ const labels = {
 
   let scoreEl = null;
   let summaryEl = null;
+  let sourceStatusEl = null;
   let cloudEl = null;
   let visibilityEl = null;
   let precipitationEl = null;
@@ -477,6 +482,7 @@ const labels = {
   let skyMag6El = null;
 
   const WEATHER_CACHE_TTL_MS = 10 * 60 * 1000;
+  const WEATHER_FETCH_TIMEOUT_MS = 10000;
   let weatherCache = null;
   let weatherFetchPromise = null;
 
@@ -504,6 +510,7 @@ const labels = {
   function bindStarsDom() {
     scoreEl = document.getElementById('stars-score');
     summaryEl = document.getElementById('stars-summary');
+    sourceStatusEl = document.getElementById('stars-source-status');
     cloudEl = document.getElementById('stars-cloud');
     visibilityEl = document.getElementById('stars-visibility');
     precipitationEl = document.getElementById('stars-precipitation');
@@ -1369,6 +1376,7 @@ const labels = {
     const moon = getMoonPhaseInfo();
     setText(scoreEl, `${summary.totalScore}/100`);
     setText(summaryEl, qualityMessage(summary.totalScore));
+    setText(sourceStatusEl, labels.sourceLive.replace('{time}', formatTokyoDateTime(new Date())));
     setText(cloudEl, `${Math.round(summary.avgCloud)}%`);
     setText(visibilityEl, `${(summary.avgVisibility / 1000).toFixed(1)} km`);
     setText(precipitationEl, `${summary.avgPrecipitation.toFixed(1)} mm/h`);
@@ -1424,12 +1432,25 @@ const labels = {
   function renderWeatherError() {
     setText(scoreEl, '--');
     setText(summaryEl, labels.error);
+    setText(sourceStatusEl, labels.sourceError);
     setText(cloudEl, '--');
     setText(visibilityEl, '--');
     setText(precipitationEl, '--');
     setText(sunsetEl, '--');
     setText(bestHourEl, '--');
     setText(moonEl, '--');
+  }
+
+  function renderWeatherLoading() {
+    setText(scoreEl, '...');
+    setText(summaryEl, labels.loading);
+    setText(sourceStatusEl, labels.sourceLoading);
+    setText(cloudEl, '...');
+    setText(visibilityEl, '...');
+    setText(precipitationEl, '...');
+    setText(sunsetEl, '...');
+    setText(bestHourEl, '...');
+    setText(moonEl, '...');
   }
 
   function renderWeeklyError() {
@@ -1446,7 +1467,13 @@ const labels = {
     if (weatherFetchPromise) return weatherFetchPromise;
 
     const url = createWeatherApiUrl();
-    weatherFetchPromise = fetch(url.toString())
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), WEATHER_FETCH_TIMEOUT_MS);
+
+    weatherFetchPromise = fetch(url.toString(), {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
       .then((response) => {
         if (!response.ok) throw new Error(`Weather API status ${response.status}`);
         return response.json();
@@ -1462,6 +1489,7 @@ const labels = {
         return { summary, weekly };
       })
       .finally(() => {
+        window.clearTimeout(timeoutId);
         weatherFetchPromise = null;
       });
 
@@ -1486,7 +1514,7 @@ const labels = {
       renderWeatherSummary(weatherCache.summary);
       renderWeeklyForecast(weatherCache.weekly);
     } else {
-      setText(summaryEl, labels.loading);
+      renderWeatherLoading();
       if (weeklyLoadingEl instanceof HTMLElement) {
         setText(weeklyLoadingEl, labels.loading);
         weeklyLoadingEl.classList.remove('hidden');
@@ -1505,7 +1533,7 @@ const labels = {
         if (weatherCache?.summary) return;
         renderWeatherError();
         renderWeeklyError();
-        console.error(error);
+        console.error('Tokyo sky weather fetch failed:', error);
       });
   }
 
