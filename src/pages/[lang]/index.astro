@@ -39,7 +39,9 @@ const heroTitle = t['hero.title'];
 
             <div class="text-center md:text-left">
                 <h1 class="text-4xl md:text-6xl font-extrabold bg-gradient-to-r from-white to-gray-600 bg-clip-text text-transparent pb-2 md:pb-4 leading-tight break-words">
-                    <span id="hero-typewriter" class="typewriter-title" data-text={heroTitle} aria-label={heroTitle}></span>
+                    <span id="hero-typewriter" class="typewriter-title" data-text={heroTitle} aria-label={heroTitle}>
+                        <span class="typewriter-title__text" aria-hidden="true"></span>
+                    </span>
                 </h1>
                 
                 <p class="text-lg md:text-xl text-gray-400 mt-4 max-w-lg leading-relaxed mx-auto md:mx-0">
@@ -184,56 +186,121 @@ const heroTitle = t['hero.title'];
 </Layout>
 
 <script is:inline>
-    const runHeroTypewriter = () => {
+    const heroTypewriterState = window.__heroTypewriterState ?? {
+        element: null,
+        running: false,
+        completed: false,
+        timeouts: [],
+        runId: 0,
+    };
+    window.__heroTypewriterState = heroTypewriterState;
+
+    const clearHeroTypewriterTimers = () => {
+        for (const timeoutId of heroTypewriterState.timeouts) {
+            window.clearTimeout(timeoutId);
+        }
+        heroTypewriterState.timeouts = [];
+        heroTypewriterState.running = false;
+    };
+
+    const queueHeroTypewriterStep = (callback, delay) => {
+        const timeoutId = window.setTimeout(() => {
+            heroTypewriterState.timeouts = heroTypewriterState.timeouts.filter((id) => id !== timeoutId);
+            callback();
+        }, delay);
+        heroTypewriterState.timeouts.push(timeoutId);
+    };
+
+    window.__runHeroTypewriter = () => {
         const el = document.getElementById('hero-typewriter');
         if (!(el instanceof HTMLElement)) return;
-        const typingIntervalMs = 280;
+        const textEl = el.querySelector('.typewriter-title__text');
+        if (!(textEl instanceof HTMLElement)) return;
 
         const fullText = el.dataset.text ?? '';
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        const typingIntervalMs = 120;
+        const startDelayMs = 140;
+        const finishDelayMs = 900;
 
-        if (reduceMotion) {
-            el.textContent = fullText;
-            el.classList.remove('typing', 'post-blink');
-            el.classList.add('done');
+        if (heroTypewriterState.element === el && (heroTypewriterState.running || heroTypewriterState.completed)) {
             return;
         }
 
-        el.textContent = '';
-        el.classList.remove('done', 'post-blink');
+        clearHeroTypewriterTimers();
+        heroTypewriterState.element = el;
+        heroTypewriterState.completed = false;
+        heroTypewriterState.runId += 1;
+        const currentRunId = heroTypewriterState.runId;
+
+        if (reduceMotion) {
+            textEl.textContent = fullText;
+            el.classList.remove('typing', 'settling');
+            el.classList.add('done');
+            heroTypewriterState.completed = true;
+            return;
+        }
+
+        textEl.textContent = '';
+        el.classList.remove('done', 'settling');
         el.classList.add('typing');
+        heroTypewriterState.running = true;
 
         let index = 0;
         const typeNext = () => {
+            if (heroTypewriterState.runId !== currentRunId) return;
+
             if (index >= fullText.length) {
                 el.classList.remove('typing');
-                el.classList.add('post-blink');
-                el.addEventListener('animationend', () => {
-                    el.classList.remove('post-blink');
+                el.classList.add('settling');
+                queueHeroTypewriterStep(() => {
+                    if (heroTypewriterState.runId !== currentRunId) return;
+                    el.classList.remove('settling');
                     el.classList.add('done');
-                }, { once: true });
+                    heroTypewriterState.running = false;
+                    heroTypewriterState.completed = true;
+                }, finishDelayMs);
                 return;
             }
             index += 1;
-            el.textContent = fullText.slice(0, index);
-            window.setTimeout(typeNext, typingIntervalMs);
+            textEl.textContent = fullText.slice(0, index);
+            queueHeroTypewriterStep(typeNext, typingIntervalMs);
         };
 
-        window.setTimeout(typeNext, 180);
+        queueHeroTypewriterStep(typeNext, startDelayMs);
     };
 
-    runHeroTypewriter();
     if (!window.__heroTypewriterHookAttached) {
-        document.addEventListener('astro:page-load', runHeroTypewriter);
+        document.addEventListener('astro:page-load', () => window.__runHeroTypewriter?.());
+        document.addEventListener('astro:before-swap', clearHeroTypewriterTimers);
         window.__heroTypewriterHookAttached = true;
     }
+
+    window.__runHeroTypewriter();
 </script>
 
 <style>
     .typewriter-title {
-        display: inline-block;
+        display: inline-grid;
         white-space: nowrap;
         vertical-align: bottom;
+        min-height: 1em;
+        text-align: left;
+    }
+
+    .typewriter-title::before {
+        content: attr(data-text);
+        grid-area: 1 / 1;
+        padding-right: 0.08em;
+        border-right: 0.08em solid transparent;
+        visibility: hidden;
+    }
+
+    .typewriter-title__text {
+        grid-area: 1 / 1;
+        justify-self: start;
+        display: inline-block;
+        width: max-content;
         min-height: 1em;
         padding-right: 0.08em;
         border-right: 0.08em solid rgba(226, 232, 240, 0.95);
@@ -244,21 +311,18 @@ const heroTitle = t['hero.title'];
         50%, 100% { border-right-color: transparent; }
     }
 
-    .typewriter-title.typing {
+    .typewriter-title.typing .typewriter-title__text,
+    .typewriter-title.settling .typewriter-title__text {
         animation: typewriter-caret 0.95s step-end infinite;
     }
 
-    .typewriter-title.post-blink {
-        animation: typewriter-caret 0.95s step-end 3 forwards;
-    }
-
-    .typewriter-title.done {
+    .typewriter-title.done .typewriter-title__text {
         animation: none;
         border-right-color: transparent;
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .typewriter-title {
+        .typewriter-title__text {
             border-right: none;
             animation: none;
         }
