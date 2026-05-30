@@ -36,7 +36,7 @@ const labels = {
 <Layout title={`${t['bandit.title']} | Sakasu Portfolio`} lang={lang} description={t['bandit.subtitle']}>
   <section class="py-10 md:py-14 relative overflow-hidden">
     <div aria-hidden="true" class="pointer-events-none absolute -top-28 -left-20 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl"></div>
-    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 right-0 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl"></div>
+    <div aria-hidden="true" class="pointer-events-none absolute -bottom-24 right-0 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl"></div>
 
     <div class="relative rounded-2xl border border-blue-500/20 bg-[#0f1526]/70 backdrop-blur-sm p-6 md:p-8 shadow-[0_0_0_1px_rgba(59,130,246,0.08),0_18px_50px_rgba(2,6,23,0.7)]">
       <h1 class="text-3xl md:text-5xl font-extrabold bg-gradient-to-r from-white via-blue-100 to-cyan-300 bg-clip-text text-transparent">
@@ -58,8 +58,8 @@ const labels = {
           <p class="text-[10px] sm:text-xs uppercase tracking-[0.08em] sm:tracking-widest text-cyan-200/70">{t['bandit.roundsLeft']}</p>
           <p id="bandit-rounds-left" class="mt-1 sm:mt-2 text-lg sm:text-2xl md:text-3xl font-bold text-white">20</p>
         </article>
-        <article class="bandit-metric rounded-xl border border-emerald-500/20 bg-[#0e1422]/90 p-2 sm:p-3 md:p-4">
-          <p class="text-[10px] sm:text-xs uppercase tracking-[0.08em] sm:tracking-widest text-emerald-200/70">{t['bandit.totalReward']}</p>
+        <article class="bandit-metric rounded-xl border border-blue-500/20 bg-[#0e1422]/90 p-2 sm:p-3 md:p-4">
+          <p class="text-[10px] sm:text-xs uppercase tracking-[0.08em] sm:tracking-widest text-blue-200/70">{t['bandit.totalReward']}</p>
           <p id="bandit-total-reward" class="mt-1 sm:mt-2 text-lg sm:text-2xl md:text-3xl font-bold text-white">0</p>
         </article>
       </div>
@@ -144,7 +144,7 @@ const labels = {
         ))}
       </div>
 
-      <article class="rounded-xl border border-indigo-500/20 bg-[#0d1321]/90 p-4">
+      <article class="rounded-xl border border-blue-500/20 bg-[#0d1321]/90 p-4">
         <h2 class="text-xl font-bold text-white">{t['bandit.results']}</h2>
 
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
@@ -160,9 +160,9 @@ const labels = {
             <span class="text-cyan-100">{t['bandit.ucb']}</span>
             <span id="bandit-score-ucb" class="font-semibold text-cyan-100">0</span>
           </div>
-          <div class="bandit-score-card flex items-center justify-between rounded-md border border-emerald-500/30 bg-[#0e1d1a] p-3">
-            <span class="text-emerald-100">{t['bandit.oracle']}</span>
-            <span id="bandit-score-oracle" class="font-semibold text-emerald-100">0</span>
+          <div class="bandit-score-card flex items-center justify-between rounded-md border border-slate-500/30 bg-[#121826] p-3">
+            <span class="text-slate-100">{t['bandit.oracle']}</span>
+            <span id="bandit-score-oracle" class="font-semibold text-slate-100">0</span>
           </div>
         </div>
 
@@ -200,9 +200,9 @@ const labels = {
               <p class="mt-2 text-gray-400 leading-relaxed">{t['bandit.policy.ucbDetail']}</p>
             </div>
           </details>
-          <details class="bandit-policy-card rounded-md border border-emerald-500/25 bg-[#0f201a] p-3">
+          <details class="bandit-policy-card rounded-md border border-slate-500/25 bg-[#121826] p-3">
             <summary class="bandit-policy-summary">
-              <span class="font-semibold text-emerald-100">{t['bandit.oracle']}</span>
+              <span class="font-semibold text-slate-100">{t['bandit.oracle']}</span>
               <span class="bandit-policy-caret" aria-hidden="true">▾</span>
             </summary>
             <div class="bandit-policy-body mt-2">
@@ -531,7 +531,7 @@ const labels = {
       setText(statusEl, isFinished() ? labels.statusFinished : labels.statusPlaying);
       if (statusEl) {
         statusEl.className = isFinished()
-          ? 'bandit-status-pill px-2 py-1 rounded border border-green-600/50 bg-green-500/10 text-green-300 font-semibold'
+          ? 'bandit-status-pill px-2 py-1 rounded border border-cyan-600/50 bg-cyan-500/10 text-cyan-300 font-semibold'
           : 'bandit-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold';
       }
       if (toggleRatesButton) {
