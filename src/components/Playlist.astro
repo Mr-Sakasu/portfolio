@@ -4,6 +4,8 @@ import { ui } from '../i18n/ui';
 
 interface Props {
   lang: keyof typeof ui;
+  variant?: 'home' | 'page';
+  showHeading?: boolean;
 }
 
 interface PlaylistTrack {
@@ -35,7 +37,7 @@ interface PlaylistData {
   tracks?: PlaylistTrack[];
 }
 
-const { lang } = Astro.props;
+const { lang, variant = 'home', showHeading = true } = Astro.props;
 const t = ui[lang] ?? ui.en;
 const playlistRoot = playlistData as PlaylistData;
 const playlistCollection = playlistRoot.byLang?.[lang] ?? playlistRoot;
@@ -94,18 +96,24 @@ const visiblePlaylists = configuredPlaylists.length > 0
   ? configuredPlaylists
   : [normalizePlaylist(playlistCollection)];
 const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
+const sectionClass = variant === 'page' ? 'mt-6' : 'mt-4 md:mt-8';
+const trackListClass = variant === 'page'
+  ? 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
+  : 'max-h-72 divide-y divide-white/10 overflow-y-auto overscroll-contain';
 ---
 
 {shouldRender && (
-  <section class="mt-4 md:mt-8">
-    <div class="mb-2 flex items-end justify-between gap-4">
-      <div>
-        <h2 class="text-sm font-bold text-rose-300 uppercase tracking-widest">
-          {t['playlist.eyebrow']}
-        </h2>
-        <p class="mt-2 text-sm text-gray-400">{t['playlist.subtitle']}</p>
+  <section class={sectionClass}>
+    {showHeading && (
+      <div class="mb-2 flex items-end justify-between gap-4">
+        <div>
+          <h2 class="text-sm font-bold text-rose-300 uppercase tracking-widest">
+            {t['playlist.eyebrow']}
+          </h2>
+          <p class="mt-2 text-sm text-gray-400">{t['playlist.subtitle']}</p>
+        </div>
       </div>
-    </div>
+    )}
 
     <div class="space-y-4">
       {visiblePlaylists.map((playlist) => (
@@ -144,7 +152,7 @@ const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
                 </div>
               </a>
 
-              <div class="max-h-72 divide-y divide-white/10 overflow-y-auto overscroll-contain">
+              <div class={trackListClass}>
                 {playlist.tracks.map((track, index) => (
                   <a
                     href={track.url || playlist.playlistUrl}
