@@ -124,14 +124,14 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2025-08',
             title: 'HSK 5級 取得',
-            desc: '中国語チョットデキル',
+            desc: '中国語少し',
             color: 'red',
             icon: '🇨🇳'
         },
         {
             date: '2024-03',
             title: 'AtCoder Algo 緑色',
-            desc: 'アルゴリズム(本当にチョットダケ)デキル',
+            desc: 'アルゴリズム少し',
             color: 'green',
             icon: '🏆'
         },
