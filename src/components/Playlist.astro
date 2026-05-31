@@ -45,13 +45,13 @@ const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
   jp: [
     'PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le',
     'PLiz-kupUIzB6fO7Svf1w3dUi3GSss_H6f',
-    'PLiz-kupUIzB5R2QlsvnTmpFMWXiLVvxtw',
-    'PLiz-kupUIzB75wypS-rh2V1ZPLgae3jcu',
-    'PLiz-kupUIzB5Fo3N3xVwtYsis_U9i4ol3',
-    'PLiz-kupUIzB4bOwHGV_WKNPi6m7m2mT8l',
-    'PLiz-kupUIzB7o_jAtsyT-iGY8gpQvOWxJ',
     'PLiz-kupUIzB70ktndKK9cPKR2zz9siN2A',
+    'PLiz-kupUIzB5Fo3N3xVwtYsis_U9i4ol3',
+    'PLiz-kupUIzB5R2QlsvnTmpFMWXiLVvxtw',
+    'PLiz-kupUIzB7o_jAtsyT-iGY8gpQvOWxJ',
+    'PLiz-kupUIzB4bOwHGV_WKNPi6m7m2mT8l',
     'PLiz-kupUIzB7x5yWRVSGXdNcRjnDaom6M',
+    'PLiz-kupUIzB75wypS-rh2V1ZPLgae3jcu',
   ],
 };
 const homePlaylistByLang: Partial<Record<keyof typeof ui, string[]>> = {
@@ -132,6 +132,63 @@ const jpopArtistChartConfig = [
   { artist: 'yama', playlistTitle: 'Liked: JPOP - yama', auditFallbackCount: 3 },
   { artist: 'Reol', playlistTitle: 'Liked: JPOP - Reol', auditFallbackCount: 4 },
 ];
+const englishArtistNameOverrides: Record<string, string> = {
+  'AbbaVEVO': 'ABBA',
+  'billyjoelVEVO': 'Billy Joel',
+  'DefTech004': 'Def Tech',
+  'IBeLovinTheJ5': 'The Jackson 5',
+  'JFlaMusic': 'J.Fla',
+  'JustinBieberVEVO': 'Justin Bieber',
+  'KnaanVEVO': "K'NAAN",
+  'littlemixVEVO': 'Little Mix',
+  'MIKAVEVO': 'MIKA',
+  'MKTOVEVO': 'MKTO',
+  'oasisvideos': 'Oasis',
+  'PentatonixVEVO': 'Pentatonix',
+  'PostmodernJukebox': 'Postmodern Jukebox',
+  'RachelPlattenVEVO': 'Rachel Platten',
+  'TheKillersVEVO': 'The Killers',
+  'TimefliesVEVO': 'Timeflies',
+  'VideoHitsBelemBrazil': 'Kylie Minogue',
+  'XXxxZakixxXX': 'Weezer',
+};
+const englishArtistFromTitle = (title: string) => {
+  const knownArtists = [
+    'Billy Joel',
+    'Bruno Mars',
+    'Daniel Powter',
+    'Dua Lipa',
+    'Ed Sheeran',
+    'Green Day',
+    'James Blunt',
+    'John Lennon',
+    'Kylie Minogue',
+    'Little Mix',
+    'MIKA',
+    'Oasis',
+    'Pentatonix',
+    'Rachel Platten',
+    'The Carpenters',
+    'The Killers',
+    'Weezer',
+  ];
+  const loweredTitle = title.toLowerCase();
+  return knownArtists.find((artist) => loweredTitle.startsWith(artist.toLowerCase())) ?? '';
+};
+const normalizeEnglishArtist = (track: PlaylistTrack) => {
+  const titleArtist = englishArtistFromTitle(track.title ?? '');
+  if (titleArtist) {
+    return titleArtist;
+  }
+
+  const rawArtist = (track.artists ?? '').trim();
+  const mappedArtist = englishArtistNameOverrides[rawArtist] ?? rawArtist;
+  const normalizedArtist = mappedArtist
+    .replace(/\s+-\s+Topic$/, '')
+    .replace(/VEVO$/, '')
+    .trim();
+  return englishArtistNameOverrides[normalizedArtist] ?? (normalizedArtist || t['playlist.unknownArtist']);
+};
 const playlistByTitle = new Map(sourcePlaylists.map((playlist) => [playlist.title, playlist]));
 const playlistTrackCount = (playlist?: PlaylistData) => {
   if (!playlist) {
@@ -144,6 +201,25 @@ const playlistTrackCount = (playlist?: PlaylistData) => {
     ? playlist.tracks.filter((track) => track?.title).length
     : undefined;
 };
+const formatTrackCount = (count: number) => (
+  lang === 'en' && count === 1
+    ? '1 track'
+    : t['playlist.trackCount'].replace('{count}', String(count))
+);
+const englishArtistCounts = new Map<string, number>();
+if (lang === 'en') {
+  sourcePlaylists.forEach((playlist) => {
+    (playlist.tracks ?? [])
+      .filter((track) => track?.title)
+      .forEach((track) => {
+        const artist = normalizeEnglishArtist(track);
+        englishArtistCounts.set(artist, (englishArtistCounts.get(artist) ?? 0) + 1);
+      });
+  });
+}
+const englishArtistChartItems = [...englishArtistCounts.entries()]
+  .map(([artist, count], index) => ({ artist, count, order: index }))
+  .sort((first, second) => second.count - first.count || first.artist.localeCompare(second.artist));
 const artistChartItems = lang === 'jp'
   ? jpopArtistChartConfig
       .map((item, index) => {
@@ -153,7 +229,9 @@ const artistChartItems = lang === 'jp'
       })
       .filter((item) => item.count > 0)
       .sort((first, second) => second.count - first.count || first.order - second.order)
-  : [];
+  : lang === 'en'
+    ? englishArtistChartItems
+    : [];
 const artistChartMaxCount = Math.max(...artistChartItems.map((item) => item.count), 1);
 const artistChartTotalCount = artistChartItems.reduce((total, item) => total + item.count, 0);
 const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
@@ -186,12 +264,12 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
               {t['playlist.artistChart.total']}
             </p>
             <p class="mt-1 text-2xl font-black tabular-nums text-rose-100">
-              {t['playlist.trackCount'].replace('{count}', String(artistChartTotalCount))}
+              {formatTrackCount(artistChartTotalCount)}
             </p>
           </div>
         </div>
 
-        <div class="mt-4 space-y-3">
+        <div class={lang === 'en' ? 'mt-4 max-h-80 space-y-3 overflow-y-auto overscroll-contain pr-1' : 'mt-4 space-y-3'}>
           {artistChartItems.map((item) => (
             <div class="grid gap-2 sm:grid-cols-[13rem_minmax(0,1fr)_5rem] sm:items-center">
               <div class="flex min-w-0 items-baseline justify-between gap-3 sm:block">
@@ -199,13 +277,13 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                   {item.artist}
                 </span>
                 <span class="shrink-0 text-xs tabular-nums text-gray-400 sm:hidden">
-                  {t['playlist.trackCount'].replace('{count}', String(item.count))}
+                  {formatTrackCount(item.count)}
                 </span>
               </div>
               <div
                 class="h-3 overflow-hidden rounded-full bg-white/[0.06]"
                 role="img"
-                aria-label={`${item.artist}: ${t['playlist.trackCount'].replace('{count}', String(item.count))}`}
+                aria-label={`${item.artist}: ${formatTrackCount(item.count)}`}
               >
                 <span
                   class="block h-full rounded-full bg-gradient-to-r from-rose-300 via-cyan-300 to-emerald-300"
@@ -213,7 +291,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                 ></span>
               </div>
               <span class="hidden text-right text-xs tabular-nums text-gray-300 sm:block">
-                {t['playlist.trackCount'].replace('{count}', String(item.count))}
+                {formatTrackCount(item.count)}
               </span>
             </div>
           ))}
