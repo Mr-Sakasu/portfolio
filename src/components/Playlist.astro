@@ -54,6 +54,9 @@ const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
     'PLiz-kupUIzB7x5yWRVSGXdNcRjnDaom6M',
   ],
 };
+const homePlaylistByLang: Partial<Record<keyof typeof ui, string[]>> = {
+  jp: ['PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le'],
+};
 const unsortedSourcePlaylists = Array.isArray(playlistCollection.playlists) && playlistCollection.playlists.length > 0
   ? playlistCollection.playlists
   : [playlistCollection];
@@ -66,6 +69,10 @@ const sourcePlaylists = playlistOrder.length > 0
         - (secondOrder === -1 ? Number.MAX_SAFE_INTEGER : secondOrder);
     })
   : unsortedSourcePlaylists;
+const homePlaylistOrder = variant === 'home' ? homePlaylistByLang[lang] ?? [] : [];
+const displayPlaylists = homePlaylistOrder.length > 0
+  ? sourcePlaylists.filter((playlist) => homePlaylistOrder.includes(playlist.playlistId ?? ''))
+  : sourcePlaylists;
 const trackTime = (track: PlaylistTrack) => {
   const rawDate = track.publishedAt || track.uploadedAt || track.addedAt || '';
   const timestamp = Date.parse(rawDate);
@@ -97,14 +104,16 @@ const normalizePlaylist = (playlist: PlaylistData) => {
     hasTracks: Boolean(playlist.configured && playlist.playlistId && tracks.length > 0),
   };
 };
-const configuredPlaylists = sourcePlaylists.map(normalizePlaylist).filter((playlist) => playlist.isConfigured);
+const configuredPlaylists = displayPlaylists.map(normalizePlaylist).filter((playlist) => playlist.isConfigured);
 const visiblePlaylists = configuredPlaylists.length > 0
   ? configuredPlaylists
   : [normalizePlaylist(playlistCollection)];
 const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
 const sectionClass = variant === 'page' ? 'mt-6' : 'mt-4 md:mt-8';
 const trackListClass = variant === 'page'
-  ? 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
+  ? lang === 'jp'
+    ? 'max-h-80 divide-y divide-white/10 overflow-y-auto overscroll-contain'
+    : 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
   : 'max-h-72 divide-y divide-white/10 overflow-y-auto overscroll-contain';
 const jpopArtistChartConfig = [
   { artist: 'Yorushika', playlistTitle: 'Liked: JPOP - Yorushika' },
