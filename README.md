@@ -36,11 +36,7 @@ Astro を使い、研究活動、開発プロジェクト、趣味要素を 1 �
 
 - 競技プログラミング: https://github.com/Mr-Sakasu/abc
 - THU Auto Login: https://github.com/Mr-Sakasu/THU-auto-login
-- EEG/fNIRS emotion recognition: https://github.com/Mr-Sakasu/gnn-cl
-- CLISA paper: https://arxiv.org/abs/2109.09559
-- FACED paper: https://www.nature.com/articles/s41597-023-02650-w
-- SEED dataset: https://bcmi.sjtu.edu.cn/home/seed/
-
+  
 ## Commands
 
 ```bash
