@@ -5,7 +5,7 @@ export interface TimelineEvent {
     date: string;
     title: string;
     desc: string;
-    color: 'blue' | 'yellow' | 'gray' | 'green' | 'red';
+    color: 'blue' | 'yellow' | 'gray' | 'green' | 'red' | 'cyan';
     icon: string;
 }
 
@@ -18,6 +18,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: 'Master\'s Research',
             color: 'blue',
             icon: '✒'
+        },
+        {
+            date: '2026-06-08',
+            title: 'AtCoder Heuristic (Cyan)',
+            desc: 'Reached cyan in heuristic contests.',
+            color: 'cyan',
+            icon: '🏆'
         },
         {
             date: '2025-08',
@@ -71,6 +78,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
+            date: '2026-06-08',
+            title: 'AtCoder 启发式竞赛 (青名)',
+            desc: '启发式竞赛达到青名。',
+            color: 'cyan',
+            icon: '🏆'
+        },
+        {
             date: '2025-08',
             title: '获得 HSK 5级证书',
             desc: '中文会一点点。',
@@ -117,9 +131,16 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: CURRENT_MONTH_TOKEN,
             title: '現在',
-            desc: '修士課程で研究中...',
+            desc: '日中のダブルディグリーを目指して研究中...',
             color: 'blue',
             icon: '✒'
+        },
+        {
+            date: '2026-06-08',
+            title: 'AtCoder Heuristic 水色',
+            desc: 'ヒューリスティック少し',
+            color: 'cyan',
+            icon: '🏆'
         },
         {
             date: '2025-08',

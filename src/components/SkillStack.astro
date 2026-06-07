@@ -1,0 +1,84 @@
+---
+import { skillStack, type SkillLocale } from '../data/skills';
+import { ui } from '../i18n/ui';
+
+interface Props {
+    lang: keyof typeof ui;
+}
+
+const { lang } = Astro.props;
+const t = ui[lang] ?? ui.en;
+const locale = (lang in ui ? lang : 'en') as SkillLocale;
+const maxSkillLevel = 5;
+const skillLevelSlots = Array.from({ length: maxSkillLevel }, (_, index) => index + 1);
+---
+
+<section class="mt-4 md:mt-8">
+    <div class="mb-4 border-b border-slate-700/70 pb-3">
+        <h2 class="text-2xl md:text-3xl font-bold text-cyan-300">
+            {t['skills.title']}
+        </h2>
+        <p class="mt-2 text-sm text-gray-400">
+            {t['skills.subtitle']}
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {skillStack.map((skill) => (
+            <article class="min-h-36 rounded-lg border border-slate-700/80 bg-[#111722]/80 p-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] transition-colors hover:border-cyan-300/35 hover:bg-[#131c2a]/85">
+                <div class="flex items-center gap-3">
+                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/95 p-2">
+                        <img
+                            src={skill.icon}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            width="24"
+                            height="24"
+                            class="h-6 w-6 object-contain"
+                        />
+                    </span>
+                    <h3 class="min-w-0 text-sm font-bold leading-tight text-white md:text-base">
+                        {skill.name}
+                    </h3>
+                </div>
+
+                <p class="mt-3 text-xs leading-relaxed text-gray-400">
+                    {skill.summary[locale]}
+                </p>
+
+                {skill.children && (
+                    <div class="mt-3 flex flex-wrap gap-1.5">
+                        {skill.children.map((child) => (
+                            <span class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-slate-700/80 bg-white/[0.035] px-2 py-1 text-[11px] font-semibold leading-none text-gray-300">
+                                <img
+                                    src={child.icon}
+                                    alt=""
+                                    loading="lazy"
+                                    decoding="async"
+                                    width="14"
+                                    height="14"
+                                    class="h-3.5 w-3.5 rounded-sm bg-white/95 p-0.5"
+                                />
+                                <span class="min-w-0 truncate" title={child.name}>{child.name}</span>
+                            </span>
+                        ))}
+                    </div>
+                )}
+
+                <div
+                    class="mt-3 flex items-center"
+                    aria-label={`${skill.name}: ${skill.level} star level`}
+                >
+                    <div class="flex gap-0.5 text-sm leading-none" aria-hidden="true">
+                        {skillLevelSlots.map((slot) => (
+                            <span class={slot <= skill.level ? 'text-cyan-300' : 'text-slate-600/80'}>
+                                ★
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            </article>
+        ))}
+    </div>
+</section>
