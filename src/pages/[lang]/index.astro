@@ -3,6 +3,7 @@ import { Image } from 'astro:assets';
 import Layout from '../../layouts/Layout.astro';
 import { ui, languages } from '../../i18n/ui';
 import Timeline from '../../components/Timeline.astro';
+import SkillStack from '../../components/SkillStack.astro';
 import Playlist from '../../components/Playlist.astro';
 import { projectData } from '../../data/projects';
 import profileImage from '../../assets/sakasu.jpg';
@@ -183,6 +184,8 @@ const heroTitle = t['hero.title'];
             ))}
         </div>
     </section>
+
+    <SkillStack lang={lang as keyof typeof ui} />
 
     <section class="mt-16 md:mt-24 mb-24">
         <div class="mb-8 border-b border-slate-700/70 pb-3">
