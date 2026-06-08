@@ -4,14 +4,22 @@ dist/
 # generated types
 .astro/
 artifacts/
+.vercel/
+.netlify/
+.cache/
+.turbo/
+*.tsbuildinfo
 
 # dependencies
 node_modules/
 .venv/
+venv/
+env/
 __pycache__/
 *.py[cod]
 
 # logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -19,13 +27,30 @@ pnpm-debug.log*
 
 # environment variables
 .env
+.env.*
 .env.production
+!.env.example
+!**/.env.example
 .ytmusic-oauth.json
 oauth.json
 client_secret*.json
+credentials*.json
+token*.json
+*.pem
+*.key
+
+# test / coverage output
+coverage/
+playwright-report/
+test-results/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 
 # macOS-specific files
 .DS_Store
+Thumbs.db
 
 # jetbrains setting folder
 .idea/
+.vscode/
