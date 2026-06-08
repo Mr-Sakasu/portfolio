@@ -1,46 +1,75 @@
 # Portfolio
 
-自分の研究・制作物・学習ログをまとめる多言語ポートフォリオサイトです。トップページだけでなく、星空シミュレーション、音楽プレイリスト、ミニゲームを実際に操作できるようにしています。
+研究、制作物、学習ログ、趣味要素をまとめた多言語ポートフォリオサイトです。Astro で静的に生成しつつ、星空シミュレーション、YouTube Music プレイリスト、ミニゲームなどの操作できるコンテンツも載せています。
 
-- GitHub: https://github.com/Mr-Sakasu/portfolio
-- 公開URL: https://portfolio-five-blond-32.vercel.app
-- 種別: ポートフォリオサイト、インタラクティブ UI、静的サイト
+- リポジトリ: <https://github.com/Mr-Sakasu/portfolio>
+- 公開 URL: <https://portfolio-five-blond-32.vercel.app>
+- 種別: 多言語ポートフォリオ / インタラクティブ静的サイト
 
-## 作成物の説明
+## 主な機能
 
-Astro を使い、研究活動、開発プロジェクト、趣味要素を 1 つのサイトにまとめました。Timeline、Star Watch、Playlist、Bandit Lab などを個別ページとトップページの両方で見せられる構成にしています。
+- **多言語ページ**: English, Chinese, Japanese の 3 言語に対応
+- **Timeline**: 研究、資格、コンテスト、ロボコンなどの活動履歴を表示
+- **Skill Stack**: 使用技術と関連ツールをコンパクトに整理
+- **Star Watch**: 東京の夜空を Canvas で描画し、天体位置や観測条件を確認
+- **Playlist**: ローカルスクリプトで生成した静的 JSON から YouTube Music プレイリストを表示
+- **Bandit Lab**: 多腕バンディット問題を試せる小さなインタラクティブデモ
 
-## 担当した役割
+## 実装で意識したこと
 
-- サイト設計、UI 実装、レスポンシブ対応を担当
-- Astro のルーティングと多言語表示の実装を担当
-- Star Watch の空の描画、Playlist の静的 JSON 生成、Bandit Lab のインタラクションを実装
-- GitHub Pages/Vercel 向けの静的ビルド前提で、認証情報を含めないデータ更新フローを整備
+- トップページだけでなく、各コンテンツを個別ページとしても見られる構成にしました。
+- UI の密度がセクションごとにばらつかないよう、見出し、余白、区切り線、カード表現を揃えました。
+- 星空描画は Canvas の描画状態と UI 状態を分け、画面サイズ変更やテーマ切り替えでも崩れにくいようにしています。
+- プレイリストは認証情報を公開ビルドに含めないため、API 取得処理をローカルスクリプトに分離しています。
 
-## 直面した課題と解決方法
-
-- 星空の描画では、画面サイズ変更やテーマ切り替えでレイアウトが崩れやすかったため、Canvas の再初期化と描画状態の分離で安定化しました。
-- Playlist では OAuth トークンや client secret を公開しない必要があったため、取得処理をローカルスクリプトに分離し、公開物には生成済み JSON だけを含める構成にしました。
-- セクションごとに UI の密度が変わりすぎる問題に対して、見出しサイズ、余白、区切り線、カード使用量を揃えました。
-
-## 技術情報
+## 技術スタック
 
 - Astro 5
-- Tailwind CSS
 - TypeScript / JavaScript
-- `astronomy-engine` による天体位置計算
-- YouTube Music / YouTube Data API 用の Python 更新スクリプト
-- 静的 JSON を使ったプレイリスト表示
+- Tailwind CSS
+- `astronomy-engine`
+- YouTube Music / YouTube Data API
+- Python によるプレイリストデータ生成
 
-## 関連リポジトリ・研究URL
-
-- 競技プログラミング: https://github.com/Mr-Sakasu/abc
-- THU Auto Login: https://github.com/Mr-Sakasu/THU-auto-login
-  
-## Commands
+## 開発
 
 ```bash
 npm install
 npm run dev
-npm run build
 ```
+
+本番ビルドとプレビューは次のコマンドで確認します。
+
+```bash
+npm run build
+npm run preview
+```
+
+## プレイリストデータの更新
+
+プレイリストデータはローカルで生成し、静的 JSON として公開ビルドに含めます。API credential や OAuth token は公開物に含めません。
+
+```bash
+npm run playlist:auth
+npm run playlist:update
+```
+
+公開サイトが参照するのは `src/data/` 以下の生成済みデータだけです。
+
+## ディレクトリ構成
+
+```text
+src/
+  components/   再利用する Astro コンポーネント
+  data/         Timeline、projects、skills、生成済みプレイリストデータ
+  i18n/         各言語の UI テキスト
+  layouts/      共通レイアウト
+  pages/        多言語ルーティングと個別ページ
+public/         静的画像とアイコン
+scripts/        YouTube Music データ更新用スクリプト
+```
+
+## 関連リンク
+
+- 競技プログラミング: <https://github.com/Mr-Sakasu/abc>
+- THU Auto Login: <https://github.com/Mr-Sakasu/THU-auto-login>
