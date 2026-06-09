@@ -17,15 +17,16 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/cplusplus.svg',
         level: 4,
         summary: {
-            en: 'Competitive programming, robotics control, solvers.',
-            zh: '算法竞赛、机器人控制、求解器。',
-            jp: '競プロ、ロボット制御、ソルバ実装',
+            en: 'Competitive programming, robotics control, solvers, optimization algorithms for my graduation thesis, and use of Gurobi.',
+            zh: '算法竞赛、机器人控制、求解器、毕业论文中的优化算法实现，以及 Gurobi 的使用。',
+            jp: '競プロ、ロボット制御、ソルバ実装。卒業論文では最適化アルゴリズムの実装やGurobiの利用を経験',
         },
         children: [
             { name: 'Algorithms', icon: '/icons/skills/algorithms.svg' },
             { name: 'Data Structures', icon: '/icons/skills/data-structures.svg' },
             { name: 'Heuristic', icon: '/icons/skills/heuristic.svg' },
             { name: 'Object-Oriented Programming', icon: '/icons/skills/oop.svg' },
+            { name: 'Gurobi', icon: '/icons/skills/gurobi.svg' },
         ],
     },
     {
@@ -33,9 +34,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/c.svg',
         level: 2,
         summary: {
-            en: 'Low-level basics and systems exercises.',
-            zh: '底层基础与系统编程练习。',
-            jp: '低レイヤの基礎とシステム系の演習',
+            en: 'Low-level basics and systems exercises; used in university coursework and robotics control.',
+            zh: '底层基础与系统编程练习；用于大学课程和机器人控制。',
+            jp: '低レイヤの基礎とシステム系の演習。大学の授業やロボット制御で使用',
         },
         children: [
             { name: 'Algorithms', icon: '/icons/skills/algorithms.svg' },
@@ -47,12 +48,13 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/python.svg',
         level: 2,
         summary: {
-            en: 'Research experiments, data analysis, automation.',
-            zh: '研究实验、数据分析、自动化。',
-            jp: '研究実験、データ分析、自動化',
+            en: 'Research experiments, data analysis, automation, and implementation of machine-learning emotion recognition algorithms.',
+            zh: '研究实验、数据分析、自动化，以及基于机器学习的情感识别算法实现。',
+            jp: '研究実験、データ分析、自動化。機械学習による感情認識アルゴリズムも実装',
         },
         children: [
             { name: 'NumPy', icon: '/icons/skills/numpy.svg' },
+            { name: 'pandas', icon: '/icons/skills/pandas.svg' },
             { name: 'PyTorch', icon: '/icons/skills/pytorch.svg' },
             { name: 'scikit-learn', icon: '/icons/skills/scikitlearn.svg' },
             { name: 'Seaborn', icon: '/icons/skills/seaborn.svg' },
@@ -64,12 +66,13 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/web.svg',
         level: 1,
         summary: {
-            en: 'Typed static sites and compact interfaces.',
-            zh: '带类型的静态网站与紧凑界面。',
-            jp: '型付き静的サイトとコンパクトなUI',
+            en: 'Typed static sites and compact interfaces; built this website, a typing web app, an e-commerce support AI chatbot, and an X/Twitter competitive-programming contest notification bot.',
+            zh: '带类型的静态网站与紧凑界面；制作了本网站、打字 Web 应用、电子商务支持 AI 聊天机器人，以及 X/Twitter 算法竞赛通知 bot。',
+            jp: '型付き静的サイトとコンパクトなUI。本Webサイト、タイピングWebアプリ、Eコマース支援AIチャットボット、X/Twitter向け競技プログラミングコンテスト通知botを作成',
         },
         children: [
             { name: 'JavaScript', icon: '/icons/skills/javascript.svg' },
+            { name: 'Node.js', icon: '/icons/skills/nodejs.svg' },
             { name: 'TypeScript', icon: '/icons/skills/typescript.svg' },
             { name: 'HTML', icon: '/icons/skills/html.svg' },
             { name: 'Astro', icon: '/icons/skills/astro.svg' },
@@ -99,22 +102,32 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/aws.svg',
         level: 1,
         summary: {
-            en: 'Cloud platform basics.',
-            zh: '云平台基础。',
-            jp: 'クラウドプラットフォームの基礎',
+            en: 'Cloud platform basics; used for poker game development.',
+            zh: '云平台基础；用于扑克游戏开发。',
+            jp: 'クラウドプラットフォームの基礎。ポーカーゲームの開発で利用',
         },
         children: [
             { name: 'AWS Lambda', icon: '/icons/skills/aws-lambda.svg' },
         ],
     },
     {
+        name: 'Docker',
+        icon: '/icons/skills/docker.svg',
+        level: 1,
+        summary: {
+            en: 'Container basics for local development.',
+            zh: '用于本地开发的容器基础。',
+            jp: 'ローカル開発向けのコンテナ基礎',
+        },
+    },
+    {
         name: 'Java',
         icon: '/icons/skills/java.svg',
         level: 1,
         summary: {
-            en: 'Class-based programming basics.',
-            zh: '基于类的编程基础。',
-            jp: 'クラスベースのプログラミング基礎',
+            en: 'Class-based programming basics; studied for about six months in undergraduate coursework.',
+            zh: '基于类的编程基础；本科课程中学习了约半年。',
+            jp: 'クラスベースのプログラミング基礎。学部の授業で半年ほど履修',
         },
     },
     {
@@ -122,9 +135,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/haskell.svg',
         level: 1,
         summary: {
-            en: 'Functional programming basics.',
-            zh: '函数式编程基础。',
-            jp: '関数型プログラミングの基礎',
+            en: 'Functional programming basics; studied for about six months in undergraduate coursework.',
+            zh: '函数式编程基础；本科课程中学习了约半年。',
+            jp: '関数型プログラミングの基礎。学部の授業で半年ほど履修',
         },
     },
     {
@@ -132,19 +145,33 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/rust.svg',
         level: 1,
         summary: {
-            en: 'Ownership-focused systems programming basics.',
-            zh: '以所有权为核心的系统编程基础。',
-            jp: '所有権を中心にしたシステムプログラミング基礎',
+            en: 'Ownership-focused systems programming basics; used for the backend of a typing game web app.',
+            zh: '以所有权为核心的系统编程基础；用于打字游戏 Web 应用的后端。',
+            jp: '所有権を中心にしたシステムプログラミング基礎。タイピングゲームWebアプリのバックエンドで使用',
         },
     },
     {
-        name: 'PostgreSQL',
-        icon: '/icons/skills/postgresql.svg',
+        name: 'R',
+        icon: '/icons/skills/r.svg',
         level: 1,
         summary: {
-            en: 'Relational database basics.',
-            zh: '关系数据库基础。',
-            jp: 'リレーショナルデータベースの基礎',
+            en: 'Statistical analysis basics; studied for about six months in undergraduate coursework.',
+            zh: '统计分析基础；本科课程中学习了约半年。',
+            jp: '統計解析の基礎。学部の授業で半年ほど履修',
         },
+    },
+    {
+        name: 'DB',
+        icon: '/icons/skills/database.svg',
+        level: 1,
+        summary: {
+            en: 'Relational database basics; studied database fundamentals for about six months in undergraduate coursework.',
+            zh: '关系数据库基础；本科课程中学习了约半年的数据库基础。',
+            jp: 'リレーショナルデータベースの基礎。学部の授業で半年ほどデータベース基礎を履修',
+        },
+        children: [
+            { name: 'PostgreSQL', icon: '/icons/skills/postgresql.svg' },
+            { name: 'MySQL', icon: '/icons/skills/mysql.svg' },
+        ],
     },
 ];
