@@ -141,7 +141,28 @@ const heroTitle = t['hero.title'];
                     <div class="h-full p-5 md:p-6 rounded-lg bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] hover:bg-[#131c2a]/85 transition-colors flex flex-col">
                         
                         <div class="relative w-full h-40 md:h-48 mb-4 overflow-hidden rounded-md">
-                            {project.image === '/er.png' ? (
+                            {project.video ? (
+                                <>
+                                    <video
+                                        muted
+                                        loop
+                                        playsinline
+                                        preload="none"
+                                        poster={project.poster}
+                                        data-src={project.video}
+                                        data-project-video
+                                        aria-label={`${project.title} demo video`}
+                                        class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500"
+                                    ></video>
+                                    <span class="pointer-events-none absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-black/65 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-white">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-300 motion-safe:animate-pulse"></span>
+                                        Demo
+                                    </span>
+                                    <span class="pointer-events-none absolute inset-x-0 bottom-0 h-1 overflow-hidden bg-black/45">
+                                        <span class="block h-full w-1/3 bg-emerald-300/90 motion-safe:animate-[project-video-progress_2.4s_linear_infinite]"></span>
+                                    </span>
+                                </>
+                            ) : project.image === '/er.png' ? (
                                 <Image
                                     src={erProjectImage}
                                     alt={project.title}
@@ -195,6 +216,51 @@ const heroTitle = t['hero.title'];
     </section>
 
 </Layout>
+
+<script is:inline>
+    const initProjectVideos = () => {
+        const videos = Array.from(document.querySelectorAll('[data-project-video]'));
+        if (!videos.length) return;
+
+        const playVideo = (video) => {
+            if (!(video instanceof HTMLVideoElement)) return;
+            if (!video.src && video.dataset.src) {
+                video.src = video.dataset.src;
+                video.load();
+            }
+            video.muted = true;
+            video.play().catch(() => {
+                // Some browsers defer autoplay until the video is visible or the user interacts.
+            });
+        };
+
+        if ('IntersectionObserver' in window) {
+            const observer = window.__projectVideoObserver ?? new IntersectionObserver((entries) => {
+                    for (const entry of entries) {
+                        if (!(entry.target instanceof HTMLVideoElement)) continue;
+                        if (entry.isIntersecting) {
+                            playVideo(entry.target);
+                        } else {
+                            entry.target.pause();
+                        }
+                    }
+                }, { rootMargin: '200px 0px', threshold: 0.2 });
+            window.__projectVideoObserver = observer;
+
+            videos.forEach((video) => {
+                if (video.dataset.projectVideoBound === 'true') return;
+                video.dataset.projectVideoBound = 'true';
+                observer.observe(video);
+            });
+            return;
+        }
+
+        videos.forEach(playVideo);
+    };
+
+    initProjectVideos();
+    document.addEventListener('astro:page-load', initProjectVideos);
+</script>
 
 <script is:inline>
     const heroTypewriterState = window.__heroTypewriterState ?? {
@@ -336,6 +402,16 @@ const heroTitle = t['hero.title'];
         .typewriter-title__text {
             border-right: none;
             animation: none;
+        }
+    }
+
+    @keyframes project-video-progress {
+        from {
+            transform: translateX(-100%);
+        }
+
+        to {
+            transform: translateX(300%);
         }
     }
 </style>

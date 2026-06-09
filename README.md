@@ -14,6 +14,7 @@
 - **Star Watch**: 東京の夜空を Canvas で描画し、天体位置や観測条件を確認
 - **Playlist**: ローカルスクリプトで生成した静的 JSON から YouTube Music プレイリストを表示
 - **Bandit Lab**: 多腕バンディット問題を試せる小さなインタラクティブデモ
+- **Projects**: 制作物カードにデモ動画プレビューを表示
 
 ## 実装で意識したこと
 
@@ -21,6 +22,11 @@
 - UI の密度がセクションごとにばらつかないよう、見出し、余白、区切り線、カード表現を揃えました。
 - 星空描画は Canvas の描画状態と UI 状態を分け、画面サイズ変更やテーマ切り替えでも崩れにくいようにしています。
 - プレイリストは認証情報を公開ビルドに含めないため、API 取得処理をローカルスクリプトに分離しています。
+
+## Project デモ動画
+
+- Typing Game: `/videos/projects/type-game-demo.mp4`（音声なし軽量MP4、posterあり）
+- AI Commerce Agent: `/videos/projects/jd-global-demo.mp4`（音声なし軽量MP4、posterあり）
 
 ## 技術スタック
 
