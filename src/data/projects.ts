@@ -11,6 +11,20 @@ export interface Project {
 export const projectData: Record<string, Project[]> = {
     en: [
         {
+            title: "NHK Student Robocon",
+            desc: "Designed control program for ER injection mechanism, etc.",
+            image: "/er.png",
+            link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
+            tags: ["C++", "Embedded", "Robotics", "Python"]
+        },
+        {
+            title: "Competitive Programming",
+            desc: "Casual participation.",
+            image: "/kyopro.avif",
+            link: "https://atcoder.jp/users/Sakasu",
+            tags: ["C++", "Algorithms", "Python"]
+        },
+        {
             title: "Typing Game",
             desc: "Vue and Rust typing game with time tracking, sound feedback, and a ranking API design.",
             image: "/css.avif",
@@ -41,23 +55,23 @@ export const projectData: Record<string, Project[]> = {
             image: "/css.avif",
             link: "https://github.com/Mr-Sakasu/",
             tags: ["Astro", "TypeScript", "Tailwind"]
-        },
-        {
-            title: "NHK Student Robocon",
-            desc: "Designed control program for ER injection mechanism, etc.",
-            image: "/er.png",
-            link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
-            tags: ["C++", "Embedded", "Robotics", "Python"]
-        },
-        {
-            title: "Competitive Programming",
-            desc: "Casual participation.",
-            image: "/kyopro.avif",
-            link: "https://atcoder.jp/users/Sakasu",
-            tags: ["C++", "Algorithms", "Python"]
         }
     ],
     zh: [
+        {
+            title: "NHK 学生机器人大赛",
+            desc: "负责 ER 发射机构的控制程序设计等。",
+            image: "/er.png",
+            link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
+            tags: ["C++", "嵌入式", "机器人", "Python"]
+        },
+        {
+            title: "竞技编程 (算法竞赛)",
+            desc: "佛系参与。",
+            image: "/kyopro.avif",
+            link: "https://atcoder.jp/users/Sakasu",
+            tags: ["C++", "算法", "Python"]
+        },
         {
             title: "Typing Game",
             desc: "使用 Vue 和 Rust/Actix Web 制作的打字游戏，包含计时、音效反馈和排行榜 API 设计。",
@@ -89,23 +103,23 @@ export const projectData: Record<string, Project[]> = {
             image: "/css.avif",
             link: "https://github.com/Mr-Sakasu/",
             tags: ["Astro", "TypeScript", "Tailwind"]
-        },
-        {
-            title: "NHK 学生机器人大赛",
-            desc: "负责 ER 发射机构的控制程序设计等。",
-            image: "/er.png",
-            link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
-            tags: ["C++", "嵌入式", "机器人", "Python"]
-        },
-        {
-            title: "竞技编程 (算法竞赛)",
-            desc: "佛系参与。",
-            image: "/kyopro.avif",
-            link: "https://atcoder.jp/users/Sakasu",
-            tags: ["C++", "算法", "Python"]
         }
     ],
-    jp: [
+    ja: [
+        {
+            title: "NHK学生ロボコン",
+            desc: "ER射出機構の制御プログラム設計など",
+            image: "/er.png",
+            link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
+            tags: ["C++", "組み込み", "Robotics", "Python"]
+        },
+        {
+            title: "競技プログラミング",
+            desc: "まったり参加",
+            image: "/kyopro.avif",
+            link: "https://atcoder.jp/users/Sakasu",
+            tags: ["C++", "Algorithms", "Python"]
+        },
         {
             title: "Typing Game",
             desc: "Vue 3 と Rust/Actix Webで作成したタイピングゲーム。タイム計測、効果音、ランキングAPI設計を実装",
@@ -137,20 +151,6 @@ export const projectData: Record<string, Project[]> = {
             image: "/css.avif",
             link: "https://github.com/Mr-Sakasu/",
             tags: ["Astro", "TypeScript", "Tailwind"]
-        },
-        {
-            title: "NHK学生ロボコン",
-            desc: "ER射出機構の制御プログラム設計など",
-            image: "/er.png",
-            link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
-            tags: ["C++", "組み込み", "Robotics", "Python"]
-        },
-        {
-            title: "競技プログラミング",
-            desc: "まったり参加",
-            image: "/kyopro.avif",
-            link: "https://atcoder.jp/users/Sakasu",
-            tags: ["C++", "Algorithms", "Python"]
         }
     ]
 };

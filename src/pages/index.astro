@@ -29,7 +29,7 @@ import Background from '../components/Background.astro';
     <script>
         function toRouteLang(langTag) {
             const tag = String(langTag || '').toLowerCase();
-            if (tag.startsWith('ja') || tag.startsWith('jp')) return 'jp';
+            if (tag.startsWith('ja') || tag.startsWith('jp')) return 'ja';
             if (tag.startsWith('zh')) return 'zh';
             if (tag.startsWith('en')) return 'en';
             return '';

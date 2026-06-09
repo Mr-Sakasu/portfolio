@@ -1,7 +1,7 @@
 export const languages = {
     en: 'EN',
     zh: 'ZH',
-    jp: 'JP',
+    ja: 'JA',
 };
 
 export const defaultLang = 'en';
@@ -247,7 +247,7 @@ export const ui = {
         'stars.sky.magbands.fifth': '五等星',
         'stars.sky.magbands.sixth': '六等星',
     },
-    jp: {
+    ja: {
         'nav.work': 'プロジェクト',
         'nav.stars': '星空',
         'nav.bandit': 'バンディット',
