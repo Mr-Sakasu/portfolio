@@ -8,7 +8,7 @@ export const defaultLang = 'en';
 
 export const ui = {
     en: {
-        'nav.work': 'Interests',
+        'nav.work': 'Projects',
         'nav.stars': 'Star Watch',
         'nav.bandit': 'Bandit Lab',
         'nav.playlist': 'Playlist',
@@ -128,7 +128,7 @@ export const ui = {
         'stars.sky.magbands.sixth': '6th magnitude',
     },
     zh: {
-        'nav.work': '兴趣领域',
+        'nav.work': '项目',
         'nav.stars': '观星',
         'nav.bandit': 'Bandit 实验',
         'nav.playlist': '歌单',
@@ -248,7 +248,7 @@ export const ui = {
         'stars.sky.magbands.sixth': '六等星',
     },
     jp: {
-        'nav.work': '興味分野',
+        'nav.work': 'プロジェクト',
         'nav.stars': '星空',
         'nav.bandit': 'バンディット',
         'nav.playlist': 'プレイリスト',
