@@ -31,7 +31,7 @@ export const ui = {
         'playlist.page.title': 'Playlist',
         'playlist.page.subtitle': 'Localized YouTube Music categories, sorted newest first.',
         'playlist.artistChart.title': 'Artist Counts',
-        'playlist.artistChart.subtitle': 'Grouped from the current English Songs playlist metadata.',
+        'playlist.artistChart.subtitle': 'Grouped from English Songs metadata, with known related songs counted under the original artist.',
         'playlist.artistChart.total': 'Total',
         'bandit.title': 'Multi-Armed Bandit Challenge',
         'bandit.subtitle': 'Maximize cumulative reward in 20 rounds and compare with standard policies.',
