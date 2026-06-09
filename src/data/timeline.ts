@@ -127,7 +127,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '🤖'
         }
     ],
-    jp: [
+    ja: [
         {
             date: CURRENT_MONTH_TOKEN,
             title: '現在',

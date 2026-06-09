@@ -42,7 +42,7 @@ const t = ui[lang] ?? ui.en;
 const playlistRoot = playlistData as PlaylistData;
 const playlistCollection = playlistRoot.byLang?.[lang] ?? playlistRoot;
 const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
-  jp: [
+  ja: [
     'PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le',
     'PLiz-kupUIzB6fO7Svf1w3dUi3GSss_H6f',
     'PLiz-kupUIzB70ktndKK9cPKR2zz9siN2A',
@@ -55,7 +55,7 @@ const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
   ],
 };
 const homePlaylistByLang: Partial<Record<keyof typeof ui, string[]>> = {
-  jp: ['PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le'],
+  ja: ['PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le'],
 };
 const unsortedSourcePlaylists = Array.isArray(playlistCollection.playlists) && playlistCollection.playlists.length > 0
   ? playlistCollection.playlists
@@ -111,7 +111,7 @@ const visiblePlaylists = configuredPlaylists.length > 0
 const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
 const sectionClass = variant === 'page' ? 'mt-6' : 'mt-4 md:mt-8';
 const trackListClass = variant === 'page'
-  ? lang === 'jp'
+  ? lang === 'ja'
     ? 'max-h-80 divide-y divide-white/10 overflow-y-auto overscroll-contain'
     : 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
   : 'max-h-72 divide-y divide-white/10 overflow-y-auto overscroll-contain';
@@ -220,7 +220,7 @@ if (lang === 'en') {
 const englishArtistChartItems = [...englishArtistCounts.entries()]
   .map(([artist, count], index) => ({ artist, count, order: index }))
   .sort((first, second) => second.count - first.count || first.artist.localeCompare(second.artist));
-const artistChartItems = lang === 'jp'
+const artistChartItems = lang === 'ja'
   ? jpopArtistChartConfig
       .map((item, index) => {
         const playlist = playlistByTitle.get(item.playlistTitle);
