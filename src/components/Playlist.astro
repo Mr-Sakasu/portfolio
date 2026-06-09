@@ -175,7 +175,28 @@ const englishArtistFromTitle = (title: string) => {
   const loweredTitle = title.toLowerCase();
   return knownArtists.find((artist) => loweredTitle.startsWith(artist.toLowerCase())) ?? '';
 };
+const englishRelatedArtistByVideoId: Record<string, string> = {
+  '7RZ12L-sp7g': 'Maroon 5',
+};
+const englishRelatedArtistFromTrack = (track: PlaylistTrack) => {
+  const videoIdArtist = englishRelatedArtistByVideoId[track.videoId ?? ''];
+  if (videoIdArtist) {
+    return videoIdArtist;
+  }
+
+  const title = (track.title ?? '').trim().toLowerCase();
+  if (title === 'memories (feat. ben woodward)') {
+    return 'Maroon 5';
+  }
+
+  return '';
+};
 const normalizeEnglishArtist = (track: PlaylistTrack) => {
+  const relatedArtist = englishRelatedArtistFromTrack(track);
+  if (relatedArtist) {
+    return relatedArtist;
+  }
+
   const titleArtist = englishArtistFromTitle(track.title ?? '');
   if (titleArtist) {
     return titleArtist;
@@ -234,6 +255,44 @@ const artistChartItems = lang === 'ja'
     : [];
 const artistChartMaxCount = Math.max(...artistChartItems.map((item) => item.count), 1);
 const artistChartTotalCount = artistChartItems.reduce((total, item) => total + item.count, 0);
+const artistChartPalette = [
+  '#fb7185',
+  '#22d3ee',
+  '#34d399',
+  '#facc15',
+  '#a78bfa',
+  '#f97316',
+  '#60a5fa',
+  '#f472b6',
+  '#2dd4bf',
+  '#c084fc',
+  '#fde047',
+  '#4ade80',
+  '#38bdf8',
+  '#fb923c',
+  '#e879f9',
+];
+let artistChartOffset = 0;
+const artistChartSlices = artistChartItems.map((item, index) => {
+  const percentage = artistChartTotalCount > 0
+    ? (item.count / artistChartTotalCount) * 100
+    : 0;
+  const start = artistChartOffset;
+  artistChartOffset += percentage;
+  return {
+    ...item,
+    color: artistChartPalette[index % artistChartPalette.length],
+    percentage,
+    start,
+    end: artistChartOffset,
+  };
+});
+const artistChartGradient = artistChartSlices
+  .map((item) => `${item.color} ${item.start.toFixed(4)}% ${item.end.toFixed(4)}%`)
+  .join(', ');
+const formatPercentage = (percentage: number) => (
+  percentage >= 10 ? `${Math.round(percentage)}%` : `${percentage.toFixed(1)}%`
+);
 const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 ---
 
@@ -269,33 +328,60 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
           </div>
         </div>
 
-        <div class={lang === 'en' ? 'mt-4 max-h-80 space-y-3 overflow-y-auto overscroll-contain pr-1' : 'mt-4 space-y-3'}>
-          {artistChartItems.map((item) => (
-            <div class="grid gap-2 sm:grid-cols-[13rem_minmax(0,1fr)_5rem] sm:items-center">
-              <div class="flex min-w-0 items-baseline justify-between gap-3 sm:block">
-                <span class="block break-words text-sm font-semibold leading-snug text-white">
-                  {item.artist}
-                </span>
-                <span class="shrink-0 text-xs tabular-nums text-gray-400 sm:hidden">
+        {lang === 'ja' ? (
+          <div class="mt-5 grid gap-5 lg:grid-cols-[minmax(14rem,19rem)_minmax(0,1fr)] lg:items-center">
+            <div
+              class="mx-auto aspect-square w-full max-w-72 rounded-full border border-white/10 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.95)]"
+              role="img"
+              aria-label={`${t['playlist.artistChart.title']}: ${artistChartSlices.map((item) => `${item.artist} ${formatTrackCount(item.count)}`).join(', ')}`}
+              style={`background: conic-gradient(${artistChartGradient});`}
+            ></div>
+            <div class="max-h-96 space-y-2 overflow-y-auto overscroll-contain pr-1">
+              {artistChartSlices.map((item) => (
+                <div class="grid min-w-0 grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md bg-white/[0.035] px-3 py-2">
+                  <span
+                    class="h-3 w-3 rounded-full"
+                    style={`background-color: ${item.color};`}
+                  ></span>
+                  <span class="min-w-0 truncate text-sm font-semibold leading-snug text-white" title={item.artist}>
+                    {item.artist}
+                  </span>
+                  <span class="whitespace-nowrap text-right text-xs tabular-nums text-gray-300">
+                    {formatTrackCount(item.count)} / {formatPercentage(item.percentage)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div class="mt-4 max-h-80 space-y-3 overflow-y-auto overscroll-contain pr-1">
+            {artistChartItems.map((item) => (
+              <div class="grid gap-2 sm:grid-cols-[13rem_minmax(0,1fr)_5rem] sm:items-center">
+                <div class="flex min-w-0 items-baseline justify-between gap-3 sm:block">
+                  <span class="block break-words text-sm font-semibold leading-snug text-white">
+                    {item.artist}
+                  </span>
+                  <span class="shrink-0 text-xs tabular-nums text-gray-400 sm:hidden">
+                    {formatTrackCount(item.count)}
+                  </span>
+                </div>
+                <div
+                  class="h-3 overflow-hidden rounded-full bg-white/[0.06]"
+                  role="img"
+                  aria-label={`${item.artist}: ${formatTrackCount(item.count)}`}
+                >
+                  <span
+                    class="block h-full rounded-full bg-gradient-to-r from-rose-300 via-cyan-300 to-emerald-300"
+                    style={`width: ${Math.max(4, Math.round((item.count / artistChartMaxCount) * 100))}%`}
+                  ></span>
+                </div>
+                <span class="hidden text-right text-xs tabular-nums text-gray-300 sm:block">
                   {formatTrackCount(item.count)}
                 </span>
               </div>
-              <div
-                class="h-3 overflow-hidden rounded-full bg-white/[0.06]"
-                role="img"
-                aria-label={`${item.artist}: ${formatTrackCount(item.count)}`}
-              >
-                <span
-                  class="block h-full rounded-full bg-gradient-to-r from-rose-300 via-cyan-300 to-emerald-300"
-                  style={`width: ${Math.max(4, Math.round((item.count / artistChartMaxCount) * 100))}%`}
-                ></span>
-              </div>
-              <span class="hidden text-right text-xs tabular-nums text-gray-300 sm:block">
-                {formatTrackCount(item.count)}
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     )}
 
