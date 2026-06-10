@@ -20,7 +20,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
-            date: '2026-06-08',
+            date: '2026-06',
             title: 'AtCoder Heuristic (Cyan)',
             desc: 'Reached cyan in heuristic contests.',
             color: 'cyan',
@@ -78,7 +78,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
-            date: '2026-06-08',
+            date: '2026-06',
             title: 'AtCoder 启发式竞赛 (青名)',
             desc: '启发式竞赛达到青名。',
             color: 'cyan',
@@ -136,7 +136,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
-            date: '2026-06-08',
+            date: '2026-06',
             title: 'AtCoder Heuristic 水色',
             desc: 'ヒューリスティック少し',
             color: 'cyan',
