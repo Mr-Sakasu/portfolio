@@ -48,9 +48,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/python.svg',
         level: 2,
         summary: {
-            en: 'Research experiments, data analysis, automation, and implementation of machine-learning emotion recognition algorithms.',
-            zh: '研究实验、数据分析、自动化，以及基于机器学习的情感识别算法实现。',
-            ja: '研究実験、データ分析、自動化。機械学習による感情認識アルゴリズムも実装',
+            en: 'Research experiments, data analysis, automation, web app backends, and implementation of machine-learning emotion recognition algorithms.',
+            zh: '研究实验、数据分析、自动化、Web 应用后端，以及基于机器学习的情感识别算法实现。',
+            ja: '研究実験、データ分析、自動化、Webアプリのバックエンドとして使用。機械学習による感情認識アルゴリズムも実装',
         },
         children: [
             { name: 'NumPy', icon: '/icons/skills/numpy.svg' },
