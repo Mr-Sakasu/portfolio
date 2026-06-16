@@ -1,5 +1,10 @@
 ---
-import { skillStack, type SkillLocale } from '../data/skills';
+import {
+    skillChildGroupLabels,
+    skillStack,
+    type SkillChildGroup,
+    type SkillLocale,
+} from '../data/skills';
 import { ui } from '../i18n/ui';
 
 interface Props {
@@ -11,6 +16,30 @@ const t = ui[lang] ?? ui.en;
 const locale = (lang in ui ? lang : 'en') as SkillLocale;
 const maxSkillLevel = 5;
 const skillLevelSlots = Array.from({ length: maxSkillLevel }, (_, index) => index + 1);
+const childGroupOrder: SkillChildGroup[] = ['frontend', 'backend'];
+
+const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
+    if (!skill.children) {
+        return [];
+    }
+
+    const grouped = childGroupOrder
+        .map((group) => ({
+            label: skillChildGroupLabels[group][locale],
+            children: skill.children?.filter((child) => child.group === group) ?? [],
+        }))
+        .filter((group) => group.children.length > 0);
+
+    const ungroupedChildren = skill.children.filter((child) => !child.group);
+    if (ungroupedChildren.length > 0) {
+        grouped.push({
+            label: '',
+            children: ungroupedChildren,
+        });
+    }
+
+    return grouped;
+};
 ---
 
 <section class="mt-4 md:mt-8">
@@ -48,20 +77,31 @@ const skillLevelSlots = Array.from({ length: maxSkillLevel }, (_, index) => inde
                 </p>
 
                 {skill.children && (
-                    <div class="mt-3 flex flex-wrap gap-1.5">
-                        {skill.children.map((child) => (
-                            <span class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-slate-700/80 bg-white/[0.035] px-2 py-1 text-[11px] font-semibold leading-none text-gray-300">
-                                <img
-                                    src={child.icon}
-                                    alt=""
-                                    loading="lazy"
-                                    decoding="async"
-                                    width="14"
-                                    height="14"
-                                    class="h-3.5 w-3.5 rounded-sm bg-white/95 p-0.5"
-                                />
-                                <span class="min-w-0 truncate" title={child.name}>{child.name}</span>
-                            </span>
+                    <div class="mt-3 space-y-2">
+                        {getSkillChildGroups(skill).map((group) => (
+                            <div>
+                                {group.label && (
+                                    <p class="text-[10px] font-bold uppercase leading-none tracking-[0.14em] text-cyan-300/80">
+                                        {group.label}
+                                    </p>
+                                )}
+                                <div class={group.label ? 'mt-1.5 flex flex-wrap gap-1.5' : 'flex flex-wrap gap-1.5'}>
+                                    {group.children.map((child) => (
+                                        <span class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-slate-700/80 bg-white/[0.035] px-2 py-1 text-[11px] font-semibold leading-none text-gray-300">
+                                            <img
+                                                src={child.icon}
+                                                alt=""
+                                                loading="lazy"
+                                                decoding="async"
+                                                width="14"
+                                                height="14"
+                                                class="h-3.5 w-3.5 rounded-sm bg-white/95 p-0.5"
+                                            />
+                                            <span class="min-w-0 truncate" title={child.name}>{child.name}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
                 )}
