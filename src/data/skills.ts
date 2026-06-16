@@ -1,4 +1,18 @@
 export type SkillLocale = 'en' | 'zh' | 'ja';
+export type SkillChildGroup = 'frontend' | 'backend';
+
+export const skillChildGroupLabels: Record<SkillChildGroup, Record<SkillLocale, string>> = {
+    frontend: {
+        en: 'Frontend',
+        zh: '前端',
+        ja: 'フロントエンド',
+    },
+    backend: {
+        en: 'Backend',
+        zh: '后端',
+        ja: 'バックエンド',
+    },
+};
 
 export interface SkillStackItem {
     name: string;
@@ -8,6 +22,7 @@ export interface SkillStackItem {
     children?: Array<{
         name: string;
         icon: string;
+        group?: SkillChildGroup;
     }>;
 }
 
@@ -66,19 +81,20 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/web.svg',
         level: 1,
         summary: {
-            en: 'Typed static sites and compact interfaces; built this website, a typing web app, an e-commerce support AI chatbot, and an X/Twitter competitive-programming contest notification bot.',
-            zh: '带类型的静态网站与紧凑界面；制作了本网站、打字 Web 应用、电子商务支持 AI 聊天机器人，以及 X/Twitter 算法竞赛通知 bot。',
-            ja: '型付き静的サイトとコンパクトなUI。本Webサイト、タイピングWebアプリ、Eコマース支援AIチャットボット、X/Twitter向け競技プログラミングコンテスト通知botを作成',
+            en: 'Frontend and backend web development; built this website, a typing web app, an e-commerce support AI chatbot, and an X/Twitter competitive-programming contest notification bot.',
+            zh: '前端与后端 Web 开发；制作了本网站、打字 Web 应用、电子商务支持 AI 聊天机器人，以及 X/Twitter 算法竞赛通知 bot。',
+            ja: 'フロントエンドとバックエンドのWeb開発。本Webサイト、タイピングWebアプリ、Eコマース支援AIチャットボット、X/Twitter向け競技プログラミングコンテスト通知botを作成',
         },
         children: [
-            { name: 'JavaScript', icon: '/icons/skills/javascript.svg' },
-            { name: 'Node.js', icon: '/icons/skills/nodejs.svg' },
-            { name: 'TypeScript', icon: '/icons/skills/typescript.svg' },
-            { name: 'HTML', icon: '/icons/skills/html.svg' },
-            { name: 'Astro', icon: '/icons/skills/astro.svg' },
-            { name: 'Vue', icon: '/icons/skills/vue.svg' },
-            { name: 'React', icon: '/icons/skills/react.svg' },
-            { name: 'Tailwind CSS', icon: '/icons/skills/tailwindcss.svg' },
+            { name: 'JavaScript', icon: '/icons/skills/javascript.svg', group: 'frontend' },
+            { name: 'TypeScript', icon: '/icons/skills/typescript.svg', group: 'frontend' },
+            { name: 'Vue 3', icon: '/icons/skills/vue.svg', group: 'frontend' },
+            { name: 'React', icon: '/icons/skills/react.svg', group: 'frontend' },
+            { name: 'HTML', icon: '/icons/skills/html.svg', group: 'frontend' },
+            { name: 'Astro', icon: '/icons/skills/astro.svg', group: 'frontend' },
+            { name: 'Tailwind CSS', icon: '/icons/skills/tailwindcss.svg', group: 'frontend' },
+            { name: 'Rust / Actix Web', icon: '/icons/skills/rust.svg', group: 'backend' },
+            { name: 'Node.js', icon: '/icons/skills/nodejs.svg', group: 'backend' },
         ],
     },
     {
