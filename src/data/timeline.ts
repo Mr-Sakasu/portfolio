@@ -34,6 +34,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '🇨🇳'
         },
         {
+            date: '2025-03',
+            title: 'Departmental Outstanding Graduation Thesis Award',
+            desc: 'Received an award for my undergraduate thesis.',
+            color: 'yellow',
+            icon: '🏆'
+        },
+        {
             date: '2024-03',
             title: 'AtCoder Algorithm (Green)',
             desc: 'I can do algorithms... (really just a tiny bit).',
@@ -92,6 +99,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '🇨🇳'
         },
         {
+            date: '2025-03',
+            title: '获得系内优秀毕业论文奖',
+            desc: '本科毕业论文获奖。',
+            color: 'yellow',
+            icon: '🏆'
+        },
+        {
             date: '2024-03',
             title: 'AtCoder 算法竞技 (绿名)',
             desc: '算法... (真的只懂一点点)。',
@@ -148,6 +162,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: '中国語少し',
             color: 'red',
             icon: '🇨🇳'
+        },
+        {
+            date: '2025-03',
+            title: '学科内優秀卒業論文賞 受賞',
+            desc: '卒業論文で学科内優秀卒業論文賞を受賞',
+            color: 'yellow',
+            icon: '🏆'
         },
         {
             date: '2024-03',
