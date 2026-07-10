@@ -145,9 +145,9 @@ const heroTitle = t['hero.title'];
             <span class="section-rule bg-gradient-to-r from-emerald-500 to-cyan-400" aria-hidden="true"></span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
             {projects.map((project, projectIndex) => (
-                <a href={project.link} target="_blank" class="block group" data-reveal style={`--reveal-delay: ${(projectIndex % 2) * 90}ms;`}>
+                <a href={project.link} target="_blank" class="block group" data-reveal style={`--reveal-delay: ${(projectIndex % 2) * 160}ms; --reveal-duration: 1.4s;`}>
                     <div class="site-card h-full p-5 md:p-6 flex flex-col">
                         
                         <div class="relative w-full h-40 md:h-48 mb-4 overflow-hidden rounded-md">

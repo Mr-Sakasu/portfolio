@@ -335,7 +335,7 @@ const currentYear = new Date().getFullYear();
     }
 
     [data-reveal].is-revealed {
-        animation: site-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation: site-reveal var(--reveal-duration, 1.15s) cubic-bezier(0.16, 1, 0.3, 1) both;
         animation-delay: var(--reveal-delay, 0ms);
     }
 
@@ -347,7 +347,7 @@ const currentYear = new Date().getFullYear();
     @keyframes site-reveal {
         from {
             opacity: 0;
-            transform: translateY(22px);
+            transform: translateY(28px);
         }
         to {
             opacity: 1;
