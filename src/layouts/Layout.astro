@@ -12,16 +12,23 @@ const t = ui[lang as keyof typeof ui] ?? ui.en;
 const isStarsPage = Astro.url.pathname.includes('/stars');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
 const isPlaylistPage = Astro.url.pathname.includes('/playlist');
-const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-xs md:text-sm transition-colors';
+const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs md:text-sm font-medium transition-colors';
+const currentYear = new Date().getFullYear();
 ---
 
 <!DOCTYPE html>
-<html lang={lang} class="scroll-smooth bg-[#111]">
+<html lang={lang} class="scroll-smooth bg-[#0a0e17]">
 		<head>
 			<meta charset="UTF-8" />
-			<meta name="viewport" content="width=device-width" />
+			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<meta name="description" content={pageDescription} />
 			<title>{title}</title>
+			<link rel="preconnect" href="https://fonts.googleapis.com" />
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+			<link
+				href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+				rel="stylesheet"
+			/>
             <script is:inline>
                 (() => {
                     const storageKey = 'portfolio-theme';
@@ -44,18 +51,69 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
 		
         <Background />
 
-        <header class="box-border w-full max-w-3xl mx-auto px-4 py-4 md:p-6 border-b border-gray-800/50 relative z-10">
-            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div class="flex items-center justify-between gap-4">
-                    <a href={`/${lang}/`} class="text-lg md:text-xl font-bold tracking-wider hover:text-blue-400 transition-colors whitespace-nowrap">
-                        Sakasu's note
-                    </a>
-                    <div class="flex items-center gap-2 md:hidden shrink-0">
+        <header class="site-header sticky top-0 z-40 w-full">
+            <div class="box-border w-full max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-3.5">
+                <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div class="flex items-center justify-between gap-4">
+                        <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-blue-400 transition-colors whitespace-nowrap">
+                            Sakasu's note<span class="site-brand__dot" aria-hidden="true">.</span>
+                        </a>
+                        <div class="flex items-center gap-2 md:hidden shrink-0">
+                            <LanguagePicker />
+                            <button
+                                type="button"
+                                data-theme-toggle
+                                class="theme-toggle"
+                                aria-label={t['theme.toggle']}
+                                title={t['theme.toggle']}
+                            >
+                                <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
+                                <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <nav aria-label="Top navigation" class="w-full md:flex-1 md:flex md:justify-center">
+                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                            <a
+                                href={`/${lang}/playlist/`}
+                                class={`${navBaseClass} ${
+                                    isPlaylistPage
+                                        ? 'border-rose-400/60 bg-rose-500/15 text-rose-300'
+                                        : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                                }`}
+                            >
+                                {t['nav.playlist']}
+                            </a>
+                            <a
+                                href={`/${lang}/stars/`}
+                                class={`${navBaseClass} ${
+                                    isStarsPage
+                                        ? 'border-blue-400/60 bg-blue-500/15 text-blue-300'
+                                        : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                                }`}
+                            >
+                                {t['nav.stars']}
+                            </a>
+                            <a
+                                href={`/${lang}/bandit/`}
+                                class={`${navBaseClass} ${
+                                    isBanditPage
+                                        ? 'border-cyan-400/60 bg-cyan-500/15 text-cyan-300'
+                                        : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'
+                                }`}
+                            >
+                                {t['nav.bandit']}
+                            </a>
+                        </div>
+                    </nav>
+
+                    <div class="hidden md:flex md:items-center md:gap-2 shrink-0">
                         <LanguagePicker />
                         <button
                             type="button"
                             data-theme-toggle
-                            class="theme-toggle inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-700 text-gray-300 transition-colors hover:border-blue-400/60 hover:text-white"
+                            class="theme-toggle"
                             aria-label={t['theme.toggle']}
                             title={t['theme.toggle']}
                         >
@@ -64,55 +122,6 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
                         </button>
                     </div>
                 </div>
-
-                <nav aria-label="Top navigation" class="w-full md:flex-1 md:flex md:justify-center">
-                    <div class="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
-                        <a
-                            href={`/${lang}/playlist/`}
-                            class={`${navBaseClass} ${
-                                isPlaylistPage
-                                    ? 'border-rose-400/70 bg-rose-500/15 text-rose-300'
-                                    : 'border-gray-700 text-gray-300 hover:border-rose-400/60 hover:text-white'
-                            }`}
-                        >
-                            {t['nav.playlist']}
-                        </a>
-                        <a
-                            href={`/${lang}/stars/`}
-                            class={`${navBaseClass} ${
-                                isStarsPage
-                                    ? 'border-blue-400/70 bg-blue-500/15 text-blue-300'
-                                    : 'border-gray-700 text-gray-300 hover:border-blue-400/60 hover:text-white'
-                            }`}
-                        >
-                            {t['nav.stars']}
-                        </a>
-                        <a
-                            href={`/${lang}/bandit/`}
-                            class={`${navBaseClass} ${
-                                isBanditPage
-                                    ? 'border-cyan-400/70 bg-cyan-500/15 text-cyan-300'
-                                    : 'border-gray-700 text-gray-300 hover:border-cyan-400/60 hover:text-white'
-                            }`}
-                        >
-                            {t['nav.bandit']}
-                        </a>
-                    </div>
-                </nav>
-
-                <div class="hidden md:flex md:items-center md:gap-2 shrink-0">
-                    <LanguagePicker />
-                    <button
-                        type="button"
-                        data-theme-toggle
-                        class="theme-toggle inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gray-700 text-gray-300 transition-colors hover:border-blue-400/60 hover:text-white"
-                        aria-label={t['theme.toggle']}
-                        title={t['theme.toggle']}
-                    >
-                        <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
-                        <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀</span>
-                    </button>
-                </div>
             </div>
 			</header>
 
@@ -120,8 +129,18 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
 			<slot />
 		</main>
 
-        <footer class="text-center p-8 text-gray-600 text-sm relative z-10">
-            2025 Sakasu
+        <footer class="site-footer relative z-10 mt-10">
+            <div class="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-8 text-xs text-gray-500">
+                <p>&copy; {currentYear} Sakasu</p>
+                <a
+                    href="https://github.com/Mr-Sakasu/"
+                    target="_blank"
+                    rel="noopener"
+                    class="text-gray-500 hover:text-blue-400 transition-colors"
+                >
+                    GitHub
+                </a>
+            </div>
         </footer>
 
 	</body>
@@ -179,7 +198,10 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
 <style is:global>
     :root {
         color-scheme: dark;
-        --site-bg: #111;
+        --site-bg: #0a0e17;
+        --site-bg-glow:
+            radial-gradient(900px 620px at 85% -10%, rgba(59, 130, 246, 0.16), transparent 62%),
+            radial-gradient(720px 520px at -12% 108%, rgba(34, 211, 238, 0.1), transparent 60%);
         --site-text: #f8fafc;
         --site-muted: #94a3b8;
         --site-subtle: #cbd5e1;
@@ -187,11 +209,23 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
         --site-surface: rgba(17, 23, 34, 0.8);
         --site-surface-strong: rgba(15, 23, 42, 0.92);
         --site-surface-soft: rgba(8, 13, 23, 0.8);
+        --site-header-bg: rgba(10, 14, 23, 0.72);
+        --site-card-bg: rgba(17, 23, 34, 0.72);
+        --site-card-border: rgba(148, 163, 184, 0.16);
+        --site-card-border-hover: rgba(125, 211, 252, 0.42);
+        --site-card-shadow: 0 12px 32px -20px rgba(2, 6, 23, 0.9);
+        --site-card-shadow-hover: 0 20px 44px -22px rgba(56, 189, 248, 0.28);
+        --site-chip-bg: rgba(255, 255, 255, 0.05);
+        --site-caret: rgba(226, 232, 240, 0.95);
     }
 
     html[data-theme='light'] {
         color-scheme: light;
-        --site-bg: #f5f7fb;
+        background-color: #f4f6fb;
+        --site-bg: #f4f6fb;
+        --site-bg-glow:
+            radial-gradient(900px 620px at 85% -10%, rgba(59, 130, 246, 0.1), transparent 62%),
+            radial-gradient(720px 520px at -12% 108%, rgba(14, 165, 233, 0.08), transparent 60%);
         --site-text: #0f172a;
         --site-muted: #475569;
         --site-subtle: #334155;
@@ -199,6 +233,14 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
         --site-surface: rgba(255, 255, 255, 0.84);
         --site-surface-strong: rgba(255, 255, 255, 0.94);
         --site-surface-soft: rgba(241, 245, 249, 0.78);
+        --site-header-bg: rgba(247, 249, 253, 0.8);
+        --site-card-bg: rgba(255, 255, 255, 0.86);
+        --site-card-border: rgba(15, 23, 42, 0.1);
+        --site-card-border-hover: rgba(37, 99, 235, 0.42);
+        --site-card-shadow: 0 12px 32px -24px rgba(15, 23, 42, 0.28);
+        --site-card-shadow-hover: 0 20px 44px -24px rgba(37, 99, 235, 0.26);
+        --site-chip-bg: rgba(15, 23, 42, 0.045);
+        --site-caret: rgba(15, 23, 42, 0.85);
     }
 
     html,
@@ -209,6 +251,168 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
 
     body {
         color: var(--site-text);
+    }
+
+    h1,
+    h2,
+    h3 {
+        font-family: 'Space Grotesk', 'Noto Sans JP', ui-sans-serif, system-ui, sans-serif;
+        letter-spacing: -0.01em;
+    }
+
+    ::selection {
+        background: rgba(56, 189, 248, 0.32);
+    }
+
+    html[data-theme='light'] ::selection {
+        background: rgba(37, 99, 235, 0.2);
+    }
+
+    :focus-visible {
+        outline: 2px solid rgba(56, 189, 248, 0.7);
+        outline-offset: 2px;
+    }
+
+    html[data-theme='light'] :focus-visible {
+        outline-color: rgba(37, 99, 235, 0.7);
+    }
+
+    .site-header {
+        background: var(--site-header-bg);
+        border-bottom: 1px solid var(--site-card-border);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        transition: background-color 180ms ease, border-color 180ms ease;
+    }
+
+    .site-brand__dot {
+        background: linear-gradient(120deg, #3b82f6, #22d3ee);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+
+    .site-footer {
+        border-top: 1px solid var(--site-card-border);
+    }
+
+    .site-card {
+        border: 1px solid var(--site-card-border);
+        background-color: var(--site-card-bg);
+        border-radius: 1rem;
+        box-shadow: var(--site-card-shadow);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        transition:
+            transform 220ms ease,
+            border-color 220ms ease,
+            box-shadow 220ms ease,
+            background-color 180ms ease;
+    }
+
+    .site-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--site-card-border-hover);
+        box-shadow: var(--site-card-shadow-hover);
+    }
+
+    .section-rule {
+        display: block;
+        height: 3px;
+        width: 3.25rem;
+        margin-top: 0.7rem;
+        border-radius: 9999px;
+    }
+
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 9999px;
+        border: 1px solid var(--site-card-border);
+        background: var(--site-chip-bg);
+        padding: 0.28rem 0.65rem;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--site-muted);
+        transition: color 180ms ease, border-color 180ms ease;
+    }
+
+    .btn-ghost {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border-radius: 9999px;
+        border: 1px solid var(--site-card-border);
+        background: var(--site-chip-bg);
+        padding: 0.5rem 1.1rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--site-subtle);
+        transition:
+            color 180ms ease,
+            border-color 180ms ease,
+            transform 180ms ease,
+            box-shadow 180ms ease;
+    }
+
+    .btn-ghost:hover {
+        color: var(--site-text);
+        border-color: var(--site-card-border-hover);
+        transform: translateY(-1px);
+        box-shadow: var(--site-card-shadow);
+    }
+
+    .lang-picker {
+        display: flex;
+        gap: 2px;
+        padding: 3px;
+        border-radius: 9999px;
+        border: 1px solid var(--site-card-border);
+        background: var(--site-chip-bg);
+    }
+
+    .lang-picker a {
+        border-radius: 9999px;
+        padding: 0.3rem 0.7rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        color: var(--site-muted);
+        transition: color 180ms ease, background-color 180ms ease;
+    }
+
+    .lang-picker a:hover {
+        color: var(--site-text);
+    }
+
+    .lang-picker a.is-active {
+        background: linear-gradient(120deg, #2563eb, #0891b2);
+        color: #fff;
+        box-shadow: 0 6px 16px -8px rgba(37, 99, 235, 0.7);
+    }
+
+    .lang-picker a.is-active:hover {
+        color: #fff;
+    }
+
+    .theme-toggle {
+        display: inline-flex;
+        height: 2.25rem;
+        width: 2.25rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        border: 1px solid var(--site-card-border);
+        background: var(--site-chip-bg);
+        color: var(--site-muted);
+        transition: color 180ms ease, border-color 180ms ease;
+    }
+
+    .theme-toggle:hover {
+        color: var(--site-text);
+        border-color: var(--site-card-border-hover);
     }
 
     .theme-toggle__icon {
@@ -226,6 +430,14 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 t
 
     html[data-theme='light'] .theme-toggle__icon--light {
         display: inline;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .site-card,
+        .site-card:hover,
+        .btn-ghost:hover {
+            transform: none;
+        }
     }
 
     html[data-theme='light'] .text-white {
