@@ -44,12 +44,10 @@ const toneByColor = {
     {events.map((event, index) => {
         const isLeft = index % 2 === 0;
         const tone = toneByColor[event.color] ?? toneByColor.blue;
+        const isCurrent = event.date === CURRENT_MONTH_TOKEN;
 
         return (
-            <article
-                class="timeline-item relative mb-6 last:mb-0 md:mb-8 opacity-0 translate-y-2 animate-[timelineFade_.6s_ease-out_forwards]"
-                style={`animation-delay: ${index * 90}ms;`}
-            >
+            <article class="timeline-item relative mb-6 last:mb-0 md:mb-8" data-reveal>
                 <div class="relative grid grid-cols-[2.25rem_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] items-start">
                     <div class="relative col-start-1 md:col-start-2 flex justify-center pt-2">
                         <span class="z-10 grid h-8 w-8 place-items-center rounded-full border border-slate-600/80 bg-[#0f131d]">
@@ -58,7 +56,7 @@ const toneByColor = {
                     </div>
 
                     <div class={`col-start-2 ${isLeft ? 'md:col-start-1 md:pr-6 md:text-right' : 'md:col-start-3 md:pl-6 md:text-left'}`}>
-                        <div class={`rounded-xl border bg-[#111722]/80 backdrop-blur-md px-4 py-3 md:px-5 md:py-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] transition-colors duration-300 ${tone.card}`}>
+                        <div class={`${isCurrent ? 'timeline-card--current ' : ''}rounded-xl border bg-[#111722]/80 backdrop-blur-md px-4 py-3 md:px-5 md:py-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] transition-colors duration-300 ${tone.card}`}>
                             <p class="mb-2">
                                 <span class={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide ${tone.badge}`}>
                                     {event.date === CURRENT_MONTH_TOKEN ? (
@@ -107,22 +105,61 @@ const toneByColor = {
 </script>
 
 <style>
-    @keyframes timelineFade {
-        from {
-            opacity: 0;
-            transform: translateY(10px);
-        }
+    @property --timeline-beam-angle {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+    }
+
+    div.timeline-card--current {
+        position: relative;
+        border-color: var(--timeline-beam-soft, rgba(56, 189, 248, 0.55));
+        box-shadow: 0 0 28px -4px var(--timeline-beam-glow, rgba(56, 189, 248, 0.45));
+    }
+
+    /* A bright line that travels around the card edge. */
+    .timeline-card--current::after {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        padding: 2px;
+        background: conic-gradient(
+            from var(--timeline-beam-angle),
+            transparent 0deg,
+            transparent 250deg,
+            var(--timeline-beam-soft, rgba(56, 189, 248, 0.55)) 305deg,
+            var(--timeline-beam-core, #22d3ee) 330deg,
+            transparent 360deg
+        );
+        -webkit-mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+            linear-gradient(#fff 0 0) content-box,
+            linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        animation: timeline-beam 3.2s linear infinite;
+        pointer-events: none;
+    }
+
+    @keyframes timeline-beam {
         to {
-            opacity: 1;
-            transform: translateY(0);
+            --timeline-beam-angle: 360deg;
         }
     }
 
     @media (prefers-reduced-motion: reduce) {
-        .timeline-item {
-            opacity: 1 !important;
-            transform: none !important;
-            animation: none !important;
+        .timeline-card--current::after {
+            animation: none;
+            background: conic-gradient(
+                from 0deg,
+                var(--timeline-beam-soft, rgba(56, 189, 248, 0.55)),
+                var(--timeline-beam-core, #22d3ee),
+                var(--timeline-beam-soft, rgba(56, 189, 248, 0.55))
+            );
         }
     }
 </style>
+

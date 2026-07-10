@@ -43,7 +43,7 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
 ---
 
 <section class="mt-12 md:mt-16">
-    <div class="mb-5">
+    <div class="mb-5" data-reveal>
         <h2 class="text-2xl md:text-3xl font-bold text-cyan-300">
             {t['skills.title']}
         </h2>
@@ -54,8 +54,8 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
     </div>
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {skillStack.map((skill) => (
-            <article class="site-card min-h-36 p-4">
+        {skillStack.map((skill, skillIndex) => (
+            <article class="site-card min-h-36 p-4" data-reveal style={`--reveal-delay: ${(skillIndex % 3) * 80}ms;`}>
                 <div class="flex items-center gap-3">
                     <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/95 p-2">
                         <img
@@ -68,9 +68,19 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
                             class="h-6 w-6 object-contain"
                         />
                     </span>
-                    <h3 class="min-w-0 text-sm font-bold leading-tight text-white md:text-base">
+                    <h3 class="min-w-0 flex-1 text-sm font-bold leading-tight text-white md:text-base">
                         {skill.name}
                     </h3>
+                    <div
+                        class="flex shrink-0 gap-0.5 text-sm leading-none"
+                        aria-label={`${skill.name}: ${skill.level} star level`}
+                    >
+                        {skillLevelSlots.map((slot) => (
+                            <span class={slot <= skill.level ? 'star-on' : 'star-off'} aria-hidden="true">
+                                ★
+                            </span>
+                        ))}
+                    </div>
                 </div>
 
                 <p class="mt-3 text-xs leading-relaxed text-gray-400">
@@ -107,18 +117,6 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
                     </div>
                 )}
 
-                <div
-                    class="mt-3 flex items-center"
-                    aria-label={`${skill.name}: ${skill.level} star level`}
-                >
-                    <div class="flex gap-0.5 text-sm leading-none" aria-hidden="true">
-                        {skillLevelSlots.map((slot) => (
-                            <span class={slot <= skill.level ? 'text-cyan-300' : 'text-slate-600/80'}>
-                                ★
-                            </span>
-                        ))}
-                    </div>
-                </div>
             </article>
         ))}
     </div>
