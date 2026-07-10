@@ -43,6 +43,7 @@ const currentYear = new Date().getFullYear();
                     }
                     document.documentElement.dataset.theme = theme;
                     document.documentElement.style.colorScheme = theme;
+                    document.documentElement.classList.add('js');
                 })();
             </script>
 			<ClientRouter />
@@ -195,6 +196,47 @@ const currentYear = new Date().getFullYear();
     })();
 </script>
 
+<script is:inline>
+    (() => {
+        const revealNow = (el) => {
+            el.classList.add('is-revealed', 'is-done');
+        };
+
+        const initReveals = () => {
+            const elements = Array.from(document.querySelectorAll('[data-reveal]:not(.is-revealed)'));
+            if (!elements.length) return;
+
+            const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (reduceMotion || !('IntersectionObserver' in window)) {
+                elements.forEach(revealNow);
+                return;
+            }
+
+            const observer = new IntersectionObserver((entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) continue;
+                    const el = entry.target;
+                    observer.unobserve(el);
+                    el.classList.add('is-revealed');
+                    el.addEventListener('animationend', (event) => {
+                        if (event.target === el && event.animationName === 'site-reveal') {
+                            el.classList.add('is-done');
+                        }
+                    });
+                }
+            }, { rootMargin: '0px 0px -8% 0px', threshold: 0.1 });
+
+            elements.forEach((el) => observer.observe(el));
+        };
+
+        initReveals();
+        if (!window.__portfolioRevealHookAttached) {
+            document.addEventListener('astro:page-load', initReveals);
+            window.__portfolioRevealHookAttached = true;
+        }
+    })();
+</script>
+
 <style is:global>
     :root {
         color-scheme: dark;
@@ -217,6 +259,11 @@ const currentYear = new Date().getFullYear();
         --site-card-shadow-hover: 0 20px 44px -22px rgba(56, 189, 248, 0.28);
         --site-chip-bg: rgba(255, 255, 255, 0.05);
         --site-caret: rgba(226, 232, 240, 0.95);
+        --site-star-on: #67e8f9;
+        --site-star-off: rgba(100, 116, 139, 0.55);
+        --timeline-beam-core: #22d3ee;
+        --timeline-beam-soft: rgba(56, 189, 248, 0.55);
+        --timeline-beam-glow: rgba(56, 189, 248, 0.45);
     }
 
     html[data-theme='light'] {
@@ -241,6 +288,11 @@ const currentYear = new Date().getFullYear();
         --site-card-shadow-hover: 0 20px 44px -24px rgba(37, 99, 235, 0.26);
         --site-chip-bg: rgba(15, 23, 42, 0.045);
         --site-caret: rgba(15, 23, 42, 0.85);
+        --site-star-on: #0891b2;
+        --site-star-off: rgba(148, 163, 184, 0.65);
+        --timeline-beam-core: #0284c7;
+        --timeline-beam-soft: rgba(37, 99, 235, 0.5);
+        --timeline-beam-glow: rgba(37, 99, 235, 0.3);
     }
 
     html,
@@ -275,6 +327,42 @@ const currentYear = new Date().getFullYear();
 
     html[data-theme='light'] :focus-visible {
         outline-color: rgba(37, 99, 235, 0.7);
+    }
+
+    /* Scroll reveal: elements with [data-reveal] float in when they enter the viewport. */
+    html.js [data-reveal]:not(.is-revealed) {
+        opacity: 0;
+    }
+
+    [data-reveal].is-revealed {
+        animation: site-reveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        animation-delay: var(--reveal-delay, 0ms);
+    }
+
+    [data-reveal].is-done {
+        opacity: 1;
+        animation: none;
+    }
+
+    @keyframes site-reveal {
+        from {
+            opacity: 0;
+            transform: translateY(22px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        html.js [data-reveal]:not(.is-revealed) {
+            opacity: 1;
+        }
+
+        [data-reveal].is-revealed {
+            animation: none;
+        }
     }
 
     .site-header {
@@ -322,6 +410,14 @@ const currentYear = new Date().getFullYear();
         width: 3.25rem;
         margin-top: 0.7rem;
         border-radius: 9999px;
+    }
+
+    .star-on {
+        color: var(--site-star-on);
+    }
+
+    .star-off {
+        color: var(--site-star-off);
     }
 
     .chip {

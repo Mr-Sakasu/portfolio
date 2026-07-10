@@ -299,7 +299,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 {shouldRender && (
   <section class={sectionClass}>
     {showHeading && (
-      <div class="mb-5">
+      <div class="mb-5" data-reveal>
         <h2 class="text-2xl md:text-3xl font-bold text-rose-300">
           {t['playlist.eyebrow']}
         </h2>
@@ -309,7 +309,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
     )}
 
     {shouldShowArtistChart && (
-      <div class="mb-6 overflow-hidden rounded-xl border border-white/10 bg-[#0f151f]/85 p-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] sm:p-5">
+      <div class="mb-6 overflow-hidden rounded-xl border border-white/10 bg-[#0f151f]/85 p-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] sm:p-5" data-reveal>
         <div class="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 class="text-xl font-black leading-tight text-white sm:text-2xl">
@@ -390,6 +390,8 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
       {visiblePlaylists.map((playlist) => (
         <div
           class="overflow-hidden rounded-xl border border-white/10 bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]"
+          data-reveal
+          style="--reveal-delay: 80ms;"
           data-playlist-card
         >
           {playlist.hasTracks ? (
