@@ -8,7 +8,8 @@
     width: 100%;
     height: 100%;
     z-index: 0;
-    background-color: var(--site-bg, #111);
+    background-color: var(--site-bg, #0a0e17);
+    background-image: var(--site-bg-glow, none);
     pointer-events: none;
     transition: background-color 180ms ease;
   }
@@ -40,10 +41,10 @@
             connectionAlpha: 0.2,
           }
         : {
-            particle: 'rgba(130, 200, 255, 1)',
-            particleShadow: 'rgba(0, 150, 255, 0.8)',
+            particle: 'rgba(130, 200, 255, 0.9)',
+            particleShadow: 'rgba(0, 150, 255, 0.65)',
             connection: '100, 200, 255',
-            connectionAlpha: 0.5,
+            connectionAlpha: 0.38,
           };
     }
 
