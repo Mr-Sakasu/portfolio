@@ -98,7 +98,11 @@
   // --- SCENE: FIREWORKS -------------------------------------------------------
   // A shell climbs, slows under gravity, and bursts at its apex.
   const fireworksScene = (canvas, ctx) => {
-    const GRAVITY = 0.055;      // px per frame squared
+    const GRAVITY = 0.055;      // px per frame squared, for the climbing shell
+    // Stars fall far more slowly than the shell rises. Real ones are hundreds of
+    // metres away, so they drift down rather than drop; at the shell's gravity
+    // a burst rained straight out of frame.
+    const STAR_GRAVITY = 0.023;
     const DRAG = 0.992;         // spark velocity retained per frame — high enough
                                 // that sparks stay streaks instead of collapsing
                                 // to stationary dots after a few frames
@@ -217,7 +221,7 @@
           // 冠菊 keeps its speed and falls harder, so it droops into a hanging
           // curtain instead of stalling as a ring.
           drag: opts.gold ? 0.997 : DRAG,
-          grav: opts.gold ? GRAVITY * 1.75 : GRAVITY,
+          grav: opts.gold ? STAR_GRAVITY * 1.9 : STAR_GRAVITY,
           twinkle: opts.twinkle === true,
           seed: Math.random() * Math.PI * 2,
           life,
@@ -363,7 +367,7 @@
             y: s.y,
             trail: [s.x, s.y, s.x, s.y, s.x, s.y],
             drag: DRAG,
-            grav: GRAVITY,
+            grav: STAR_GRAVITY,
             hue2: null,
             gold: false,
             twinkle: false,
