@@ -485,14 +485,11 @@
     fireworks: fireworksScene,
   };
 
-  // Which scene this load gets: `?bg=<name>` when one is being checked
-  // directly, otherwise a fresh roll. Nothing is remembered between loads —
-  // every arrival is its own coin flip. Every scene stays in the roll under
-  // reduced motion too; that setting calms the fireworks (see the scene)
-  // rather than removing them, since the other scene drifts and animates too.
-  function pickSceneName() {
-    const names = Object.keys(SCENES);
-
+  // The theme picks the scene: fireworks belong in a night sky, the
+  // constellation graph suits a bright one. `?bg=<name>` overrides, for
+  // checking one directly. Reduced motion does not change the choice — it
+  // calms the fireworks instead (see the scene), since the graph animates too.
+  function pickSceneName(isLight) {
     try {
       const forced = new URLSearchParams(window.location.search).get('bg');
       if (forced && Object.prototype.hasOwnProperty.call(SCENES, forced)) return forced;
@@ -500,7 +497,7 @@
       // Unparseable query string is not a reason to lose the background.
     }
 
-    return names[Math.floor(Math.random() * names.length)];
+    return isLight ? 'network' : 'fireworks';
   }
 
   // We wrap everything in a function so we can restart it
@@ -527,12 +524,20 @@
     window.addEventListener('resize', resizeHandler);
     resize();
 
-    // Scenes are built after the first resize so they can size themselves.
-    const frame = SCENES[pickSceneName()](canvas, ctx);
+    // Built lazily in the loop, because the theme can change under us and the
+    // scene has to change with it. Scenes size themselves, so this happens
+    // after the first resize either way.
+    let builtName = null;
+    let frame = null;
 
     // --- ANIMATION LOOP ---
     function animate() {
       const isLight = document.documentElement.dataset.theme === 'light';
+      const wanted = pickSceneName(isLight);
+      if (wanted !== builtName) {
+        builtName = wanted;
+        frame = SCENES[wanted](canvas, ctx);   // a theme flip starts it fresh
+      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frame(isLight);
       // Save the ID so we can cancel it later
