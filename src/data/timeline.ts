@@ -20,6 +20,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
+            date: '2026-08',
+            title: 'LINEYahoo Software Engineer Internship',
+            desc: 'Worked on geographic data analysis as a software engineer intern.',
+            color: 'green',
+            icon: '💼'
+        },
+        {
             date: '2026-06',
             title: 'AtCoder Heuristic (Cyan)',
             desc: 'Reached cyan in heuristic contests.',
@@ -85,6 +92,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
+            date: '2026-08',
+            title: 'LINEYahoo 软件工程师实习',
+            desc: '作为软件工程师实习生，负责地理数据的分析。',
+            color: 'green',
+            icon: '💼'
+        },
+        {
             date: '2026-06',
             title: 'AtCoder 启发式竞赛 (青名)',
             desc: '启发式竞赛达到青名。',
@@ -148,6 +162,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: '日中のダブルディグリーを目指して研究中...',
             color: 'blue',
             icon: '✒'
+        },
+        {
+            date: '2026-08',
+            title: 'LINEヤフー ソフトウェアエンジニアインターン',
+            desc: '地理データの分析を担当',
+            color: 'green',
+            icon: '💼'
         },
         {
             date: '2026-06',
