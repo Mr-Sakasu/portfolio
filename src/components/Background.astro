@@ -20,8 +20,6 @@
   // listener, the theme read and the animation frame; a scene only knows how to
   // draw itself. Add a scene by adding one entry to SCENES.
 
-  const SCENE_STORAGE_KEY = 'portfolio-bg';
-
   // Global variable to track the animation frame
   let animationId;
   // The resize listener currently attached. Kept at module scope because each
@@ -111,6 +109,11 @@
     let framesToLaunch = 0;     // first shell goes up immediately
     let tick = 0;
 
+    // Reduced motion keeps the fireworks but takes the energy out of them:
+    // smaller bursts, longer gaps. Suppressing them entirely would only send
+    // the visitor to the other scene, which drifts and animates too.
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     // On the light theme the sky is near-white: bright sparks disappear, so the
     // hues go darker and more saturated and the white-hot core is dropped.
     const styleFor = (isLight) => isLight
@@ -135,8 +138,8 @@
     };
 
     const explode = (shell) => {
-      const count = 34 + Math.floor(Math.random() * 16);
-      const power = 3.6 + Math.random() * 3.2;
+      const count = calm ? 22 + Math.floor(Math.random() * 10) : 34 + Math.floor(Math.random() * 16);
+      const power = calm ? 2.6 + Math.random() * 1.6 : 3.6 + Math.random() * 3.2;
       // The bloom of light at the moment of the burst.
       flashes.push({ x: shell.x, y: shell.y, hue: shell.hue, life: 14, maxLife: 14, radius: 26 + power * 9 });
       // A slight hue spread reads as a real burst rather than a flat disc.
@@ -168,8 +171,8 @@
       if (framesToLaunch <= 0) {
         launch();
         // ~2.5s to ~5s between shells at 60fps: this is a background, so the
-        // sky is empty more often than not.
-        framesToLaunch = 150 + Math.floor(Math.random() * 150);
+        // sky is empty more often than not. Twice that under reduced motion.
+        framesToLaunch = (calm ? 300 : 150) + Math.floor(Math.random() * (calm ? 300 : 150));
       }
       framesToLaunch -= 1;
 
@@ -320,8 +323,11 @@
     fireworks: fireworksScene,
   };
 
-  // Which scene this visit gets. `?bg=<name>` wins (handy for checking one
-  // directly), then the choice already made for this tab, then a fresh roll.
+  // Which scene this load gets: `?bg=<name>` when one is being checked
+  // directly, otherwise a fresh roll. Nothing is remembered between loads —
+  // every arrival is its own coin flip. Every scene stays in the roll under
+  // reduced motion too; that setting calms the fireworks (see the scene)
+  // rather than removing them, since the other scene drifts and animates too.
   function pickSceneName() {
     const names = Object.keys(SCENES);
 
@@ -332,24 +338,7 @@
       // Unparseable query string is not a reason to lose the background.
     }
 
-    // Fireworks are the kind of motion this setting is meant to suppress.
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'network';
-
-    try {
-      const stored = window.sessionStorage.getItem(SCENE_STORAGE_KEY);
-      // A name left over from a scene that no longer exists must not stick.
-      if (stored && Object.prototype.hasOwnProperty.call(SCENES, stored)) return stored;
-    } catch {
-      // Private mode / storage disabled: fall through and just roll one.
-    }
-
-    const picked = names[Math.floor(Math.random() * names.length)];
-    try {
-      window.sessionStorage.setItem(SCENE_STORAGE_KEY, picked);
-    } catch {
-      // Not storable, so the next navigation rolls again. Still better than none.
-    }
-    return picked;
+    return names[Math.floor(Math.random() * names.length)];
   }
 
   // We wrap everything in a function so we can restart it
