@@ -255,22 +255,28 @@ const artistChartItems = lang === 'ja'
     : [];
 const artistChartMaxCount = Math.max(...artistChartItems.map((item) => item.count), 1);
 const artistChartTotalCount = artistChartItems.reduce((total, item) => total + item.count, 0);
+// Muted steps of the same hues: chroma pulled to ~0.10-0.13 and lightness kept
+// inside the OKLCH band both themes share, since these hexes are inline and the
+// light theme only remaps the card behind them. Adjacent pairs (including the
+// wrap from the last slice back to the first) clear the normal-vision ΔE 15
+// floor; the legend rows carry name and count, so colour never identifies alone.
 const artistChartPalette = [
-  '#fb7185',
-  '#22d3ee',
-  '#34d399',
-  '#facc15',
-  '#a78bfa',
-  '#f97316',
-  '#60a5fa',
-  '#f472b6',
-  '#2dd4bf',
-  '#c084fc',
-  '#fde047',
-  '#4ade80',
-  '#38bdf8',
-  '#fb923c',
-  '#e879f9',
+  '#b05b66',
+  '#0598ad',
+  '#007651',
+  '#ac8c0e',
+  '#8b7ac4',
+  '#ad5623',
+  '#4582cc',
+  '#973f6e',
+  '#009585',
+  '#7a589d',
+  '#a38f29',
+  '#07773b',
+  '#288bb7',
+  '#be7e50',
+  '#94559e',
+  '#0098af',
 ];
 let artistChartOffset = 0;
 const artistChartSlices = artistChartItems.map((item, index) => {
