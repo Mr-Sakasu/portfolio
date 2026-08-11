@@ -2,6 +2,7 @@
 import { ClientRouter } from 'astro:transitions';
 import LanguagePicker from '../components/LanguagePicker.astro';
 import Background from '../components/Background.astro';
+import Bgm from '../components/Bgm.astro';
 import { ui } from '../i18n/ui';
 
 const { title, lang, description } = Astro.props;
@@ -51,6 +52,7 @@ const currentYear = new Date().getFullYear();
 	<body class="text-white font-sans antialiased min-h-screen flex flex-col relative">
 		
         <Background />
+        <Bgm />
 
         <header class="site-header sticky top-0 z-40 w-full">
             <div class="box-border w-full max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-3.5">
@@ -70,6 +72,17 @@ const currentYear = new Date().getFullYear();
                             >
                                 <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
                                 <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀</span>
+                            </button>
+                            <button
+                                type="button"
+                                data-bgm-toggle
+                                data-bgm-state="off"
+                                class="theme-toggle bgm-toggle"
+                                aria-pressed="false"
+                                aria-label={t['bgm.toggle']}
+                                title={t['bgm.toggle']}
+                            >
+                                <span class="bgm-toggle__icon" aria-hidden="true">♪</span>
                             </button>
                         </div>
                     </div>
@@ -120,6 +133,17 @@ const currentYear = new Date().getFullYear();
                         >
                             <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
                             <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀</span>
+                        </button>
+                        <button
+                            type="button"
+                            data-bgm-toggle
+                            data-bgm-state="off"
+                            class="theme-toggle bgm-toggle"
+                            aria-pressed="false"
+                            aria-label={t['bgm.toggle']}
+                            title={t['bgm.toggle']}
+                        >
+                            <span class="bgm-toggle__icon" aria-hidden="true">♪</span>
                         </button>
                     </div>
                 </div>
@@ -518,6 +542,20 @@ const currentYear = new Date().getFullYear();
 
     .theme-toggle__icon--light {
         display: none;
+    }
+
+    .bgm-toggle__icon {
+        font-size: 0.95rem;
+        line-height: 1;
+    }
+
+    .bgm-toggle[data-bgm-state='off'] {
+        opacity: 0.5;
+    }
+
+    .bgm-toggle[data-bgm-state='on'] {
+        opacity: 1;
+        color: var(--timeline-beam-core, #22d3ee);
     }
 
     html[data-theme='light'] .theme-toggle__icon--dark {
