@@ -239,14 +239,14 @@
       if (shell.type === 'kamuro') {
         // 冠菊 / 黄金すだれ: opens in colour, settles to gold, and hangs.
         bloom(x, y, hue, 64, 15);
-        burst(x, y, hue, { count: 46, power: 3.4 + Math.random() * 1.6, life: 120, lifeSpread: 60, gold: true, spread: 14 });
+        burst(x, y, hue, { count: 46, power: 3.4 + Math.random() * 1.6, life: 200, lifeSpread: 90, gold: true, spread: 14 });
         return;
       }
 
       if (shell.type === 'senrin') {
         // 彩色千輪: a modest opening, then many small coloured flowers.
         bloom(x, y, hue, 44, 12);
-        burst(x, y, hue, { count: 20, power: 2.6 + Math.random() * 1.2, life: 46, lifeSpread: 30, spread: 24 });
+        burst(x, y, hue, { count: 20, power: 2.6 + Math.random() * 1.2, life: 82, lifeSpread: 44, spread: 24 });
         const flowers = 5 + Math.floor(Math.random() * 3);
         for (let i = 0; i < flowers; i++) {
           const a = Math.random() * Math.PI * 2;
@@ -256,7 +256,7 @@
             x: x + Math.cos(a) * r,
             y: y + Math.sin(a) * r,
             hue: Math.floor(Math.random() * 360),   // 彩色: each flower its own
-            opts: { count: 10, power: 1.5 + Math.random() * 0.7, life: 34, lifeSpread: 22, spread: 18, twinkle: true },
+            opts: { count: 10, power: 1.5 + Math.random() * 0.7, life: 66, lifeSpread: 34, spread: 18, twinkle: true },
           });
         }
         return;
@@ -266,8 +266,8 @@
         // 正三尺玉: the big one — a wide sphere, a second core inside it, and
         // 小割浮模様 opening around it a moment later.
         bloom(x, y, hue, 108, 20);
-        burst(x, y, hue, { count: 74, power: 6.4 + Math.random() * 2.4, life: 100, lifeSpread: 52, spread: 16 });
-        burst(x, y, (hue + 150) % 360, { count: 30, power: 3 + Math.random() * 1.2, life: 76, lifeSpread: 34, spread: 12 });
+        burst(x, y, hue, { count: 74, power: 6.4 + Math.random() * 2.4, life: 170, lifeSpread: 80, spread: 16 });
+        burst(x, y, (hue + 150) % 360, { count: 30, power: 3 + Math.random() * 1.2, life: 130, lifeSpread: 54, spread: 12 });
         const kowari = 4 + Math.floor(Math.random() * 3);
         for (let i = 0; i < kowari; i++) {
           const a = Math.random() * Math.PI * 2;
@@ -277,7 +277,7 @@
             x: x + Math.cos(a) * r,
             y: y + Math.sin(a) * r,
             hue: (hue + 40 + Math.random() * 280) % 360,
-            opts: { count: 12, power: 1.7 + Math.random() * 0.8, life: 38, lifeSpread: 24, spread: 20, twinkle: true },
+            opts: { count: 12, power: 1.7 + Math.random() * 0.8, life: 70, lifeSpread: 36, spread: 20, twinkle: true },
           });
         }
         return;
@@ -286,15 +286,15 @@
       if (shell.type === 'phoenix') {
         // Part of a line across the sky: wide, low, and quick.
         bloom(x, y, hue, 52, 12);
-        burst(x, y, hue, { count: 30, power: 3.4 + Math.random() * 1.4, life: 62, lifeSpread: 34, spread: 22 });
+        burst(x, y, hue, { count: 30, power: 3.4 + Math.random() * 1.4, life: 108, lifeSpread: 52, spread: 22 });
         return;
       }
 
       // 菊 with 二重芯: the everyday shell, a coloured sphere with a second,
       // smaller sphere of a contrasting colour sitting inside it.
       bloom(x, y, hue, 58, 14);
-      burst(x, y, hue, { count: 42, power: 4.2 + Math.random() * 2.4, life: 68, lifeSpread: 44, spread: 16 });
-      burst(x, y, (hue + 140 + Math.random() * 80) % 360, { count: 18, power: 2 + Math.random() * 0.9, life: 54, lifeSpread: 28, spread: 12 });
+      burst(x, y, hue, { count: 42, power: 4.2 + Math.random() * 2.4, life: 120, lifeSpread: 66, spread: 16 });
+      burst(x, y, (hue + 140 + Math.random() * 80) % 360, { count: 18, power: 2 + Math.random() * 0.9, life: 92, lifeSpread: 42, spread: 12 });
     };
 
     return (isLight) => {
@@ -357,7 +357,7 @@
         // Embers falling off the tail — the part that makes a launch look lit
         // rather than like a dot sliding upward. Every other frame is enough.
         if (tick % 2 === 0 && sparks.length < SPARK_CAP) {
-          const life = 12 + Math.floor(Math.random() * 14);
+          const life = 20 + Math.floor(Math.random() * 20);
           sparks.push({
             x: s.x,
             y: s.y,
@@ -433,7 +433,7 @@
         const flicker = p.twinkle && t < 0.5
           ? 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(tick * 0.9 + p.seed))
           : 1;
-        const fade = t ** (p.gold ? 0.7 : 1.6) * style.alpha * flicker;
+        const fade = t ** (p.gold ? 0.55 : 1.15) * style.alpha * flicker;
 
         // Glow is a wide, faint stroke rather than shadowBlur: a canvas shadow
         // costs ~100x more per stroke, and with hundreds of sparks that alone
