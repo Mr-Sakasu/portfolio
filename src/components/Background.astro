@@ -16,37 +16,351 @@
 </style>
 
 <script>
+  // One canvas, several scenes. The shell below owns the canvas, the resize
+  // listener, the theme read and the animation frame; a scene only knows how to
+  // draw itself. Add a scene by adding one entry to SCENES.
+
+  const SCENE_STORAGE_KEY = 'portfolio-bg';
+
   // Global variable to track the animation frame
   let animationId;
+  // The resize listener currently attached. Kept at module scope because each
+  // initBackground() call builds a new closure, and removing the *new* one (as
+  // this file used to) never unhooks the old — they pile up on every navigation.
+  let resizeHandler = null;
+
+  // --- SCENE: NETWORK ---------------------------------------------------------
+  // Drifting particles that link up when they come close.
+  const networkScene = (canvas, ctx) => {
+    const particleCount = 60;
+    const connectionDistance = 150;
+    const particles = [];
+
+    const colorsFor = (isLight) => isLight
+      ? {
+          particle: 'rgba(37, 99, 235, 0.78)',
+          particleShadow: 'rgba(37, 99, 235, 0.26)',
+          connection: '37, 99, 235',
+          connectionAlpha: 0.2,
+        }
+      : {
+          particle: 'rgba(130, 200, 255, 0.9)',
+          particleShadow: 'rgba(0, 150, 255, 0.65)',
+          connection: '100, 200, 255',
+          connectionAlpha: 0.38,
+        };
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        size: Math.random() * 2 + 1,
+      });
+    }
+
+    return (isLight) => {
+      const colors = colorsFor(isLight);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = colors.particleShadow;
+        ctx.fillStyle = colors.particle;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx = p.x - particles[j].x;
+          const dy = p.y - particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < connectionDistance) {
+            ctx.beginPath();
+            const opacity = 1 - distance / connectionDistance;
+            ctx.strokeStyle = `rgba(${colors.connection}, ${opacity * colors.connectionAlpha})`;
+            ctx.lineWidth = 1;
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+    };
+  };
+
+  // --- SCENE: FIREWORKS -------------------------------------------------------
+  // A shell climbs, slows under gravity, and bursts at its apex.
+  const fireworksScene = (canvas, ctx) => {
+    const GRAVITY = 0.055;      // px per frame squared
+    const DRAG = 0.992;         // spark velocity retained per frame — high enough
+                                // that sparks stay streaks instead of collapsing
+                                // to stationary dots after a few frames
+    const SPARK_CAP = 190;      // total live sparks, so a burst spree stays cheap
+    const shells = [];
+    const sparks = [];
+    const flashes = [];
+    let framesToLaunch = 0;     // first shell goes up immediately
+    let tick = 0;
+
+    // On the light theme the sky is near-white: bright sparks disappear, so the
+    // hues go darker and more saturated and the white-hot core is dropped.
+    const styleFor = (isLight) => isLight
+      ? { light: 42, sat: 90, glow: 8, glowAlpha: 0.1, alpha: 0.8, core: false, additive: false }
+      : { light: 64, sat: 100, glow: 12, glowAlpha: 0.16, alpha: 0.92, core: true, additive: true };
+
+    const launch = () => {
+      // Aim the apex at the upper part of the viewport, then solve for the
+      // initial speed that gravity will bleed to zero exactly there.
+      const apexY = canvas.height * (0.14 + Math.random() * 0.3);
+      const rise = Math.max(canvas.height - apexY, 40);
+      const x = canvas.width * (0.12 + Math.random() * 0.76);
+      const y = canvas.height + 8;
+      shells.push({
+        x,
+        y,
+        trail: [x, y, x, y, x, y],
+        vx: (Math.random() - 0.5) * 0.9,
+        vy: -Math.sqrt(2 * GRAVITY * rise),
+        hue: Math.floor(Math.random() * 360),
+      });
+    };
+
+    const explode = (shell) => {
+      const count = 34 + Math.floor(Math.random() * 16);
+      const power = 3.6 + Math.random() * 3.2;
+      // The bloom of light at the moment of the burst.
+      flashes.push({ x: shell.x, y: shell.y, hue: shell.hue, life: 14, maxLife: 14, radius: 26 + power * 9 });
+      // A slight hue spread reads as a real burst rather than a flat disc.
+      const spread = 12 + Math.random() * 26;
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2 + Math.random() * 0.12;
+        const speed = power * (0.35 + Math.random() * 0.65);
+        const life = 52 + Math.floor(Math.random() * 46);
+        sparks.push({
+          x: shell.x,
+          y: shell.y,
+          // A few frames of history: the tail is what makes a spark read as a
+          // streak of fire rather than a moving dot.
+          trail: [shell.x, shell.y, shell.x, shell.y, shell.x, shell.y],
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          hue: shell.hue + (Math.random() - 0.5) * spread,
+          life,
+          maxLife: life,
+        });
+      }
+      if (sparks.length > SPARK_CAP) sparks.splice(0, sparks.length - SPARK_CAP);
+    };
+
+    return (isLight) => {
+      const style = styleFor(isLight);
+      tick += 1;
+
+      if (framesToLaunch <= 0) {
+        launch();
+        // ~2.5s to ~5s between shells at 60fps: this is a background, so the
+        // sky is empty more often than not.
+        framesToLaunch = 150 + Math.floor(Math.random() * 150);
+      }
+      framesToLaunch -= 1;
+
+      ctx.lineCap = 'round';
+
+      // Flashes first, so the sparks read on top of the bloom.
+      for (let i = flashes.length - 1; i >= 0; i--) {
+        const f = flashes[i];
+        f.life -= 1;
+        if (f.life <= 0) {
+          flashes.splice(i, 1);
+          continue;
+        }
+        const t = f.life / f.maxLife;
+        const radius = f.radius * (1.3 - t * 0.55);
+        const hot = Math.min(style.light + 14, 92);
+        const bloom = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, radius);
+        bloom.addColorStop(0, `hsla(${f.hue}, ${style.sat}%, ${hot}%, ${0.55 * t * style.alpha})`);
+        bloom.addColorStop(0.42, `hsla(${f.hue}, ${style.sat}%, ${style.light}%, ${0.2 * t * style.alpha})`);
+        bloom.addColorStop(1, `hsla(${f.hue}, ${style.sat}%, ${style.light}%, 0)`);
+        ctx.fillStyle = bloom;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = shells.length - 1; i >= 0; i--) {
+        const s = shells[i];
+        s.trail[4] = s.trail[2];
+        s.trail[5] = s.trail[3];
+        s.trail[2] = s.trail[0];
+        s.trail[3] = s.trail[1];
+        s.trail[0] = s.x;
+        s.trail[1] = s.y;
+        s.vy += GRAVITY;
+        s.x += s.vx;
+        s.y += s.vy;
+
+        // Embers falling off the tail — the part that makes a launch look lit
+        // rather than like a dot sliding upward. Every other frame is enough.
+        if (tick % 2 === 0 && sparks.length < SPARK_CAP) {
+          const life = 12 + Math.floor(Math.random() * 14);
+          sparks.push({
+            x: s.x,
+            y: s.y,
+            trail: [s.x, s.y, s.x, s.y, s.x, s.y],
+            vx: s.vx * 0.3 + (Math.random() - 0.5) * 0.6,
+            vy: -s.vy * 0.08 + Math.random() * 0.4,
+            hue: s.hue,
+            life,
+            maxLife: life * 2.4, // starts already dim, so it reads as an ember
+          });
+        }
+
+        // Streak drawn from remembered positions: a trail that needs no
+        // knowledge of what is painted behind the canvas.
+        ctx.shadowBlur = style.glow;
+        ctx.shadowColor = `hsla(${s.hue}, ${style.sat}%, ${style.light}%, 0.9)`;
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${s.hue}, ${style.sat}%, ${style.light}%, ${style.alpha * 0.4})`;
+        ctx.lineWidth = 1.6;
+        ctx.moveTo(s.trail[4], s.trail[5]);
+        ctx.lineTo(s.trail[0], s.trail[1]);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${s.hue}, ${style.sat}%, ${style.light}%, ${style.alpha})`;
+        ctx.lineWidth = 2.8;
+        ctx.moveTo(s.trail[0], s.trail[1]);
+        ctx.lineTo(s.x, s.y);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        if (s.vy >= 0) {
+          explode(s);
+          shells.splice(i, 1);
+        }
+      }
+
+      // Sparks add their light together on a dark sky, the way real ones do.
+      // On the light theme that would only bleach toward white, so it stays off.
+      if (style.additive) ctx.globalCompositeOperation = 'lighter';
+
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const p = sparks[i];
+        p.trail[4] = p.trail[2];
+        p.trail[5] = p.trail[3];
+        p.trail[2] = p.trail[0];
+        p.trail[3] = p.trail[1];
+        p.trail[0] = p.x;
+        p.trail[1] = p.y;
+        p.vx *= DRAG;
+        p.vy = p.vy * DRAG + GRAVITY;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 1;
+
+        if (p.life <= 0) {
+          sparks.splice(i, 1);
+          continue;
+        }
+
+        // Fade on a curve so the burst hangs bright, then drops away quickly.
+        const fade = (p.life / p.maxLife) ** 1.6 * style.alpha;
+
+        // Glow is a wide, faint stroke rather than shadowBlur: a canvas shadow
+        // costs ~100x more per stroke, and with hundreds of sparks that alone
+        // took the frame from ~1ms to ~150ms. Under additive blending the wide
+        // strokes bloom where they overlap, which is what the shadow was for.
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${p.hue}, ${style.sat}%, ${style.light}%, ${fade * style.glowAlpha})`;
+        ctx.lineWidth = 5.5;
+        ctx.moveTo(p.trail[2], p.trail[3]);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        // Tail: dimmer, thinner, drawn from the oldest remembered position.
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${p.hue}, ${style.sat}%, ${style.light}%, ${fade * 0.45})`;
+        ctx.lineWidth = 1.3;
+        ctx.moveTo(p.trail[4], p.trail[5]);
+        ctx.lineTo(p.trail[0], p.trail[1]);
+        ctx.stroke();
+
+        // Head: the bright end of the streak.
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${p.hue}, ${style.sat}%, ${style.light}%, ${fade})`;
+        ctx.lineWidth = 2.4;
+        ctx.moveTo(p.trail[0], p.trail[1]);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        if (style.core && fade > 0.5) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${(fade - 0.5) * 1.1})`;
+          ctx.lineWidth = 1;
+          ctx.moveTo(p.trail[0], p.trail[1]);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+    };
+  };
+
+  const SCENES = {
+    network: networkScene,
+    fireworks: fireworksScene,
+  };
+
+  // Which scene this visit gets. `?bg=<name>` wins (handy for checking one
+  // directly), then the choice already made for this tab, then a fresh roll.
+  function pickSceneName() {
+    const names = Object.keys(SCENES);
+
+    try {
+      const forced = new URLSearchParams(window.location.search).get('bg');
+      if (forced && Object.prototype.hasOwnProperty.call(SCENES, forced)) return forced;
+    } catch {
+      // Unparseable query string is not a reason to lose the background.
+    }
+
+    // Fireworks are the kind of motion this setting is meant to suppress.
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return 'network';
+
+    try {
+      const stored = window.sessionStorage.getItem(SCENE_STORAGE_KEY);
+      // A name left over from a scene that no longer exists must not stick.
+      if (stored && Object.prototype.hasOwnProperty.call(SCENES, stored)) return stored;
+    } catch {
+      // Private mode / storage disabled: fall through and just roll one.
+    }
+
+    const picked = names[Math.floor(Math.random() * names.length)];
+    try {
+      window.sessionStorage.setItem(SCENE_STORAGE_KEY, picked);
+    } catch {
+      // Not storable, so the next navigation rolls again. Still better than none.
+    }
+    return picked;
+  }
 
   // We wrap everything in a function so we can restart it
   function initBackground() {
     const canvas = document.getElementById('network-canvas');
-    
+
     // Safety check: If we are on a page without the background, stop.
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    let particles = [];
-    const particleCount = 60;
-    const connectionDistance = 150;
-
-    function readThemeColors() {
-      const isLight = document.documentElement.dataset.theme === 'light';
-      return isLight
-        ? {
-            particle: 'rgba(37, 99, 235, 0.78)',
-            particleShadow: 'rgba(37, 99, 235, 0.26)',
-            connection: '37, 99, 235',
-            connectionAlpha: 0.2,
-          }
-        : {
-            particle: 'rgba(130, 200, 255, 0.9)',
-            particleShadow: 'rgba(0, 150, 255, 0.65)',
-            connection: '100, 200, 255',
-            connectionAlpha: 0.38,
-          };
-    }
+    if (!ctx) return;
 
     // --- CLEANUP PREVIOUS ANIMATION ---
     // This prevents the animation from running 2x speed if you switch pages fast
@@ -57,74 +371,19 @@
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
-    // Remove old listener to prevent memory leaks, then add new one
-    window.removeEventListener('resize', resize);
-    window.addEventListener('resize', resize);
+    if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+    resizeHandler = resize;
+    window.addEventListener('resize', resizeHandler);
     resize();
 
-    // --- PARTICLE CLASS ---
-    class Particle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.vx = (Math.random() - 0.5) * 0.25;
-        this.vy = (Math.random() - 0.5) * 0.25;
-        this.size = Math.random() * 2 + 1;
-      }
-
-      update() {
-        this.x += this.vx;
-        this.y += this.vy;
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-      }
-
-      draw(colors) {
-        if (!ctx) return;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        
-        // Style
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = colors.particleShadow;
-        ctx.fillStyle = colors.particle;
-        
-        ctx.fill();
-        ctx.shadowBlur = 0;
-      }
-    }
-
-    // --- INITIALIZE PARTICLES ---
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
+    // Scenes are built after the first resize so they can size themselves.
+    const frame = SCENES[pickSceneName()](canvas, ctx);
 
     // --- ANIMATION LOOP ---
     function animate() {
-      if (!ctx) return;
-      const colors = readThemeColors();
+      const isLight = document.documentElement.dataset.theme === 'light';
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      for (let i = 0; i < particles.length; i++) {
-        particles[i].update();
-        particles[i].draw(colors);
-
-        for (let j = i; j < particles.length; j++) {
-          const dx = particles[i].x - particles[j].x;
-          const dy = particles[i].y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-
-          if (distance < connectionDistance) {
-            ctx.beginPath();
-            const opacity = 1 - distance / connectionDistance;
-            ctx.strokeStyle = `rgba(${colors.connection}, ${opacity * colors.connectionAlpha})`;
-            ctx.lineWidth = 1;
-            ctx.moveTo(particles[i].x, particles[i].y);
-            ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.stroke();
-          }
-        }
-      }
+      frame(isLight);
       // Save the ID so we can cancel it later
       animationId = requestAnimationFrame(animate);
     }
@@ -136,5 +395,5 @@
   // Run this logic every time Astro swaps the page
   document.addEventListener('astro:page-load', initBackground);
   initBackground();
-  
+
 </script>
