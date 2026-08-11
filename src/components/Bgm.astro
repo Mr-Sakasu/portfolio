@@ -1,0 +1,169 @@
+---
+// Background music, played through an embedded YouTube player rather than a
+// self-hosted file: the platform holds the licence for the upload, nothing
+// copyrighted is served from this domain.
+const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
+---
+
+<div id="bgm-root" data-video-id={BGM_VIDEO_ID} aria-hidden="true" transition:persist>
+  <div id="bgm-player"></div>
+</div>
+
+<style>
+  /* Offscreen rather than display:none — a hidden iframe is not allowed to
+     play, and a zero-size one is treated as invisible by some browsers. */
+  #bgm-root {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+    width: 320px;
+    height: 180px;
+    pointer-events: none;
+    opacity: 0;
+  }
+</style>
+
+<script>
+  // Autoplay with sound is refused by every current browser, so this tries to
+  // play and, when refused, waits for the visitor's first gesture. The choice
+  // is remembered, and the player element survives navigation
+  // (transition:persist) so the music does not restart on every internal link.
+  const BGM_KEY = 'portfolio-bgm';
+
+  function readPref() {
+    try {
+      return window.localStorage.getItem(BGM_KEY) === 'off' ? 'off' : 'on';
+    } catch {
+      return 'on'; // storage blocked: default to wanting music
+    }
+  }
+
+  function writePref(value) {
+    try {
+      window.localStorage.setItem(BGM_KEY, value);
+    } catch {
+      // Nothing to do — the preference simply will not survive this visit.
+    }
+  }
+
+  function paintButtons(playing) {
+    document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
+      button.setAttribute('aria-pressed', playing ? 'true' : 'false');
+      button.dataset.bgmState = playing ? 'on' : 'off';
+    });
+  }
+
+  function setupBgm() {
+    const root = document.getElementById('bgm-root');
+    if (!root) return;
+
+    // The player outlives page swaps; only the buttons need rebinding.
+    const bgm = window.__bgm ?? (window.__bgm = { player: null, playing: false, armed: false });
+    paintButtons(bgm.playing);
+
+    document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
+      if (button.dataset.bgmBound === '1') return;
+      button.dataset.bgmBound = '1';
+      button.addEventListener('click', () => {
+        if (bgm.playing) {
+          writePref('off');
+          bgm.playing = false;
+          paintButtons(false);
+          bgm.player?.pauseVideo?.();
+        } else {
+          writePref('on');
+          play();
+        }
+      });
+    });
+
+    function play() {
+      if (!bgm.player?.playVideo) return;
+      bgm.player.unMute?.();
+      bgm.player.setVolume?.(35); // background, not a performance
+      bgm.player.playVideo();
+    }
+
+    // A gesture is what unlocks audio, so use the first one that arrives.
+    function armGesture() {
+      if (bgm.armed) return;
+      bgm.armed = true;
+      const start = () => {
+        if (readPref() === 'on') play();
+        events.forEach((name) => window.removeEventListener(name, start));
+      };
+      const events = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'];
+      events.forEach((name) => window.addEventListener(name, start, { once: false, passive: true }));
+    }
+
+    if (bgm.player) {
+      if (readPref() === 'on' && !bgm.playing) armGesture();
+      return;
+    }
+
+    const videoId = root.dataset.videoId;
+    if (!videoId) return; // no track configured: stay silent and show nothing
+
+    function createPlayer() {
+      bgm.player = new window.YT.Player('bgm-player', {
+        videoId,
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          modestbranding: 1,
+          playsinline: 1,
+          rel: 0,
+          loop: 1,
+          playlist: videoId, // a single-video loop needs itself as the playlist
+        },
+        events: {
+          onReady: () => {
+            if (readPref() !== 'on') return;
+            play();
+            // If the browser refused, the state never reaches PLAYING; fall
+            // back to starting on the first gesture instead.
+            window.setTimeout(() => {
+              if (!bgm.playing) armGesture();
+            }, 1200);
+          },
+          onStateChange: (event) => {
+            const YT = window.YT;
+            bgm.playing = event.data === YT.PlayerState.PLAYING;
+            paintButtons(bgm.playing);
+            // A loop can still land on ENDED; nudge it back round.
+            if (event.data === YT.PlayerState.ENDED && readPref() === 'on') play();
+          },
+          onError: () => {
+            // Video removed, private, or blocked from embedding. Leave the
+            // buttons showing "off" rather than pretending music is playing.
+            bgm.playing = false;
+            paintButtons(false);
+          },
+        },
+      });
+    }
+
+    if (window.YT?.Player) {
+      createPlayer();
+      return;
+    }
+
+    // The API calls this global once, so chain rather than overwrite.
+    const previous = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      if (typeof previous === 'function') previous();
+      createPlayer();
+    };
+    if (!document.querySelector('script[data-bgm-api]')) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      tag.dataset.bgmApi = '1';
+      document.head.appendChild(tag);
+    }
+  }
+
+  document.addEventListener('astro:page-load', setupBgm);
+  setupBgm();
+</script>
