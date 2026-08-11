@@ -5,60 +5,36 @@
 const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
 ---
 
-<div id="bgm-root" data-video-id={BGM_VIDEO_ID} data-visible="false" transition:persist>
+<div id="bgm-root" data-video-id={BGM_VIDEO_ID} aria-hidden="true" transition:persist>
   <div id="bgm-player"></div>
 </div>
 
 <style>
-  /* The player has to be genuinely on screen while it plays: mobile browsers
-     refuse playback for an offscreen or transparent player, which is why the
-     first version stayed silent on a phone however many times you pressed ♪.
-     So it becomes a small "now playing" card, shown only while the music is on
-     — and if a browser still blocks the API call, it can be tapped directly. */
+  /* Invisible, but still laid out inside the viewport rather than thrown to
+     -9999px: a player parked far offscreen is treated as not present by some
+     browsers' playback heuristics. Nothing here is interactive. */
   #bgm-root {
     position: fixed;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    z-index: 30;
-    width: 168px;
-    height: 95px;
-    overflow: hidden;
-    border-radius: 0.6rem;
-    border: 1px solid var(--site-card-border, rgba(255, 255, 255, 0.12));
-    box-shadow: 0 14px 34px -22px rgba(15, 23, 42, 0.9);
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    height: 180px;
+    z-index: -1;
     opacity: 0;
-    transform: translateY(0.5rem) scale(0.98);
     pointer-events: none;
-    transition: opacity 240ms ease, transform 240ms ease;
-  }
-
-  #bgm-root[data-visible='true'] {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
-  }
-
-  #bgm-root iframe {
-    width: 100%;
-    height: 100%;
-    display: block;
-    border: 0;
-  }
-
-  @media (max-width: 480px) {
-    #bgm-root {
-      width: 132px;
-      height: 74px;
-    }
+    overflow: hidden;
   }
 </style>
 
 <script>
-  // Autoplay with sound is refused by every current browser, so this tries to
-  // play and, when refused, waits for the visitor's first gesture. The choice
-  // is remembered, and the player element survives navigation
-  // (transition:persist) so the music does not restart on every internal link.
+  // Sound cannot simply start on load: browsers refuse audible autoplay without
+  // a gesture. What IS allowed is muted playback, so the track starts muted the
+  // moment it can and unmutes at the visitor's first gesture — the earliest
+  // point sound is permitted. Exactly one player exists per page, and only one
+  // tab plays at a time.
   const BGM_KEY = 'portfolio-bgm';
+  const BGM_CLAIM_KEY = 'portfolio-bgm-claim';
+  const BGM_CHANNEL = 'portfolio-bgm-channel';
 
   function readPref() {
     try {
@@ -84,11 +60,21 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
   }
 
   function setupBgm() {
-    const root = document.getElementById('bgm-root');
+    // Astro's transition:persist keeps the original element across navigation,
+    // but if a second one ever reaches the DOM its iframe would play over the
+    // first. Keep the one that already owns a player.
+    const roots = [...document.querySelectorAll('#bgm-root')];
+    const root = roots.find((node) => node.dataset.bgmInit === '1') ?? roots[0];
     if (!root) return;
+    roots.filter((node) => node !== root).forEach((node) => node.remove());
 
-    // The player outlives page swaps; only the buttons need rebinding.
-    const bgm = window.__bgm ?? (window.__bgm = { player: null, playing: false, armed: false });
+    const bgm = window.__bgm ?? (window.__bgm = {
+      player: null,
+      playing: false,
+      armed: false,
+      unmuted: false,
+      id: Math.random().toString(36).slice(2),
+    });
     paintButtons(bgm.playing);
 
     document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
@@ -100,43 +86,83 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
           bgm.playing = false;
           paintButtons(false);
           bgm.player?.pauseVideo?.();
-          setVisible(false);
         } else {
           writePref('on');
+          bgm.unmuted = true; // a click IS the gesture, so this one is audible
           play();
         }
       });
     });
 
-    function setVisible(on) {
-      root.dataset.visible = on ? 'true' : 'false';
+    // --- one tab at a time ---------------------------------------------------
+    // Autostart means every open tab would otherwise sing at once.
+    function claimAudio() {
+      try {
+        window.localStorage.setItem(BGM_CLAIM_KEY, `${bgm.id}:${Date.now()}`);
+      } catch {
+        // Without storage the other tabs simply will not hear about it.
+      }
+      bgm.channel?.postMessage({ type: 'claim', id: bgm.id });
+    }
+
+    function yieldAudio() {
+      // Another tab took over. Stop, but leave the preference alone: the
+      // visitor never asked for music to be off.
+      bgm.playing = false;
+      paintButtons(false);
+      bgm.player?.pauseVideo?.();
+    }
+
+    if (!bgm.wired) {
+      bgm.wired = true;
+      try {
+        bgm.channel = new BroadcastChannel(BGM_CHANNEL);
+        bgm.channel.addEventListener('message', (event) => {
+          if (event.data?.type === 'claim' && event.data.id !== bgm.id) yieldAudio();
+        });
+      } catch {
+        bgm.channel = null; // older browser: the storage event below covers it
+      }
+      window.addEventListener('storage', (event) => {
+        if (event.key !== BGM_CLAIM_KEY || !event.newValue) return;
+        if (!event.newValue.startsWith(`${bgm.id}:`)) yieldAudio();
+      });
     }
 
     function play() {
       if (!bgm.player?.playVideo) return;
-      // Visible FIRST: a browser decides whether to allow playback at the
-      // moment the call is made, and an invisible player is refused.
-      setVisible(true);
-      bgm.player.unMute?.();
-      bgm.player.setVolume?.(35); // background, not a performance
+      claimAudio();
+      if (bgm.unmuted) {
+        bgm.player.unMute?.();
+        bgm.player.setVolume?.(35); // background, not a performance
+      } else {
+        bgm.player.mute?.(); // muted playback is the only kind allowed on load
+      }
       bgm.player.playVideo();
     }
 
-    // A gesture is what unlocks audio, so use the first one that arrives.
+    // The first gesture is what makes sound legal, so take whichever arrives.
     function armGesture() {
       if (bgm.armed) return;
       bgm.armed = true;
-      const start = () => {
-        if (readPref() === 'on') play();
-        events.forEach((name) => window.removeEventListener(name, start));
-      };
       const events = ['pointerdown', 'keydown', 'touchstart', 'wheel', 'scroll'];
-      events.forEach((name) => window.addEventListener(name, start, { once: false, passive: true }));
+      const start = () => {
+        events.forEach((name) => window.removeEventListener(name, start));
+        if (readPref() !== 'on') return;
+        bgm.unmuted = true;
+        if (bgm.playing) {
+          // Already rolling silently — just turn the sound on.
+          bgm.player?.unMute?.();
+          bgm.player?.setVolume?.(35);
+        } else {
+          play();
+        }
+      };
+      events.forEach((name) => window.addEventListener(name, start, { passive: true }));
     }
 
     if (bgm.player) {
-      setVisible(bgm.playing);
-      if (readPref() === 'on' && !bgm.playing) armGesture();
+      if (readPref() === 'on' && !bgm.unmuted) armGesture();
       return;
     }
 
@@ -144,12 +170,14 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
     if (!videoId) return; // no track configured: stay silent and show nothing
 
     function createPlayer() {
+      if (root.dataset.bgmInit === '1') return; // never a second player
+      root.dataset.bgmInit = '1';
       bgm.player = new window.YT.Player('bgm-player', {
         videoId,
         host: 'https://www.youtube-nocookie.com',
         playerVars: {
           autoplay: 0,
-          controls: 1,
+          controls: 0,
           disablekb: 1,
           modestbranding: 1,
           playsinline: 1,
@@ -160,27 +188,21 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
         events: {
           onReady: () => {
             if (readPref() !== 'on') return;
-            play();
-            // If the browser refused, the state never reaches PLAYING; fall
-            // back to starting on the first gesture instead.
-            window.setTimeout(() => {
-              if (!bgm.playing) armGesture();
-            }, 1200);
+            play();          // muted, which browsers do allow on load
+            armGesture();    // and unmute the moment the visitor touches anything
           },
           onStateChange: (event) => {
             const YT = window.YT;
             bgm.playing = event.data === YT.PlayerState.PLAYING;
-            paintButtons(bgm.playing);
-            if (bgm.playing) setVisible(true);
-            // A loop can still land on ENDED; nudge it back round.
+            // A silently-playing track should not light the button as if the
+            // visitor could hear it.
+            paintButtons(bgm.playing && bgm.unmuted);
             if (event.data === YT.PlayerState.ENDED && readPref() === 'on') play();
           },
           onError: () => {
-            // Video removed, private, or blocked from embedding. Leave the
-            // buttons showing "off" rather than pretending music is playing.
+            // Video removed, private, or blocked from embedding.
             bgm.playing = false;
             paintButtons(false);
-            setVisible(false);
           },
         },
       });
