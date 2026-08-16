@@ -20,7 +20,7 @@ export interface SceneLandmark {
         | 'pearl' | 'twist' | 'opener' | 'stepped'
         | 'boc' | 'crown' | 'pyramid' | 'slab' | 'spire'
         | 'canopy' | 'statue' | 'hall' | 'wall'
-        | 'junk' | 'ferry' | 'promenade';
+        | 'junk' | 'ferry' | 'promenade' | 'billboard';
     /** Centre position, 0 (left) to 1 (right). */
     x: number;
     /** Ground row, 0 (top) to 1 (bottom). */
@@ -58,24 +58,27 @@ export interface ScenePixels {
 /** Each scene is drawn procedurally at low resolution, then scaled up with hard pixel edges. */
 export const scenePixels: Record<string, ScenePixels> = {
     bund: {
-        sky: ['#070a24', '#111a44', '#2b2a62', '#5c3a6e', '#a04f70', '#d97a63'],
-        haze: { color: '#e0906a', y: 0.6, strength: 0.5 },
-        celestial: { kind: 'moon', x: 0.26, y: 0.16, r: 7, color: '#fff6dc', glow: '#ffd9a0' },
-        stars: 70,
+        // Composed after the night view across the Huangpu: black sky, the
+        // Pearl tower on the left, Shanghai Tower and the bottle opener on the
+        // right, and long ribbons of colour dragged across the water.
+        sky: ['#04050e', '#070a1c', '#0d1130', '#161a44', '#241f4e'],
+        haze: { color: '#3a2a5e', y: 0.68, strength: 0.5 },
+        stars: 26,
         layers: [
-            { kind: 'city', y: 0.6, amp: 0.16, color: '#2a2c56', accent: '#ffd98a', haze: 0.26 },
-            { kind: 'city', y: 0.64, amp: 0.22, color: '#1d2048', accent: '#ffe0a0', haze: 0.12 },
-            { kind: 'city', y: 0.67, amp: 0.13, color: '#111436', accent: '#ffe6b0', haze: 0.04 },
+            { kind: 'city', y: 0.6, amp: 0.14, color: '#2a2a58', accent: '#ffd98a', haze: 0.3 },
+            { kind: 'city', y: 0.63, amp: 0.2, color: '#1b1d44', accent: '#ffe0a0', haze: 0.12 },
+            { kind: 'city', y: 0.66, amp: 0.12, color: '#101232', accent: '#ffe6b0', haze: 0.02 },
         ],
         landmarks: [
-            { kind: 'pearl', x: 0.19, base: 0.7, h: 0.52, body: '#2c2350', light: '#ff5f8a' },
-            { kind: 'twist', x: 0.43, base: 0.7, h: 0.6, body: '#232a5c', light: '#9ad4ff' },
-            { kind: 'opener', x: 0.55, base: 0.7, h: 0.5, body: '#1d2450', light: '#ffd98a' },
-            { kind: 'stepped', x: 0.65, base: 0.7, h: 0.42, body: '#252c5e', light: '#ffe6a8' },
-            { kind: 'ferry', x: 0.72, base: 0.84, h: 0.05, body: '#0d1230', light: '#ffd98a', onWater: true },
-            { kind: 'promenade', x: 0.5, base: 1, h: 0.2, w: 1, body: '#07091c', light: '#f0c98a', onWater: true },
+            { kind: 'pearl', x: 0.14, base: 0.68, h: 0.66, body: '#3d2f78', light: '#ff2f8f', accent: '#e0338f' },
+            { kind: 'stepped', x: 0.62, base: 0.68, h: 0.4, body: '#2a2c60', light: '#ffe6a8' },
+            { kind: 'billboard', x: 0.71, base: 0.68, h: 0.26, body: '#1d1f4a', light: '#e03434' },
+            { kind: 'opener', x: 0.79, base: 0.68, h: 0.5, body: '#232a5c', light: '#ffd98a' },
+            { kind: 'twist', x: 0.87, base: 0.68, h: 0.62, body: '#28306a', light: '#9ad4ff' },
+            { kind: 'ferry', x: 0.4, base: 0.79, h: 0.045, body: '#0d1230', light: '#ffd98a', onWater: true },
+            { kind: 'promenade', x: 0.5, base: 1, h: 0.11, w: 1, body: '#07091c', light: '#f0c98a', onWater: true },
         ],
-        water: { y: 0.7, colors: ['#1a2350', '#141b40', '#0d1230'], shimmer: '#ffd98a', reflect: 0.55 },
+        water: { y: 0.68, colors: ['#121a3e', '#0d1430', '#080d22'], shimmer: '#ffd98a', reflect: 0.9 },
         seed: 11,
     },
     gugong: {
@@ -121,8 +124,8 @@ export const scenePixels: Record<string, ScenePixels> = {
                 base: 0.73,
                 h: 0.1,
                 body: '#4c6a86',
-                light: '#e8eef2',
-                colors: ['#c8443c', '#e0a23a', '#2f6fae', '#cfd8de'],
+                light: '#6f93b4',
+                colors: ['#c53a30', '#efc132'],
             },
         ],
         seed: 61,
