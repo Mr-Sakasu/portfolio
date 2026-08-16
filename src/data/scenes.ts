@@ -1,5 +1,4 @@
-export type LayerKind = 'city' | 'peaks' | 'cone' | 'hills' | 'shore' | 'bamboo' | 'trees';
-export type Weather = 'snow' | 'rain' | 'fireflies' | 'petals';
+export type LayerKind = 'city' | 'peaks' | 'hills' | 'trees' | 'roofs';
 
 export interface SceneLayer {
     kind: LayerKind;
@@ -8,20 +7,50 @@ export interface SceneLayer {
     /** Peak height as a fraction of the canvas. */
     amp: number;
     color: string;
-    /** Optional second color: lit windows, snow caps, highlights. */
+    /** Lit windows, canopy highlights, blossoms. */
     accent?: string;
+    /** Density of blossoms scattered through a canopy, 0 to 1. */
+    bloom?: number;
+    /** 0 = crisp, 1 = fully washed into the horizon haze. */
+    haze?: number;
+}
+
+export interface SceneLandmark {
+    kind:
+        | 'pearl' | 'twist' | 'opener' | 'stepped'
+        | 'boc' | 'crown' | 'pyramid' | 'slab' | 'spire'
+        | 'canopy' | 'statue' | 'hall' | 'wall'
+        | 'junk' | 'ferry' | 'promenade';
+    /** Centre position, 0 (left) to 1 (right). */
+    x: number;
+    /** Ground row, 0 (top) to 1 (bottom). */
+    base: number;
+    /** Height as a fraction of the canvas. */
+    h: number;
+    /** Width as a fraction of the canvas; walls and the promenade use it. */
+    w?: number;
+    body: string;
+    light: string;
+    accent?: string;
+    /** Colour bands along a canopy roof. */
+    colors?: string[];
+    /** Drawn after the water, so it floats instead of being submerged. */
+    onWater?: boolean;
 }
 
 export interface ScenePixels {
     /** Sky bands, top to bottom. Rendered with ordered dithering between bands. */
     sky: string[];
+    /** Warm glow sitting on the horizon. */
+    haze?: { color: string; y: number; strength: number };
+    clouds?: { count: number; color: string; shade?: string; y: number; spread: number };
     celestial?: { kind: 'sun' | 'moon'; x: number; y: number; r: number; color: string; glow: string };
     stars?: number;
-    aurora?: string[];
-    fog?: { color: string; y: number; rows: number };
     layers: SceneLayer[];
-    water?: { y: number; colors: string[]; shimmer: string };
-    weather?: Weather;
+    /** Named buildings drawn on top of the generic skyline. */
+    landmarks?: SceneLandmark[];
+    water?: { y: number; colors: string[]; shimmer: string; reflect: number };
+    weather?: 'fireflies';
     /** Deterministic terrain seed. */
     seed: number;
 }
@@ -29,190 +58,118 @@ export interface ScenePixels {
 /** Each scene is drawn procedurally at low resolution, then scaled up with hard pixel edges. */
 export const scenePixels: Record<string, ScenePixels> = {
     bund: {
-        sky: ['#0b1030', '#1b2a5e', '#4b3a7d', '#a8547a', '#e08a6d'],
-        celestial: { kind: 'moon', x: 0.18, y: 0.2, r: 5, color: '#fff3d0', glow: '#ffd9a0' },
-        stars: 40,
+        sky: ['#070a24', '#111a44', '#2b2a62', '#5c3a6e', '#a04f70', '#d97a63'],
+        haze: { color: '#e0906a', y: 0.6, strength: 0.5 },
+        celestial: { kind: 'moon', x: 0.26, y: 0.16, r: 7, color: '#fff6dc', glow: '#ffd9a0' },
+        stars: 70,
         layers: [
-            { kind: 'city', y: 0.62, amp: 0.3, color: '#171c3a', accent: '#ffd98a' },
-            { kind: 'city', y: 0.66, amp: 0.16, color: '#0c0f24', accent: '#ffe6a8' },
+            { kind: 'city', y: 0.6, amp: 0.16, color: '#2a2c56', accent: '#ffd98a', haze: 0.26 },
+            { kind: 'city', y: 0.64, amp: 0.22, color: '#1d2048', accent: '#ffe0a0', haze: 0.12 },
+            { kind: 'city', y: 0.67, amp: 0.13, color: '#111436', accent: '#ffe6b0', haze: 0.04 },
         ],
-        water: { y: 0.72, colors: ['#16204a', '#101838', '#0b1029'], shimmer: '#ffd98a' },
+        landmarks: [
+            { kind: 'pearl', x: 0.19, base: 0.7, h: 0.52, body: '#2c2350', light: '#ff5f8a' },
+            { kind: 'twist', x: 0.43, base: 0.7, h: 0.6, body: '#232a5c', light: '#9ad4ff' },
+            { kind: 'opener', x: 0.55, base: 0.7, h: 0.5, body: '#1d2450', light: '#ffd98a' },
+            { kind: 'stepped', x: 0.65, base: 0.7, h: 0.42, body: '#252c5e', light: '#ffe6a8' },
+            { kind: 'ferry', x: 0.72, base: 0.84, h: 0.05, body: '#0d1230', light: '#ffd98a', onWater: true },
+            { kind: 'promenade', x: 0.5, base: 1, h: 0.2, w: 1, body: '#07091c', light: '#f0c98a', onWater: true },
+        ],
+        water: { y: 0.7, colors: ['#1a2350', '#141b40', '#0d1230'], shimmer: '#ffd98a', reflect: 0.55 },
         seed: 11,
     },
-    lijiang: {
-        sky: ['#e7f0ef', '#cfe0dd', '#a9c4c0', '#8aa9a4'],
-        celestial: { kind: 'sun', x: 0.72, y: 0.22, r: 4, color: '#fffdf0', glow: '#ffffff' },
-        fog: { color: '#e2ecea', y: 0.5, rows: 6 },
+    gugong: {
+        // Composed after the view down from Jingshan: hazy gold sky, ranks of
+        // tiled roofs receding into the smog, the gate hall standing in front.
+        sky: ['#c9a074', '#e6c398', '#f4dcb8', '#faeacf', '#fdf3e0'],
+        haze: { color: '#f7e2c0', y: 0.42, strength: 0.75 },
+        celestial: { kind: 'sun', x: 0.72, y: 0.12, r: 8, color: '#fffaea', glow: '#ffe0a8' },
         layers: [
-            { kind: 'peaks', y: 0.58, amp: 0.34, color: '#7d9a95' },
-            { kind: 'peaks', y: 0.63, amp: 0.26, color: '#55736f' },
-            { kind: 'peaks', y: 0.68, amp: 0.18, color: '#34504c' },
+            { kind: 'city', y: 0.34, amp: 0.04, color: '#9a8a7c', haze: 0.88 },
+            { kind: 'roofs', y: 0.38, amp: 0.05, color: '#a86a4a', accent: '#d2a058', haze: 0.55 },
+            { kind: 'roofs', y: 0.5, amp: 0.075, color: '#a4553a', accent: '#d9a441', haze: 0.32 },
+            { kind: 'trees', y: 0.56, amp: 0.07, color: '#5c6b3c', accent: '#7f9450', haze: 0.22 },
+            { kind: 'roofs', y: 0.63, amp: 0.1, color: '#9e4530', accent: '#e0aa42', haze: 0.12 },
+            { kind: 'trees', y: 0.8, amp: 0.09, color: '#3f5230', accent: '#647d3c' },
         ],
-        water: { y: 0.74, colors: ['#8fada8', '#7b9a95', '#6a8884'], shimmer: '#e7f0ef' },
-        seed: 23,
+        landmarks: [
+            { kind: 'hall', x: 0.5, base: 0.84, h: 0.26, body: '#b0402f', light: '#e8b44c' },
+            { kind: 'wall', x: 0.5, base: 1.0, h: 0.16, w: 1.02, body: '#a83c2c', light: '#e0aa42' },
+        ],
+        seed: 71,
     },
-    xihu: {
-        sky: ['#ffd9b0', '#ffb894', '#e08a9a', '#8a6fa8', '#4a4a80'],
-        celestial: { kind: 'sun', x: 0.3, y: 0.42, r: 7, color: '#fffbe8', glow: '#ff7a4c' },
+    shenzhen: {
+        // Composed after the view from Lianhua Hill Park: blue sky over the
+        // Futian axis, the banded Civic Center roof, bougainvillea in front.
+        sky: ['#2f7fc8', '#5aa2dc', '#8cc4ea', '#bcdcf2', '#dcecf7'],
+        haze: { color: '#dcecf7', y: 0.52, strength: 0.5 },
+        clouds: { count: 9, color: '#ffffff', shade: '#9ab8d4', y: 0.22, spread: 0.24 },
         layers: [
-            { kind: 'hills', y: 0.56, amp: 0.12, color: '#6a5a8a' },
-            { kind: 'trees', y: 0.62, amp: 0.1, color: '#3c3560', accent: '#57487d' },
+            { kind: 'hills', y: 0.52, amp: 0.06, color: '#7f9ab4', haze: 0.6 },
+            { kind: 'city', y: 0.56, amp: 0.16, color: '#8fa4bc', accent: '#e8f2fa', haze: 0.42 },
+            { kind: 'city', y: 0.6, amp: 0.2, color: '#5f7893', accent: '#dcecf8', haze: 0.16 },
+            { kind: 'trees', y: 0.78, amp: 0.09, color: '#3f6b34', accent: '#6f9c42' },
+            { kind: 'trees', y: 1.02, amp: 0.26, color: '#24512a', accent: '#e0417f', bloom: 0.1 },
         ],
-        water: { y: 0.66, colors: ['#8a6f9e', '#6f5a86', '#54446a'], shimmer: '#ffd9a0' },
-        weather: 'petals',
-        seed: 7,
-    },
-    zhangjiajie: {
-        sky: ['#dbe6ec', '#bccdd6', '#94adb8', '#6d8894'],
-        fog: { color: '#eaf2f6', y: 0.55, rows: 7 },
-        layers: [
-            { kind: 'peaks', y: 0.46, amp: 0.36, color: '#6a8492' },
-            { kind: 'peaks', y: 0.6, amp: 0.34, color: '#44606c' },
-            { kind: 'peaks', y: 0.82, amp: 0.3, color: '#22363f' },
+        landmarks: [
+            { kind: 'spire', x: 0.63, base: 0.64, h: 0.58, body: '#9db5cf', light: '#f8fcff' },
+            { kind: 'crown', x: 0.26, base: 0.64, h: 0.3, body: '#7d95b0', light: '#eaf4fc' },
+            { kind: 'slab', x: 0.12, base: 0.64, h: 0.26, body: '#8ba3bd', light: '#eaf4fc' },
+            {
+                kind: 'canopy',
+                x: 0.46,
+                base: 0.73,
+                h: 0.1,
+                body: '#4c6a86',
+                light: '#e8eef2',
+                colors: ['#c8443c', '#e0a23a', '#2f6fae', '#cfd8de'],
+            },
         ],
-        seed: 41,
-    },
-    fuji: {
-        sky: ['#12203f', '#2b4a7a', '#7a7fae', '#e8a6a0', '#ffd2b0'],
-        celestial: { kind: 'sun', x: 0.76, y: 0.34, r: 5, color: '#fff2d8', glow: '#ffb894' },
-        stars: 14,
-        layers: [
-            { kind: 'cone', y: 0.66, amp: 0.42, color: '#26304f', accent: '#f2e8f0' },
-            { kind: 'hills', y: 0.7, amp: 0.08, color: '#141a2e' },
-        ],
-        water: { y: 0.74, colors: ['#2a3a5e', '#1e2c48', '#141d33'], shimmer: '#ffc9a8' },
-        seed: 3,
-    },
-    arashiyama: {
-        sky: ['#1c3320', '#2f4a26', '#4f7233', '#84a447'],
-        celestial: { kind: 'sun', x: 0.5, y: 0.26, r: 4, color: '#f2ffcf', glow: '#b6d96a' },
-        layers: [
-            { kind: 'bamboo', y: 1.0, amp: 0.0, color: '#2b4020', accent: '#6f9a3c' },
-        ],
-        weather: 'fireflies',
-        seed: 19,
-    },
-    biei: {
-        sky: ['#7ea9dc', '#a9c6e6', '#cfe0ef', '#e8f0f8'],
-        layers: [
-            { kind: 'hills', y: 0.6, amp: 0.14, color: '#5f7fa8' },
-            { kind: 'trees', y: 0.66, amp: 0.14, color: '#3f5a7d', accent: '#e8f0f8' },
-        ],
-        water: { y: 0.7, colors: ['#63b5c4', '#4d9dae', '#3a8496'], shimmer: '#d8f4f8' },
-        weather: 'snow',
-        seed: 29,
-    },
-    odaiba: {
-        sky: ['#04081a', '#0c1436', '#1d2350', '#3a2a5e'],
-        stars: 55,
-        layers: [
-            { kind: 'city', y: 0.58, amp: 0.26, color: '#0a0f26', accent: '#7fd4ff' },
-            { kind: 'city', y: 0.64, amp: 0.16, color: '#060a1a', accent: '#ffd98a' },
-        ],
-        water: { y: 0.7, colors: ['#0c1430', '#0a1130', '#070c22'], shimmer: '#7fd4ff' },
-        seed: 13,
+        seed: 61,
     },
     victoria: {
-        sky: ['#050d1e', '#0e1c38', '#1e2c50', '#3f3468'],
-        stars: 30,
+        sky: ['#04081a', '#0b1430', '#16204a', '#2a2a5e', '#4a3568'],
+        haze: { color: '#c88a6a', y: 0.62, strength: 0.3 },
+        celestial: { kind: 'moon', x: 0.14, y: 0.14, r: 5, color: '#fff2d8', glow: '#ffe0b0' },
+        stars: 60,
         layers: [
-            { kind: 'peaks', y: 0.5, amp: 0.2, color: '#0b1226' },
-            { kind: 'city', y: 0.6, amp: 0.3, color: '#070d1c', accent: '#ffcf6b' },
+            { kind: 'peaks', y: 0.6, amp: 0.26, color: '#161f3e', haze: 0.24 },
+            { kind: 'city', y: 0.66, amp: 0.16, color: '#141d40', accent: '#ffcf6b', haze: 0.14 },
+            { kind: 'city', y: 0.7, amp: 0.22, color: '#0d1430', accent: '#ffd98a', haze: 0.04 },
         ],
-        water: { y: 0.68, colors: ['#0d1832', '#0a1228', '#070d1e'], shimmer: '#ffcf6b' },
+        landmarks: [
+            { kind: 'crown', x: 0.22, base: 0.72, h: 0.46, body: '#1c2b52', light: '#ffe0a0' },
+            { kind: 'boc', x: 0.4, base: 0.72, h: 0.56, body: '#24375f', light: '#a8e0ff' },
+            { kind: 'pyramid', x: 0.56, base: 0.72, h: 0.46, body: '#1c2b52', light: '#ffcf6b' },
+            { kind: 'slab', x: 0.8, base: 0.72, h: 0.42, body: '#182549', light: '#ffd98a' },
+            { kind: 'junk', x: 0.66, base: 0.88, h: 0.09, body: '#2a1d22', light: '#d4633a', onWater: true },
+            { kind: 'ferry', x: 0.32, base: 0.83, h: 0.045, body: '#0a1024', light: '#ffe0a0', onWater: true },
+        ],
+        water: { y: 0.72, colors: ['#122045', '#0d1836', '#091026'], shimmer: '#ffcf6b', reflect: 0.6 },
         seed: 47,
-    },
-    marina: {
-        sky: ['#101c3a', '#25386b', '#5a4d8c', '#9a6f9e', '#e0a08a'],
-        celestial: { kind: 'sun', x: 0.24, y: 0.4, r: 5, color: '#ffe6c0', glow: '#e08a6d' },
-        layers: [
-            { kind: 'city', y: 0.62, amp: 0.28, color: '#121a36', accent: '#9be7d4' },
-            { kind: 'trees', y: 0.66, amp: 0.16, color: '#0d1428', accent: '#5fd8b4' },
-        ],
-        water: { y: 0.72, colors: ['#1b2a52', '#152142', '#0f1830'], shimmer: '#9be7d4' },
-        seed: 5,
-    },
-    halong: {
-        sky: ['#d6e8ea', '#b4cfd4', '#8fb2b8', '#6d949c'],
-        celestial: { kind: 'sun', x: 0.66, y: 0.28, r: 4, color: '#fffdf2', glow: '#e8f4f2' },
-        fog: { color: '#dceaec', y: 0.58, rows: 4 },
-        layers: [
-            { kind: 'peaks', y: 0.6, amp: 0.22, color: '#5d8087' },
-            { kind: 'peaks', y: 0.66, amp: 0.16, color: '#3c5f66' },
-        ],
-        water: { y: 0.7, colors: ['#7fa3a8', '#6b9096', '#587c82'], shimmer: '#eaf6f6' },
-        seed: 31,
-    },
-    aurora: {
-        sky: ['#01040f', '#04101f', '#062032', '#083040'],
-        stars: 70,
-        aurora: ['#7dffbe', '#3fd9a0', '#2a9ec4'],
-        layers: [
-            { kind: 'peaks', y: 0.66, amp: 0.24, color: '#0a1526', accent: '#cfe6f0' },
-            { kind: 'trees', y: 0.74, amp: 0.12, color: '#050b16' },
-        ],
-        water: { y: 0.8, colors: ['#07131f', '#050f1a', '#040a14'], shimmer: '#7dffbe' },
-        seed: 59,
     },
 };
 
-/** Display order; groups are kept for ordering only, no headings are drawn. */
-export const sceneOrder = [
-    'bund',
-    'lijiang',
-    'xihu',
-    'zhangjiajie',
-    'fuji',
-    'arashiyama',
-    'biei',
-    'odaiba',
-    'victoria',
-    'marina',
-    'halong',
-    'aurora',
-];
+/** Display order; nothing is labelled on the page itself. */
+export const sceneOrder = ['bund', 'gugong', 'shenzhen', 'victoria'];
 
 export const sceneNames: Record<string, Record<string, { name: string; place: string }>> = {
     en: {
         bund: { name: 'The Bund', place: 'Shanghai' },
-        lijiang: { name: 'Li River', place: 'Guilin' },
-        xihu: { name: 'West Lake', place: 'Hangzhou' },
-        zhangjiajie: { name: 'Zhangjiajie', place: 'Hunan' },
-        fuji: { name: 'Mt. Fuji', place: 'Lake Kawaguchi' },
-        arashiyama: { name: 'Bamboo Grove', place: 'Arashiyama, Kyoto' },
-        biei: { name: 'Blue Pond', place: 'Biei, Hokkaido' },
-        odaiba: { name: 'Rainbow Bridge', place: 'Odaiba, Tokyo' },
+        gugong: { name: 'The Forbidden City', place: 'Beijing' },
+        shenzhen: { name: 'Lianhua Hill Park', place: 'Shenzhen' },
         victoria: { name: 'Victoria Harbour', place: 'Hong Kong' },
-        marina: { name: 'Marina Bay', place: 'Singapore' },
-        halong: { name: 'Ha Long Bay', place: 'Vietnam' },
-        aurora: { name: 'Northern Lights', place: 'Tromsø, Norway' },
     },
     zh: {
         bund: { name: '外滩', place: '上海' },
-        lijiang: { name: '漓江', place: '桂林' },
-        xihu: { name: '西湖', place: '杭州' },
-        zhangjiajie: { name: '张家界', place: '湖南' },
-        fuji: { name: '富士山', place: '河口湖' },
-        arashiyama: { name: '竹林小径', place: '京都·岚山' },
-        biei: { name: '青池', place: '北海道·美瑛' },
-        odaiba: { name: '彩虹大桥', place: '东京·台场' },
+        gugong: { name: '故宫', place: '北京' },
+        shenzhen: { name: '莲花山公园', place: '深圳' },
         victoria: { name: '维多利亚港', place: '香港' },
-        marina: { name: '滨海湾', place: '新加坡' },
-        halong: { name: '下龙湾', place: '越南' },
-        aurora: { name: '北极光', place: '挪威·特罗姆瑟' },
     },
     ja: {
         bund: { name: '外灘', place: '上海' },
-        lijiang: { name: '漓江', place: '桂林' },
-        xihu: { name: '西湖', place: '杭州' },
-        zhangjiajie: { name: '張家界', place: '湖南省' },
-        fuji: { name: '富士山', place: '河口湖' },
-        arashiyama: { name: '竹林の小径', place: '京都・嵐山' },
-        biei: { name: '青い池', place: '北海道・美瑛' },
-        odaiba: { name: 'レインボーブリッジ', place: '東京・お台場' },
+        gugong: { name: '故宮', place: '北京' },
+        shenzhen: { name: '蓮花山公園', place: '深圳' },
         victoria: { name: 'ビクトリア・ハーバー', place: '香港' },
-        marina: { name: 'マリーナ・ベイ', place: 'シンガポール' },
-        halong: { name: 'ハロン湾', place: 'ベトナム' },
-        aurora: { name: 'オーロラ', place: 'ノルウェー・トロムソ' },
     },
 };

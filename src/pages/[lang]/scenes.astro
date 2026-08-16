@@ -22,6 +22,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         aria-label={`${names[id].name}, ${names[id].place}`}
       >
         <canvas class="scene-canvas" data-scene-canvas={id} data-scene-index={index}></canvas>
+        <p class="scene-label">
+          <span class="scene-label__name">{names[id].name}</span>
+          <span class="scene-label__place">{names[id].place}</span>
+        </p>
       </section>
     ))}
   </div>
@@ -58,11 +62,50 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
     object-fit: cover;
     image-rendering: pixelated;
   }
+
+  .scene-label {
+    position: absolute;
+    top: 1.1rem;
+    left: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    line-height: 1.15;
+    /* Sits over artwork of any brightness, so it carries its own shadow. */
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.85), 0 0 8px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+  }
+
+  .scene-label__name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: #fdf6e8;
+  }
+
+  .scene-label__place {
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(253, 246, 232, 0.72);
+  }
+
+  @media (min-width: 768px) {
+    .scene-label {
+      top: 1.6rem;
+      left: 1.75rem;
+    }
+
+    .scene-label__name {
+      font-size: 1.15rem;
+    }
+  }
 </style>
 
 <script define:vars={{ specs: scenePixels }}>
   (() => {
-    const ROWS = 150;
+    const ROWS = 240;
     const BAYER = [
       [0, 8, 2, 10],
       [12, 4, 14, 6],
@@ -98,6 +141,14 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       return `#${((1 << 24) | (c(r1, r2) << 16) | (c(g1, g2) << 8) | c(b1, b2)).toString(16).slice(1)}`;
     };
 
+    /** Blend two packed words, for reflections and haze. */
+    const blend = (w1, w2, f) => {
+      const r = Math.round((w1 & 255) + (((w2 & 255) - (w1 & 255)) * f));
+      const g = Math.round(((w1 >> 8) & 255) + ((((w2 >> 8) & 255) - ((w1 >> 8) & 255)) * f));
+      const b = Math.round(((w1 >> 16) & 255) + ((((w2 >> 16) & 255) - ((w1 >> 16) & 255)) * f));
+      return (255 << 24) | (b << 16) | (g << 8) | r;
+    };
+
     /** Terrain height per column, as a row index. Lower value = taller. */
     const surface = (kind, spec, layer, width, rows) => {
       const rand = rng(spec.seed * 97 + kind.length * 13 + Math.round(layer.y * 100));
@@ -106,47 +157,36 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       const out = new Array(width).fill(base);
 
       if (kind === 'city') {
+        // Distant ranks get narrower blocks, which reads as depth.
+        const spread = Math.max(0.35, Math.min(1, amp / (rows * 0.2)));
         let x = 0;
         while (x < width) {
-          const w = 3 + Math.floor(rand() * 9);
+          const w = Math.max(2, Math.round((4 + rand() * 12) * spread));
           const h = Math.round(amp * (0.25 + rand() * 0.75));
           for (let i = 0; i < w && x + i < width; i += 1) out[x + i] = base - h;
-          x += w + (rand() < 0.25 ? 1 + Math.floor(rand() * 2) : 0);
+          x += w + (rand() < 0.3 ? 1 + Math.floor(rand() * 3) : 0);
         }
       } else if (kind === 'peaks') {
-        const count = Math.max(3, Math.round(width / 22));
+        const count = Math.max(3, Math.round(width / 30));
         const peaks = [];
         for (let i = 0; i < count; i += 1) {
-          peaks.push({
-            x: rand() * width,
-            h: amp * (0.45 + rand() * 0.55),
-            slope: 0.6 + rand() * 0.9,
-          });
+          peaks.push({ x: rand() * width, h: amp * (0.45 + rand() * 0.55), slope: 0.5 + rand() * 0.7 });
         }
         for (let x = 0; x < width; x += 1) {
           let top = 0;
           for (const p of peaks) top = Math.max(top, p.h - Math.abs(x - p.x) * p.slope);
-          out[x] = Math.round(base - top);
-        }
-      } else if (kind === 'cone') {
-        const cx = width * 0.5;
-        const slope = amp / (width * 0.34);
-        for (let x = 0; x < width; x += 1) {
-          const d = Math.abs(x - cx);
-          const jag = d > 4 ? Math.round(rand() * 1.4) : 0;
-          out[x] = Math.round(base - Math.max(0, amp - d * slope) + jag);
+          // A little roughness so ridges are not perfect triangles.
+          out[x] = Math.round(base - top + Math.sin(x * 0.7) * amp * 0.03);
         }
       } else {
-        // hills, shore, trees: smooth interpolated noise
-        const step = kind === 'shore' ? 26 : 14;
+        const step = kind === 'trees' ? 18 : 26;
         const knots = [];
         for (let i = 0; i <= Math.ceil(width / step) + 1; i += 1) knots.push(rand());
         for (let x = 0; x < width; x += 1) {
           const i = Math.floor(x / step);
           const f = (x % step) / step;
           const s = f * f * (3 - 2 * f);
-          const v = knots[i] + (knots[i + 1] - knots[i]) * s;
-          out[x] = Math.round(base - v * amp);
+          out[x] = Math.round(base - (knots[i] + (knots[i + 1] - knots[i]) * s) * amp);
         }
       }
       return out;
@@ -154,10 +194,33 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
     const buildStatic = (spec, width, rows) => {
       const buf = new Uint32Array(width * rows);
-      const put = (x, y, c) => {
+      const put = (px, py, c) => {
+        // Coordinates must be whole numbers: a fractional index silently
+        // wraps into the wrong row and leaves ghost pixels elsewhere.
+        const x = Math.round(px);
+        const y = Math.round(py);
         if (x < 0 || y < 0 || x >= width || y >= rows) return;
         buf[y * width + x] = c;
       };
+      const at = (x, y) => buf[Math.max(0, Math.min(rows - 1, y)) * width + Math.max(0, Math.min(width - 1, x))];
+      const box = (x0, y0, w, h, c) => {
+        for (let y = y0; y < y0 + h; y += 1) for (let x = x0; x < x0 + w; x += 1) put(x, y, c);
+      };
+      const disc = (cx, cy, r, c) => {
+        for (let y = -r; y <= r; y += 1) {
+          for (let x = -r; x <= r; x += 1) if (x * x + y * y <= r * r) put(cx + x, cy + y, c);
+        }
+      };
+      const line = (x0, y0, x1, y1, c) => {
+        const steps = Math.max(1, Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)));
+        for (let i = 0; i <= steps; i += 1) {
+          put(Math.round(x0 + ((x1 - x0) * i) / steps), Math.round(y0 + ((y1 - y0) * i) / steps), c);
+        }
+      };
+
+      const blinkers = [];
+      const beacons = [];
+      const horizon = spec.sky[Math.max(0, spec.sky.length - 2)];
 
       // Sky: ordered dithering between the band colors.
       const bands = spec.sky.map(word);
@@ -174,11 +237,43 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
       const rand = rng(spec.seed);
 
+      // Cumulus, built from overlapping discs with a lit top and shaded belly.
+      if (spec.clouds) {
+        const c = spec.clouds;
+        const core = word(c.color);
+        const top = word(mix(c.color, '#ffffff', 0.6));
+        const belly = word(mix(c.color, c.shade ?? '#8fa8c0', 0.55));
+        for (let i = 0; i < c.count; i += 1) {
+          const cxp = Math.round(rand() * width);
+          const cyp = Math.round((c.y + (rand() - 0.5) * c.spread) * rows);
+          const scale = (0.6 + rand() * 0.8) * rows * 0.05;
+          const puffs = 3 + Math.floor(rand() * 4);
+          const parts = [];
+          for (let p = 0; p < puffs; p += 1) {
+            parts.push({
+              x: cxp + Math.round((p - puffs / 2) * scale * 1.1 + (rand() - 0.5) * scale),
+              y: cyp + Math.round((rand() - 0.5) * scale * 0.6),
+              r: Math.max(2, Math.round(scale * (0.6 + rand() * 0.7))),
+            });
+          }
+          for (const p of parts) disc(p.x, p.y, p.r, core);
+          for (const p of parts) {
+            for (let x = -p.r; x <= p.r; x += 1) {
+              for (let y = -p.r; y <= p.r; y += 1) {
+                if (x * x + y * y > p.r * p.r) continue;
+                if (y < -p.r * 0.35) put(p.x + x, p.y + y, top);
+                else if (y > p.r * 0.45) put(p.x + x, p.y + y, belly);
+              }
+            }
+          }
+        }
+      }
+
       if (spec.stars) {
         const stars = [];
         for (let i = 0; i < spec.stars; i += 1) {
           const x = Math.floor(rand() * width);
-          const y = Math.floor(rand() * rows * 0.55);
+          const y = Math.floor(rand() * rows * 0.5);
           const c = rand() < 0.3 ? '#ffffff' : '#cfd8ff';
           stars.push({ x, y, c });
           put(x, y, word(c));
@@ -192,8 +287,8 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         const cy = Math.round(c.y * rows);
         const glow = word(c.glow);
         const core = word(c.color);
-        const halo = c.r * 2.2;
-        const shade = word(mix(c.color, c.glow, 0.55));
+        const halo = Math.round(c.r * 2.4);
+        const shade = word(mix(c.color, c.glow, 0.5));
         for (let y = -halo; y <= halo; y += 1) {
           for (let x = -halo; x <= halo; x += 1) {
             const d = Math.hypot(x, y);
@@ -206,145 +301,616 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             }
           }
         }
-        // A couple of craters give the moon some read at this size.
         if (c.kind === 'moon') {
           const cr = rng(spec.seed * 5);
           for (let i = 0; i < 3; i += 1) {
             const a = cr() * Math.PI * 2;
             const dist = cr() * c.r * 0.55;
-            const ox = Math.round(Math.cos(a) * dist);
-            const oy = Math.round(Math.sin(a) * dist);
-            const rr = Math.max(1, Math.round(c.r * (0.15 + cr() * 0.2)));
-            for (let y = -rr; y <= rr; y += 1) {
-              for (let x = -rr; x <= rr; x += 1) {
-                if (Math.hypot(x, y) <= rr) put(cx + ox + x, cy + oy + y, shade);
-              }
-            }
+            const rr = Math.max(1, Math.round(c.r * (0.14 + cr() * 0.18)));
+            disc(cx + Math.round(Math.cos(a) * dist), cy + Math.round(Math.sin(a) * dist), rr, shade);
           }
         }
       }
 
-      if (spec.aurora) spec._auroraCols = width;
+      // Warm band sitting on the horizon, behind everything solid.
+      if (spec.haze) {
+        const hy = Math.round(spec.haze.y * rows);
+        const reach = Math.round(rows * 0.34);
+        const c = word(spec.haze.color);
+        for (let y = hy - reach; y < hy + Math.round(reach * 0.35); y += 1) {
+          const d = Math.abs(y - hy) / reach;
+          const density = Math.max(0, 1 - d) ** 1.6 * spec.haze.strength;
+          for (let x = 0; x < width; x += 1) {
+            const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
+            // Blend proportionally so the band has no hard dithered edge.
+            if (density > th * 0.5) put(x, y, blend(at(x, y), c, Math.min(0.6, density * 0.8)));
+          }
+        }
+      }
 
       const waterTop = spec.water ? Math.round(spec.water.y * rows) : rows;
 
+      /** Distant layers wash toward the horizon colour. */
+      const hazed = (color, amount) => (amount ? mix(color, horizon, amount) : color);
+
       for (const layer of spec.layers) {
-        if (layer.kind === 'bamboo') {
-          const lr = rng(spec.seed * 31);
-          // Three depth passes: far stalks are thin and dark, near ones thick and lit.
-          const passes = [
-            { count: Math.round(width / 5), w: [1, 2], tint: 0.0, light: 0.0 },
-            { count: Math.round(width / 11), w: [2, 4], tint: 0.35, light: 0.15 },
-            { count: Math.round(width / 26), w: [4, 7], tint: 0.7, light: 0.3 },
-          ];
-          for (const pass of passes) {
-            for (let i = 0; i < pass.count; i += 1) {
-              const x = Math.floor(lr() * width);
-              const w = pass.w[0] + Math.floor(lr() * (pass.w[1] - pass.w[0] + 1));
-              const base = mix(layer.color, layer.accent ?? layer.color, pass.tint + lr() * 0.2);
-              const lit = word(mix(base, '#e8ffbe', pass.light + 0.12));
-              const body = word(base);
-              const edge = word(mix(base, '#04120a', 0.45));
-              const nodeOffset = Math.floor(lr() * 19);
-              for (let y = 0; y < rows; y += 1) {
-                for (let k = 0; k < w; k += 1) {
-                  put(x + k, y, k === 0 ? lit : k === w - 1 ? edge : body);
-                }
-                if ((y + nodeOffset) % 21 === 0) {
-                  for (let k = 0; k < w; k += 1) put(x + k, y, edge);
-                }
+        const top = surface(layer.kind, spec, layer, width, rows);
+        const bodyHex = hazed(layer.color, layer.haze ?? 0);
+        const body = word(bodyHex);
+        const lit = word(mix(bodyHex, '#ffffff', 0.14));
+        const shadow = word(mix(bodyHex, '#000000', 0.3));
+        const accentHex = layer.accent ? hazed(layer.accent, (layer.haze ?? 0) * 0.5) : null;
+        const accent = accentHex ? word(accentHex) : null;
+        const lr = rng(spec.seed * 17 + Math.round(layer.y * 90));
+        const bottom = layer.kind === 'city' || layer.kind === 'trees' ? waterTop : rows;
+
+        if (layer.kind === 'city') {
+          // Walk the skyline building by building so each can be shaded.
+          let x = 0;
+          while (x < width) {
+            let end = x;
+            while (end < width && top[end] === top[x]) end += 1;
+            const t = top[x];
+            const w = end - x;
+            const dark = lr() < 0.25; // some blocks stay unlit
+            for (let bx = x; bx < end; bx += 1) {
+              for (let y = Math.max(0, t); y < bottom; y += 1) {
+                let c = body;
+                if (y === t) c = lit;
+                else if (bx === x) c = lit;
+                else if (bx === end - 1) c = shadow;
+                put(bx, y, c);
               }
-              // A few leaves hanging off the taller stalks.
-              if (pass.tint > 0.3) {
-                for (let l = 0; l < 3; l += 1) {
-                  const ly = Math.floor(lr() * rows * 0.8);
-                  const dir = lr() < 0.5 ? -1 : 1;
-                  for (let s = 0; s < 6 + Math.floor(lr() * 5); s += 1) {
-                    put(x + (dir > 0 ? w : 0) + dir * s, ly + Math.round(s * 0.45), lit);
+            }
+            if (accent && !dark && w > 2) {
+              const density = 0.25 + lr() * 0.45;
+              for (let bx = x + 1; bx < end - 1; bx += 2) {
+                for (let y = t + 3; y < bottom - 2; y += 3) {
+                  if (lr() < density) {
+                    put(bx, y, accent);
+                    if (lr() < 0.06) {
+                      blinkers.push({ x: bx, y, on: accentHex, off: bodyHex, period: 12 + lr() * 14, phase: lr() * 24 });
+                    }
                   }
                 }
               }
             }
+            // Roof clutter: a mast or a water tank.
+            if (w > 4 && (layer.haze ?? 0) < 0.5 && lr() < 0.4) {
+              const mx = x + 1 + Math.floor(lr() * (w - 2));
+              const mh = 2 + Math.floor(lr() * 5);
+              line(mx, t, mx, t - mh, shadow);
+              if (accent && lr() < 0.4) {
+                beacons.push({ x: mx, y: t - mh, color: '#ff5a5a', period: 3.6 + lr() * 2.4, phase: lr() * 6 });
+              }
+            }
+            x = end;
           }
-          continue;
-        }
-
-        const top = surface(layer.kind, spec, layer, width, rows);
-        const summit = Math.min(...top);
-        const body = word(layer.color);
-        // Silhouettes read better without a rim light; landforms keep it.
-        const rim = word(layer.kind === 'trees' ? layer.color : mix(layer.color, '#ffffff', 0.16));
-        const accent = layer.accent ? word(layer.accent) : null;
-        const lr = rng(spec.seed * 17 + Math.round(layer.y * 90));
-
-        for (let x = 0; x < width; x += 1) {
-          const t = top[x];
-          const bottom = layer.kind === 'city' || layer.kind === 'trees' ? waterTop : rows;
-          for (let y = Math.max(0, t); y < bottom; y += 1) put(x, y, y === t ? rim : body);
-
-          if (accent && layer.kind === 'city') {
-            // Windows sit on a grid so they read as floors, not noise.
-            if (x % 3 === 1) {
-              for (let y = t + 3; y < bottom - 2; y += 3) {
-                if (lr() < 0.45) put(x, y, accent);
+        } else if (layer.kind === 'roofs') {
+          // A courtyard rank of tiled halls, the signature of the palace seen
+          // from the hill: gold roof, dark ridge, red wall, repeated across.
+          const scale = layer.amp * rows;
+          const unitW = Math.max(12, Math.round(scale * 2.8));
+          const roofH = Math.max(3, Math.round(scale * 0.62));
+          const wallH = Math.max(2, Math.round(scale * 0.5));
+          const baseY = Math.round(layer.y * rows);
+          const goldHex = hazed(layer.accent ?? '#d9a441', (layer.haze ?? 0) * 0.8);
+          const gold = word(goldHex);
+          const goldLit = word(mix(goldHex, '#fff0c8', 0.45));
+          const ridge = word(mix(goldHex, '#5a3418', 0.45));
+          const wall = word(mix(bodyHex, '#000000', 0.05));
+          const shade = word(mix(bodyHex, '#000000', 0.35));
+          for (let x0 = -Math.round(lr() * unitW); x0 < width; x0 += unitW + 2 + Math.floor(lr() * 4)) {
+            const w = unitW - Math.floor(lr() * (unitW * 0.25));
+            const drop = Math.round(lr() * scale * 0.25);
+            const y = baseY + drop;
+            box(x0, y - wallH, w, wallH, wall);
+            for (let x = x0; x < x0 + w; x += 3) line(x, y - wallH, x, y - 1, shade);
+            for (let i = 0; i < roofH; i += 1) {
+              const f = i / roofH;
+              const rw = Math.round(w * (1 - f * 0.32)) + 2;
+              const rx = x0 + Math.round((w - rw) / 2);
+              for (let x = rx; x < rx + rw; x += 1) {
+                // Tiles read as fine ribs low on the roof, smooth toward the ridge.
+                const tile = f > 0.45 && (x - rx) % 4 === 0;
+                put(x, y - wallH - i, tile ? ridge : f < 0.35 ? goldLit : gold);
+              }
+            }
+            // Upturned eave tips and the ridge cap.
+            put(x0 - 2, y - wallH - 1, gold);
+            put(x0 + w + 1, y - wallH - 1, gold);
+            const capW = Math.round(w * 0.66);
+            for (let x = x0 + Math.round((w - capW) / 2); x < x0 + (w + capW) / 2; x += 1) {
+              put(x, y - wallH - roofH, ridge);
+            }
+          }
+        } else if (layer.kind === 'trees') {
+          for (let x = 0; x < width; x += 1) {
+            for (let y = Math.max(0, top[x]); y < bottom; y += 1) put(x, y, body);
+          }
+          // Canopy blobs along the top edge give the mass a readable silhouette.
+          for (let x = 0; x < width; x += 2 + Math.floor(lr() * 3)) {
+            const r = 2 + Math.floor(lr() * 4);
+            const cy = top[x] + r - 1;
+            disc(x, cy, r, body);
+            if (accent && !layer.bloom) {
+              for (let a = 0; a < 5; a += 1) {
+                const ang = Math.PI + (a / 5) * Math.PI;
+                put(x + Math.round(Math.cos(ang) * r * 0.7), cy + Math.round(Math.sin(ang) * r * 0.7), accent);
               }
             }
           }
-          if (accent && layer.kind === 'cone') {
-            // Snow only near the summit, thinning out as it runs down the flanks.
-            const capDepth = layer.amp * rows * 0.42;
-            const capLine = summit + capDepth;
-            for (let y = Math.max(0, t); y < capLine; y += 1) {
-              const depth = 1 - (y - summit) / capDepth;
-              const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
-              if (depth > 0 && depth * depth > th) put(x, y, accent);
+          // Flowering hedge: blossoms scattered right through the foliage.
+          if (accent && layer.bloom) {
+            const petalLit = word(mix(accentHex, '#ffffff', 0.35));
+            const leaf = word(mix(bodyHex, '#ffffff', 0.2));
+            for (let x = 0; x < width; x += 1) {
+              for (let y = Math.max(0, top[x] - 2); y < bottom; y += 1) {
+                const depth = (y - top[x]) / Math.max(6, bottom - top[x]);
+                if (lr() < layer.bloom * (1 - depth * 0.55)) {
+                  const cluster = lr();
+                  put(x, y, cluster < 0.3 ? petalLit : accent);
+                  if (cluster > 0.7) put(x + 1, y, accent);
+                } else if (lr() < 0.06) {
+                  put(x, y, leaf);
+                }
+              }
             }
           }
-          if (accent && layer.kind === 'trees') {
-            if (lr() < 0.12) put(x, Math.max(0, t - 1), accent);
-          }
-        }
-      }
-
-      // Mist sits in front of the ridges, so it reads as a sea of cloud.
-      if (spec.fog) {
-        const fy = Math.round(spec.fog.y * rows);
-        const c = word(spec.fog.color);
-        const band = spec.fog.rows * 3;
-        for (let r = 0; r < band; r += 1) {
-          const y = fy + r;
-          // Densest in the middle of the band, feathering out top and bottom.
-          const f = r / band;
-          const density = Math.sin(f * Math.PI) * 1.15;
+        } else {
           for (let x = 0; x < width; x += 1) {
-            const wobble = Math.sin(x * 0.055 + f * 4) * 0.16 + Math.sin(x * 0.021) * 0.1;
-            const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
-            if (density + wobble > th) put(x, y, c);
+            const t = top[x];
+            for (let y = Math.max(0, t); y < bottom; y += 1) put(x, y, y === t ? lit : body);
+            // Slope shading: the side falling away from the light goes darker.
+            if (x > 0 && top[x] > top[x - 1]) {
+              for (let y = t; y < Math.min(bottom, t + 3); y += 1) put(x, y, shadow);
+            }
           }
         }
       }
 
+      const drawLandmark = (lm) => {
+        const cx = Math.round(lm.x * width);
+        const base = Math.round(lm.base * rows);
+        const h = Math.max(8, Math.round(lm.h * rows));
+        const bodyHex = lm.body;
+        const body = word(bodyHex);
+        const lit = word(mix(bodyHex, '#ffffff', 0.16));
+        const edge = word(mix(bodyHex, '#000000', 0.4));
+        const light = word(lm.light);
+        const lr = rng(spec.seed * 13 + Math.round(lm.x * 1000));
+
+        // Rows the tower actually occupies, so lit windows never float in the sky.
+        const spans = new Map();
+        const span = (y, x0, x1) => spans.set(y, [x0, x1]);
+
+        /** Tapered shaft with a lit left edge; returns the top row. */
+        const taper = (h2, wBottom, wTop, twist) => {
+          for (let i = 0; i < h2; i += 1) {
+            const f = i / h2;
+            const w = Math.max(1, Math.round(wBottom + (wTop - wBottom) * f));
+            const shift = twist ? Math.round(Math.sin(f * twist) * w * 0.35) : 0;
+            const x0 = cx - Math.floor(w / 2) + shift;
+            for (let x = x0; x < x0 + w; x += 1) {
+              put(x, base - i, x === x0 ? lit : x === x0 + w - 1 ? edge : body);
+            }
+            span(base - i, x0, x0 + w - 1);
+          }
+          return base - h2;
+        };
+        const windows = (step, density) => {
+          for (let y = base - 4; y > 0; y -= step) {
+            const s = spans.get(y);
+            if (!s || s[1] - s[0] < 3) continue;
+            for (let x = s[0] + 2; x < s[1] - 1; x += 2) {
+              if (lr() < (density ?? 0.4)) put(x, y, light);
+            }
+          }
+        };
+        const beacon = (y, period) => {
+          beacons.push({ x: cx, y, color: '#ff5a5a', period: period ?? 3.4 + lr() * 2.6, phase: lr() * 6 });
+        };
+
+        if (lm.kind === 'pearl') {
+          // Oriental Pearl: three spheres threaded on a mast, splayed legs.
+          const mast = Math.max(2, Math.round(h * 0.04));
+          box(cx - Math.floor(mast / 2), base - h, mast, h, body);
+          line(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.14), base, body);
+          line(cx + mast, base - Math.round(h * 0.3), cx + Math.round(h * 0.14), base, body);
+          line(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.07), base, edge);
+          const spheres = [
+            [0.42, 0.115],
+            [0.72, 0.075],
+            [0.9, 0.04],
+          ];
+          for (const [sy, sr] of spheres) {
+            const r = Math.max(2, Math.round(h * sr));
+            const cy = base - Math.round(h * sy);
+            disc(cx, cy, r, body);
+            for (let y = -r; y <= r; y += 1) {
+              for (let x = -r; x <= r; x += 1) {
+                if (Math.hypot(x + r * 0.4, y + r * 0.4) <= r * 0.42) put(cx + x, cy + y, lit);
+              }
+            }
+            const ring = Math.max(8, Math.round(r * 2.4));
+            for (let a = 0; a < ring; a += 1) {
+              const ang = (a / ring) * Math.PI * 2;
+              put(cx + Math.round(Math.cos(ang) * r), cy + Math.round(Math.sin(ang) * r), light);
+            }
+          }
+          line(cx, base - h, cx, base - h - Math.round(h * 0.12), body);
+          beacon(base - h - Math.round(h * 0.12), 2.8);
+        } else if (lm.kind === 'twist') {
+          // Shanghai Tower: tapered and turning as it rises.
+          const top = taper(h, Math.round(h * 0.14), Math.round(h * 0.06), 1.1);
+          windows(5);
+          beacon(top - 1, 4.2);
+        } else if (lm.kind === 'opener') {
+          // World Financial Center: the trapezoid with the hole at the top.
+          const wB = Math.round(h * 0.17);
+          const wT = Math.round(h * 0.13);
+          const holeY0 = base - Math.round(h * 0.95);
+          const holeY1 = base - Math.round(h * 0.82);
+          for (let i = 0; i < h; i += 1) {
+            const f = i / h;
+            const w = Math.round(wB + (wT - wB) * f);
+            const y = base - i;
+            const x0 = cx - Math.floor(w / 2);
+            for (let x = x0; x < x0 + w; x += 1) {
+              if (y >= holeY0 && y <= holeY1 && Math.abs(x - cx) < w * 0.34) continue;
+              put(x, y, x === x0 ? lit : x === x0 + w - 1 ? edge : body);
+            }
+            if (y < holeY0 || y > holeY1) span(y, x0, x0 + w - 1);
+          }
+          windows(5);
+          beacon(holeY0 - 1, 3.8);
+        } else if (lm.kind === 'stepped') {
+          // Jin Mao: a pagoda of shrinking segments.
+          let y = base;
+          for (let s = 0; s < 9; s += 1) {
+            const segH = Math.round((h / 9) * (1 - s * 0.035));
+            const w = Math.max(3, Math.round(h * (0.16 - s * 0.012)));
+            box(cx - Math.floor(w / 2), y - segH, w, segH, body);
+            for (let yy = y - segH; yy < y; yy += 1) span(yy, cx - Math.floor(w / 2), cx + Math.ceil(w / 2) - 1);
+            for (let x = cx - Math.floor(w / 2); x < cx + w / 2; x += 1) put(x, y - segH, lit);
+            line(cx - Math.floor(w / 2), y - segH, cx - Math.floor(w / 2), y, lit);
+            line(cx + Math.ceil(w / 2) - 1, y - segH, cx + Math.ceil(w / 2) - 1, y, edge);
+            y -= segH;
+          }
+          line(cx, y, cx, y - Math.round(h * 0.09), body);
+          windows(5);
+          beacon(y - Math.round(h * 0.09), 3.2);
+        } else if (lm.kind === 'boc') {
+          // Bank of China: stacked prisms, each cut by a diagonal.
+          const w = Math.round(h * 0.26);
+          let y = base;
+          for (let s = 0; s < 4; s += 1) {
+            const sh = Math.round((h / 4) * (s === 3 ? 1.1 : 1));
+            const sw = Math.max(4, Math.round(w * (1 - s * 0.22)));
+            const off = Math.round(((s % 2 === 0 ? 1 : -1) * (w - sw)) / 2);
+            const x0 = cx - Math.floor(sw / 2) + off;
+            box(x0, y - sh, sw, sh, body);
+            for (let yy = y - sh; yy < y; yy += 1) {
+              put(x0, yy, lit);
+              put(x0 + sw - 1, yy, edge);
+            }
+            line(x0, y, x0 + sw - 1, y - sh, light);
+            line(x0 + sw - 1, y, x0, y - sh, light);
+            for (let yy = y - sh + 3; yy < y - 2; yy += 4) {
+              for (let x = x0 + 1; x < x0 + sw - 1; x += 3) if (lr() < 0.3) put(x, yy, light);
+            }
+            y -= sh;
+          }
+          line(cx - 2, y, cx - 2, y - Math.round(h * 0.17), body);
+          line(cx + 2, y, cx + 2, y - Math.round(h * 0.17), body);
+          beacon(y - Math.round(h * 0.17), 2.6);
+        } else if (lm.kind === 'crown') {
+          const top = taper(Math.round(h * 0.86), Math.round(h * 0.17), Math.round(h * 0.12), 0);
+          const cw = Math.round(h * 0.12);
+          for (let x = cx - Math.floor(cw / 2); x <= cx + cw / 2; x += 1) {
+            const rise = Math.round(h * 0.05 * (1 - Math.abs(x - cx) / (cw * 0.7)));
+            line(x, top, x, top - Math.max(1, rise) - ((x - cx) % 3 === 0 ? 2 : 0), body);
+          }
+          windows(4);
+          beacon(top - Math.round(h * 0.06), 3.9);
+        } else if (lm.kind === 'pyramid') {
+          const top = taper(Math.round(h * 0.8), Math.round(h * 0.16), Math.round(h * 0.13), 0);
+          const pw = Math.round(h * 0.13);
+          for (let i = 0; i <= pw; i += 1) {
+            const w = pw - i;
+            for (let x = cx - Math.floor(w / 2); x <= cx + w / 2; x += 1) put(x, top - i, x < cx ? body : edge);
+          }
+          line(cx, top - pw, cx, top - pw - Math.round(h * 0.14), body);
+          windows(4);
+          beacon(top - pw - Math.round(h * 0.14), 3.1);
+        } else if (lm.kind === 'slab') {
+          const top = taper(h, Math.round(h * 0.22), Math.round(h * 0.16), 0);
+          box(cx - Math.round(h * 0.06), top - Math.round(h * 0.05), Math.round(h * 0.12), Math.round(h * 0.05), body);
+          windows(4, 0.45);
+          beacon(top - Math.round(h * 0.05), 4.6);
+        } else if (lm.kind === 'spire') {
+          // Ping An Finance Centre: tall, chamfered, needle on top.
+          const top = taper(Math.round(h * 0.88), Math.round(h * 0.13), Math.round(h * 0.05), 0);
+          const nose = Math.round(h * 0.12);
+          for (let i = 0; i < nose; i += 1) {
+            const w = Math.max(1, Math.round(h * 0.05 * (1 - i / nose)));
+            for (let x = cx - Math.floor(w / 2); x <= cx + w / 2; x += 1) put(x, top - i, body);
+          }
+          line(cx, top - nose, cx, top - nose - Math.round(h * 0.08), body);
+          windows(5);
+          beacon(top - nose - Math.round(h * 0.08), 2.4);
+        } else if (lm.kind === 'canopy') {
+          // Shenzhen Civic Center: the long wave roof on a glass base.
+          const w = Math.round(h * 5.2);
+          const x0 = cx - Math.floor(w / 2);
+          // Glass hall under the canopy.
+          box(x0 + Math.round(w * 0.1), base - Math.round(h * 0.5), Math.round(w * 0.8), Math.round(h * 0.5), edge);
+          for (let x = x0 + Math.round(w * 0.1); x < x0 + w * 0.9; x += 3) {
+            line(x, base - Math.round(h * 0.5), x, base - 1, word(mix(lm.body, '#ffffff', 0.3)));
+          }
+          const bands2 = (lm.colors ?? [lm.light]).map(word);
+          const roofTone = word(lm.light);
+          const roofEdge = word(mix(lm.light, '#5a7086', 0.45));
+          const thickness = Math.max(3, Math.round(h * 0.3));
+          for (let x = 0; x < w; x += 1) {
+            const f = x / w;
+            // Long, shallow wave: high in the middle, dipping at both ends.
+            const swoop = Math.sin(f * Math.PI) * h * 0.5 + Math.sin(f * Math.PI * 3) * h * 0.08;
+            const y = base - Math.round(h * 0.45) - Math.round(swoop);
+            for (let k = 0; k < thickness; k += 1) {
+              put(x0 + x, y + k, k === 0 ? roofTone : k === thickness - 1 ? roofEdge : word(mix(lm.light, '#ffffff', 0.3)));
+            }
+            // Coloured sculptures sit on the crest, not along the whole roof.
+            if (f > 0.34 && f < 0.66) {
+              const band = bands2[Math.min(bands2.length - 1, Math.floor(((f - 0.34) / 0.32) * bands2.length))];
+              const tall = Math.round(h * 0.5 * Math.sin(((f - 0.34) / 0.32) * Math.PI));
+              for (let k = 0; k <= tall; k += 1) put(x0 + x, y - k, band);
+            }
+          }
+          for (let x = x0 + 4; x < x0 + w - 4; x += 5) {
+            if (lr() < 0.6) put(x, base - Math.round(h * 0.3), light);
+          }
+        } else if (lm.kind === 'statue') {
+          // A striding figure on its plinth, seen against the city lights.
+          const s2 = Math.max(8, h);
+          const plinthH = Math.round(s2 * 0.32);
+          const plinthW = Math.round(s2 * 0.46);
+          box(cx - Math.floor(plinthW / 2), base - plinthH, plinthW, plinthH, body);
+          box(cx - Math.floor(plinthW / 2) - 1, base - plinthH - 1, plinthW + 2, 2, body);
+          const feet = base - plinthH - 1;
+          const figure = Math.round(s2 * 0.62);
+          // Coat: narrow at the shoulders, flaring toward the hem.
+          for (let i = 0; i < figure; i += 1) {
+            const f = i / figure;
+            const w = Math.max(2, Math.round(s2 * (0.2 - f * 0.09)));
+            for (let x = cx - Math.floor(w / 2); x <= cx + w / 2; x += 1) put(x, feet - i, body);
+          }
+          const headR = Math.max(1, Math.round(s2 * 0.075));
+          disc(cx, feet - figure - headR, headR, body);
+          // One arm held behind, one hanging forward.
+          line(cx + Math.round(s2 * 0.07), feet - Math.round(figure * 0.82), cx + Math.round(s2 * 0.2), feet - Math.round(figure * 0.5), body);
+          line(cx - Math.round(s2 * 0.07), feet - Math.round(figure * 0.82), cx - Math.round(s2 * 0.17), feet - Math.round(figure * 0.45), body);
+        } else if (lm.kind === 'hall') {
+          // Hall of Supreme Harmony: marble terrace, red hall, twin gold roofs.
+          const unit = h;
+          const marbleHex = lm.accent ?? '#e6ded0';
+          const marble = word(marbleHex);
+          const marbleEdge = word(mix(marbleHex, '#000000', 0.28));
+          const stair = word(mix(marbleHex, '#ffffff', 0.35));
+          const gold = word(lm.light);
+          const goldLit = word(mix(lm.light, '#fff3c0', 0.5));
+          const goldEdge = word(mix(lm.light, '#000000', 0.4));
+          let y = base;
+          const tiers = lm.accent ? 3 : 0; // a gate hall sits straight on its wall
+          for (let tier = 0; tier < tiers; tier += 1) {
+            const tw = Math.round(unit * (2.5 - tier * 0.18));
+            const th = Math.max(3, Math.round(unit * 0.07));
+            box(cx - Math.floor(tw / 2), y - th, tw, th, marble);
+            for (let x = cx - Math.floor(tw / 2); x < cx + tw / 2; x += 1) put(x, y - th, stair);
+            for (let x = cx - Math.floor(tw / 2); x < cx + tw / 2; x += 6) {
+              line(x, y - th + 1, x, y - 1, marbleEdge); // balustrade posts
+            }
+            const sw = Math.round(unit * 0.5);
+            box(cx - Math.floor(sw / 2), y - th, sw, th, stair);
+            for (let sy = y - th; sy < y; sy += 2) {
+              for (let x = cx - Math.floor(sw / 2); x < cx + sw / 2; x += 1) put(x, sy, marbleEdge);
+            }
+            y -= th;
+          }
+          const wallW = Math.round(unit * 1.75);
+          const wallH = Math.round(unit * 0.3);
+          box(cx - Math.floor(wallW / 2), y - wallH, wallW, wallH, body);
+          for (let x = cx - Math.floor(wallW / 2); x < cx + wallW / 2; x += Math.max(4, Math.round(unit * 0.16))) {
+            line(x, y - wallH, x, y - 1, edge);
+            line(x + 1, y - wallH, x + 1, y - 1, lit);
+          }
+          for (let d = -2; d <= 2; d += 1) {
+            const dx = cx + Math.round(d * unit * 0.32);
+            const dw = Math.max(3, Math.round(unit * 0.13));
+            box(dx - Math.floor(dw / 2), y - Math.round(wallH * 0.78), dw, Math.round(wallH * 0.78), gold);
+            for (let yy = y - Math.round(wallH * 0.78); yy < y; yy += 3) {
+              for (let x = dx - Math.floor(dw / 2); x < dx + dw / 2; x += 1) put(x, yy, goldEdge);
+            }
+          }
+          y -= wallH;
+          const roof = (bottomW, topW, rh) => {
+            // Bracket set (dougong) band under the eave.
+            for (let x = cx - Math.floor(bottomW / 2); x < cx + bottomW / 2; x += 3) {
+              put(x, y, goldEdge);
+              put(x + 1, y, goldLit);
+            }
+            for (let i = 0; i < rh; i += 1) {
+              const f = i / rh;
+              const w = Math.round(bottomW + (topW - bottomW) * f);
+              const x0 = cx - Math.floor(w / 2);
+              for (let x = x0; x < x0 + w; x += 1) {
+                const tile = (x - x0) % 4 === 0;
+                put(x, y - i, i === rh - 1 ? goldEdge : tile ? goldEdge : i < rh * 0.35 ? goldLit : gold);
+              }
+            }
+            const bw = Math.floor(bottomW / 2);
+            for (let k = 0; k < 4; k += 1) {
+              put(cx - bw - k, y - k, gold);
+              put(cx + bw + k, y - k, gold);
+              put(cx - bw - k, y - k - 1, goldLit);
+              put(cx + bw + k, y - k - 1, goldLit);
+            }
+            for (let x = cx - bw; x <= cx + bw; x += 1) put(x, y + 1, goldEdge);
+            y -= rh;
+          };
+          roof(Math.round(unit * 2.1), Math.round(unit * 1.5), Math.max(4, Math.round(unit * 0.14)));
+          const upperH = Math.max(3, Math.round(unit * 0.1));
+          box(cx - Math.round(unit * 0.7), y - upperH, Math.round(unit * 1.4), upperH, body);
+          for (let x = cx - Math.round(unit * 0.7); x < cx + unit * 0.7; x += Math.max(4, Math.round(unit * 0.18))) {
+            line(x, y - upperH, x, y - 1, edge);
+          }
+          y -= upperH;
+          roof(Math.round(unit * 1.85), Math.round(unit * 0.8), Math.max(5, Math.round(unit * 0.18)));
+          const rw = Math.round(unit * 0.8);
+          for (let x = cx - Math.floor(rw / 2); x <= cx + rw / 2; x += 1) put(x, y, goldEdge);
+          for (let x = cx - Math.floor(rw / 2); x <= cx + rw / 2; x += 1) put(x, y - 1, goldLit);
+          // Ridge beasts at both ends.
+          for (let k = 0; k < 3; k += 1) {
+            put(cx - Math.floor(rw / 2) - k, y - 1 - k, gold);
+            put(cx + Math.ceil(rw / 2) + k, y - 1 - k, gold);
+          }
+        } else if (lm.kind === 'wall') {
+          // Gate wall: red mass, stone plinth, three arched passages, plaque.
+          const w = Math.round((lm.w ?? 1) * width);
+          const x0 = cx - Math.floor(w / 2);
+          const wallH = Math.round(h);
+          const plinth = Math.max(3, Math.round(wallH * 0.16));
+          const stoneHex = mix(lm.body, '#d8d0c0', 0.7);
+          const stoneWord = word(stoneHex);
+          box(x0, base - wallH, w, wallH, body);
+          for (let x = x0; x < x0 + w; x += 1) put(x, base - wallH, lit);
+          box(x0, base - plinth, w, plinth, stoneWord);
+          for (let x = x0; x < x0 + w; x += 5) line(x, base - plinth, x, base - 1, word(mix(stoneHex, '#000000', 0.2)));
+
+          const gold = word(lm.light);
+          const goldDark = word(mix(lm.light, '#000000', 0.35));
+          for (let x = x0 - 3; x < x0 + w + 3; x += 1) {
+            put(x, base - wallH - 3, goldDark);
+            put(x, base - wallH - 2, gold);
+            put(x, base - wallH - 1, gold);
+            put(x, base - wallH, goldDark);
+            if (x % 4 === 0) put(x, base - wallH - 2, goldDark);
+          }
+
+          const shadow = word(mix(lm.body, '#1a0c08', 0.75));
+          const gates = [-1, 0, 1];
+          for (const g of gates) {
+            const gw = Math.max(5, Math.round(wallH * (g === 0 ? 0.44 : 0.32)));
+            const gx = cx + Math.round(g * wallH * 0.85);
+            const gh = Math.round(wallH * (g === 0 ? 0.74 : 0.6));
+            for (let yy = plinth; yy < gh; yy += 1) {
+              const straight = gh - gw / 2;
+              const arch = yy > straight ? Math.round(Math.sqrt(Math.max(0, (gw / 2) ** 2 - (yy - straight) ** 2))) : gw / 2;
+              for (let x = gx - arch; x <= gx + arch; x += 1) put(x, base - yy - 1, shadow);
+            }
+            // Studded doors inside the passage.
+            for (let yy = plinth + 3; yy < gh - gw * 0.6; yy += 4) {
+              for (let x = gx - Math.round(gw * 0.32); x <= gx + gw * 0.32; x += 3) put(x, base - yy - 1, gold);
+            }
+          }
+
+          // Name plaque above the central gate.
+          const pw = Math.max(8, Math.round(wallH * 0.5));
+          const ph = Math.max(4, Math.round(wallH * 0.16));
+          const py = base - Math.round(wallH * 0.78);
+          box(cx - Math.floor(pw / 2), py, pw, ph, word(mix(lm.light, '#243a6a', 0.7)));
+          for (let x = cx - Math.floor(pw / 2); x < cx + pw / 2; x += 1) {
+            put(x, py, gold);
+            put(x, py + ph - 1, gold);
+          }
+          for (let x = cx - Math.round(pw * 0.3); x < cx + pw * 0.3; x += 3) {
+            line(x, py + 1, x, py + ph - 2, gold);
+          }
+        } else if (lm.kind === 'promenade') {
+          // Foreground embankment: railing, lamps, a few onlookers.
+          const y0 = base - h;
+          spec._waterBottom = y0; // shimmer stops at the shoreline
+          box(0, y0, width, h, body);
+          const rail = word(mix(lm.body, '#ffffff', 0.22));
+          // Paved embankment: banded stone so it reads as ground, not a void.
+          const paveA = word(mix(lm.body, '#ffffff', 0.09));
+          const paveB = word(mix(lm.body, '#ffffff', 0.045));
+          for (let y = y0 + 1; y < base; y += 1) {
+            const stripe = Math.floor((y - y0) / 3) % 2 === 0;
+            for (let x = 0; x < width; x += 1) {
+              const seam = (x + Math.floor((y - y0) / 3) * 4) % 9 === 0;
+              put(x, y, seam ? paveB : stripe ? paveA : paveB);
+            }
+          }
+          for (let x = 0; x < width; x += 1) put(x, y0, rail);
+          for (let x = 0; x < width; x += 6) line(x, y0, x, y0 + Math.round(h * 0.3), rail);
+          for (let x = Math.round(width * 0.08); x < width; x += Math.round(width * 0.22)) {
+            const lampH = Math.round(h * 0.55);
+            line(x, y0, x, y0 - lampH, rail);
+            disc(x, y0 - lampH - 1, 2, word(lm.light));
+            beacons.push({ x, y: y0 - lampH - 1, color: lm.light, period: 0, phase: 0 });
+          }
+          const people = 5 + Math.floor(lr() * 4);
+          for (let i = 0; i < people; i += 1) {
+            const px = Math.round(lr() * width);
+            const ph = Math.round(h * (0.26 + lr() * 0.12));
+            box(px - 1, y0 - ph, 3, ph, word(mix(lm.body, '#000000', 0.5)));
+            disc(px, y0 - ph - 1, 1, word(mix(lm.body, '#000000', 0.5)));
+          }
+        } else if (lm.kind === 'junk') {
+          const s = Math.max(6, h);
+          for (let i = 0; i < Math.round(s * 0.9); i += 1) {
+            const w = Math.round(s * 1.1 * (1 - i / (s * 1.4)));
+            for (let x = cx - Math.floor(w / 2); x <= cx + w / 2; x += 1) {
+              put(x, base - Math.round(s * 0.25) - i, (x - cx) % 4 === 0 ? word(mix(lm.light, '#000000', 0.3)) : light);
+            }
+          }
+          box(cx - Math.round(s * 0.7), base - Math.round(s * 0.25), Math.round(s * 1.4), Math.round(s * 0.22), body);
+          line(cx, base - Math.round(s * 0.25), cx, base - Math.round(s * 1.15), body);
+        } else if (lm.kind === 'ferry') {
+          const s = Math.max(5, h);
+          const hull = Math.max(2, Math.round(s * 0.5));
+          box(cx - Math.round(s * 1.6), base - hull, Math.round(s * 3.2), hull, body);
+          box(cx - Math.round(s * 1.1), base - hull - Math.round(s * 0.5), Math.round(s * 2.2), Math.round(s * 0.5), body);
+          line(cx + Math.round(s * 0.2), base - hull - Math.round(s * 0.5), cx + Math.round(s * 0.2), base - hull - Math.round(s * 0.9), body);
+          for (let x = cx - Math.round(s * 1.4); x < cx + s * 1.4; x += 3) put(x, base - Math.round(hull * 0.6), light);
+        }
+      };
+
+      if (spec.landmarks) {
+        for (const lm of spec.landmarks) if (!lm.onWater) drawLandmark(lm);
+      }
+
+      // Water: bands, then a wobbled mirror of everything standing above it.
       if (spec.water) {
         const cols = spec.water.colors.map(word);
         for (let y = waterTop; y < rows; y += 1) {
           const band = Math.min(cols.length - 1, Math.floor(((y - waterTop) / (rows - waterTop)) * cols.length));
           for (let x = 0; x < width; x += 1) put(x, y, cols[band]);
         }
-        // Reflection of the sun or moon, broken into dashes.
-        if (spec.celestial) {
-          const cx = Math.round(spec.celestial.x * width);
-          const g = word(spec.celestial.glow);
-          const wr = rng(spec.seed * 7);
-          for (let y = waterTop; y < rows; y += 2) {
-            const spread = Math.round(1 + ((y - waterTop) / (rows - waterTop)) * spec.celestial.r * 2.5);
-            for (let x = cx - spread; x <= cx + spread; x += 1) {
-              const falloff = 1 - Math.abs(x - cx) / (spread + 1);
-              if (wr() < falloff * 0.8) put(x, y, g);
-            }
+        const depth = rows - waterTop;
+        for (let y = waterTop; y < rows; y += 1) {
+          const d = (y - waterTop) / depth;
+          // Reflection fades and smears with distance from the shore.
+          const strength = spec.water.reflect * Math.pow(1 - d, 1.5);
+          if (strength <= 0.03) continue;
+          const srcY = waterTop - Math.round((y - waterTop) * 0.9);
+          for (let x = 0; x < width; x += 1) {
+            const wobble = Math.round(Math.sin(y * 0.5 + x * 0.06) * (1 + d * 3));
+            const src = at(x + wobble, srcY);
+            const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
+            if (strength > th * 0.9) put(x, y, blend(at(x, y), src, 0.55));
           }
         }
       }
 
+      if (spec.landmarks) {
+        for (const lm of spec.landmarks) if (lm.onWater) drawLandmark(lm);
+      }
+
+      if (!spec.landmarks || !spec.landmarks.some((l) => l.kind === 'promenade')) spec._waterBottom = rows;
+      spec._blinkers = blinkers;
+      spec._beacons = beacons.filter((b) => b.period > 0);
       return buf;
     };
 
@@ -371,10 +937,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         // landscape and portrait, and nothing gets cropped by object-fit.
         if (aspect >= 1) {
           rows = ROWS;
-          width = Math.min(560, Math.round(ROWS * aspect));
+          width = Math.min(880, Math.round(ROWS * aspect));
         } else {
           width = Math.round(ROWS * 0.8);
-          rows = Math.min(520, Math.round(width / aspect));
+          rows = Math.min(820, Math.round(width / aspect));
         }
         canvas.width = width;
         canvas.height = rows;
@@ -385,13 +951,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         particles = [];
         if (spec.weather) {
           const pr = rng(spec.seed * 3 + 1);
-          const count = spec.weather === 'fireflies' ? 18 : 40;
-          for (let i = 0; i < count; i += 1) {
+          for (let i = 0; i < 26; i += 1) {
             particles.push({
               x: pr() * width,
-              y: pr() * rows,
-              vx: (pr() - 0.5) * 0.5,
-              vy: spec.weather === 'fireflies' ? (pr() - 0.5) * 0.2 : 0.25 + pr() * 0.5,
+              y: rows * (0.72 + pr() * 0.26),
               phase: pr() * Math.PI * 2,
             });
           }
@@ -401,23 +964,29 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       const frame = (time) => {
         raf = requestAnimationFrame(frame);
         if (!visible || !image) return;
-        if (time - lastDraw < 90) return; // ~11fps keeps the pixel cadence
+        if (time - lastDraw < 140) return; // ~7fps keeps a slow pixel cadence
         lastDraw = time;
         ctx.putImageData(image, 0, 0);
-        const t = time / 1000;
+        const t = (time / 1000) * 0.35; // everything drifts at roughly a third speed
+        const clock = time / 1000;
 
-        if (spec.aurora) {
-          for (let x = 0; x < width; x += 1) {
-            const base = rows * 0.34 + Math.sin(x * 0.08 + t * 0.7) * 12 + Math.sin(x * 0.021 - t * 0.4) * 18;
-            const height = 16 + Math.sin(x * 0.05 + t) * 10;
-            for (let y = Math.round(base - height); y < base; y += 1) {
-              if (y < 0) continue;
-              const f = (y - (base - height)) / height;
-              const c = spec.aurora[Math.min(spec.aurora.length - 1, Math.floor(f * spec.aurora.length))];
-              const th = (BAYER[y & 3][x & 3] + 0.5) / 16;
-              if (1 - f * 0.8 > th) {
-                ctx.fillStyle = c;
-                ctx.fillRect(x, y, 1, 1);
+        if (!reduced) {
+          // Windows switching on and off, one slow room at a time.
+          for (const b of spec._blinkers) {
+            const litNow = ((clock + b.phase) % b.period) / b.period < 0.55;
+            ctx.fillStyle = litNow ? b.on : b.off;
+            ctx.fillRect(b.x, b.y, 1, 1);
+          }
+          // Aviation lights on the masts.
+          for (const b of spec._beacons) {
+            const phase = ((clock + b.phase) % b.period) / b.period;
+            if (phase < 0.18) {
+              ctx.fillStyle = b.color;
+              ctx.fillRect(b.x, b.y, 1, 1);
+              if (phase < 0.09) {
+                ctx.fillRect(b.x - 1, b.y, 1, 1);
+                ctx.fillRect(b.x + 1, b.y, 1, 1);
+                ctx.fillRect(b.x, b.y - 1, 1, 1);
               }
             }
           }
@@ -426,8 +995,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         if (spec._stars && !reduced) {
           for (let i = 0; i < spec._stars.length; i += 1) {
             const s = spec._stars[i];
-            const on = Math.sin(t * 2.2 + i * 1.7) > 0.4;
-            ctx.fillStyle = on ? '#ffffff' : s.c;
+            ctx.fillStyle = Math.sin(t * 2.2 + i * 1.7) > 0.4 ? '#ffffff' : s.c;
             ctx.fillRect(s.x, s.y, 1, 1);
           }
         }
@@ -436,37 +1004,25 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const top = Math.round(spec.water.y * rows);
           ctx.fillStyle = spec.water.shimmer;
           // Sparse horizontal streaks that drift sideways, rather than static noise.
-          for (let y = top + 2; y < rows; y += 4) {
-            const row = (y - top) / 4;
+          const bottom = spec._waterBottom ?? rows;
+          for (let y = top + 3; y < bottom; y += 6) {
+            const row = (y - top) / 6;
             const drift = Math.sin(t * 0.6 + row) * width * 0.5;
-            const spacing = 22 + (row % 3) * 9;
+            const spacing = 30 + (row % 3) * 12;
             for (let x = ((drift % spacing) + spacing) % spacing; x < width; x += spacing) {
               ctx.fillRect(Math.round(x), y, 2 + (row % 2), 1);
             }
           }
         }
 
-        if (particles.length) {
-          for (const p of particles) {
-            if (reduced) {
-              // hold position
-            } else if (spec.weather === 'fireflies') {
-              p.x += Math.sin(t + p.phase) * 0.4;
-              p.y += Math.cos(t * 0.8 + p.phase) * 0.3;
-            } else {
-              p.x += p.vx + Math.sin(t + p.phase) * 0.3;
-              p.y += p.vy;
-              if (p.y > rows) {
-                p.y = -2;
-                p.x = Math.random() * width;
-              }
-              if (p.x < 0) p.x += width;
-              if (p.x > width) p.x -= width;
-            }
-            const glow = spec.weather === 'fireflies' ? (Math.sin(t * 3 + p.phase) > 0 ? '#e8ff9a' : '#9ec55a') : null;
-            ctx.fillStyle = glow ?? (spec.weather === 'petals' ? '#ffd6e0' : '#ffffff');
-            ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
+        // Fireflies over the park, drifting and pulsing.
+        for (const p of particles) {
+          if (!reduced) {
+            p.x += Math.sin(t + p.phase) * 0.22;
+            p.y += Math.cos(t * 0.8 + p.phase) * 0.16;
           }
+          ctx.fillStyle = Math.sin(t * 3 + p.phase) > 0 ? '#e8ff9a' : '#9ec55a';
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
         }
       };
 
@@ -506,8 +1062,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
       const sizeReel = () => {
         const top = reel.getBoundingClientRect().top + window.scrollY;
-        const height = Math.max(320, window.innerHeight - top);
-        reel.style.height = `${height}px`;
+        reel.style.height = `${Math.max(320, window.innerHeight - top)}px`;
       };
       sizeReel();
       window.addEventListener('resize', sizeReel);
