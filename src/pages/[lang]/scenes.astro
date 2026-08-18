@@ -892,10 +892,14 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             }
             // Children carry on from the direction the parent actually ends
             // pointing, so a fork reads as a fork and not a broken joint.
-            const spread = 0.4 + lr() * 0.35;
-            limb(x1, y1, tipAng + spread, len * (0.6 + lr() * 0.18), w * 0.62, depth - 1);
-            limb(x1, y1, tipAng - spread * (0.7 + lr() * 0.7), len * (0.58 + lr() * 0.2), w * 0.62, depth - 1);
-            if (lr() < 0.45) limb(x1, y1, tipAng + (lr() - 0.5) * 0.5, len * 0.52, w * 0.5, depth - 1);
+            // Two-way forks alone threw all the growth out to the sides and
+            // left a bare gap up the middle, with the right arm reaching
+            // furthest of all; every fork now also sends a limb straight on,
+            // and the outer two are held back and kept even with each other.
+            const spread = 0.32 + lr() * 0.24;
+            limb(x1, y1, tipAng + spread * (0.8 + lr() * 0.3), len * (0.56 + lr() * 0.16), w * 0.6, depth - 1);
+            limb(x1, y1, tipAng - spread * (0.8 + lr() * 0.3), len * (0.56 + lr() * 0.16), w * 0.6, depth - 1);
+            limb(x1, y1, tipAng + (lr() - 0.5) * 0.22, len * (0.6 + lr() * 0.2), w * 0.52, depth - 1);
           };
           limb(cx, base, Math.PI / 2 + 0.1, th * 0.36, trunkW, 4);
 
