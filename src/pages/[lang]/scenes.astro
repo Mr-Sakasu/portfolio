@@ -679,24 +679,31 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           // big ones, and the little one under the aerial: eleven in all on
           // the real tower, and it is the string that makes it read as the
           // Pearl rather than a mast with two balls on it.
+          // The floodlights do not hold one colour across the whole tower:
+          // sections of it sit in violet and blue while the rest stays pink.
+          // The fourth entry is how far a given sphere is pushed out of the
+          // pink into that cold blue, so the colour breaks up the way it does
+          // on the real thing partway through its cycle.
+          const cold = lm.colors?.[1] ?? '#4a68d8';
           const spheres = [
-            [0.34, 0.082, 0.16],
-            [0.6, 0.05, 0.46],
-            [0.75, 0.028, 0.68],
+            [0.34, 0.082, 0.16, 0],
+            [0.6, 0.05, 0.46, 0.3],
+            [0.75, 0.028, 0.68, 0.62],
           ];
           for (let n = 0; n < 5; n += 1) {
-            spheres.push([0.42 + n * 0.036, 0.012, 0.2 + n * 0.05]);
+            // Every third bead of the string picks up the cold light.
+            spheres.push([0.42 + n * 0.036, 0.012, 0.2 + n * 0.05, n % 3 === 2 ? 0.55 : 0]);
           }
-          spheres.push([0.68, 0.016, 0.56]);
-          for (const [sy, sr, chill] of spheres) {
+          spheres.push([0.68, 0.016, 0.56, 0.4]);
+          for (const [sy, sr, chill, ice] of spheres) {
             const r = Math.max(2, Math.round(h * sr));
             const cy = base - Math.round(h * sy);
-            const tint = mix(glowHex, cool, chill);
+            const tint = mix(mix(glowHex, cool, chill), cold, ice);
             // Shaded underside, so the sphere is a ball and not a flat dot.
             const shade = word(mix(tint, lm.body, 0.45));
             const face = word(tint);
-            const litFace = word(mix(mix(lm.light, cool, chill * 0.6), '#ffffff', 0.25));
-            const rim = word(mix(lm.light, cool, chill));
+            const litFace = word(mix(mix(mix(lm.light, cool, chill * 0.6), cold, ice * 0.5), '#ffffff', 0.25));
+            const rim = word(mix(mix(lm.light, cool, chill), cold, ice));
             // Light spilling off the glass into the night air. Dithered, so
             // it falls away as a haze rather than a hard second disc.
             const halo = Math.round(r * 2.1);
@@ -740,12 +747,20 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           }
           // The aerial carries on well above the top sphere, thinning to a
           // point and cooling to the blue the top of the cycle sits at.
-          const aerial = word(mix(lm.light, coolShaft, 0.7));
+          // The aerial is the coldest thing on the tower, well out into blue.
+          const aerial = word(mix(mix(lm.light, coolShaft, 0.7), lm.colors?.[1] ?? '#4a68d8', 0.55));
           line(cx, base - Math.round(h * 0.78), cx, base - h, aerial);
           // Bands of light ringing the shaft, closer together as it thins,
           // and the lit podium the whole thing stands on.
+          const coldShaft = lm.colors?.[1] ?? '#4a68d8';
+          let band = 0;
           for (let y = base - Math.round(h * 0.78); y < base; y += Math.max(3, Math.round(h * 0.045))) {
-            const bandHex = mix(lm.light, coolShaft, Math.max(0, (base - y) / h));
+            let bandHex = mix(lm.light, coolShaft, Math.max(0, (base - y) / h));
+            // A run of the bands is lit cold, so the shaft is banded in
+            // violet and blue rather than being one even wash of pink.
+            if (band % 4 === 1) bandHex = mix(bandHex, coolShaft, 0.65);
+            else if (band % 4 === 3) bandHex = mix(bandHex, coldShaft, 0.7);
+            band += 1;
             box(cx - Math.floor(mast / 2) - 1, y, mast + 2, 1, word(mix(bandHex, '#ffffff', 0.35)));
           }
           const podW = Math.max(6, Math.round(h * 0.2));
