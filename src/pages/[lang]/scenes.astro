@@ -650,26 +650,40 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           line(cx + mast, base - Math.round(h * 0.3), cx + Math.round(h * 0.14), base, body);
           line(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.07), base, edge);
           const glowHex = lm.accent ?? mix(lm.body, lm.light, 0.5);
-          const glowWord = word(glowHex);
-          const glowLit = word(mix(glowHex, '#ffffff', 0.3));
+          // The tower's floodlights run a gradient rather than one colour:
+          // magenta down at the big sphere, cooling through violet to blue by
+          // the aerial. `cool` is that far end; each sphere is washed toward
+          // it by how high it sits, and the lit face and rim ring follow.
+          const cool = lm.colors?.[0] ?? '#3f62c8';
           const spheres = [
-            [0.34, 0.082],
-            [0.6, 0.05],
-            [0.75, 0.028],
+            [0.34, 0.082, 0.16],
+            [0.6, 0.05, 0.46],
+            [0.75, 0.028, 0.68],
           ];
-          for (const [sy, sr] of spheres) {
+          for (const [sy, sr, chill] of spheres) {
             const r = Math.max(2, Math.round(h * sr));
             const cy = base - Math.round(h * sy);
-            disc(cx, cy, r, glowWord);
+            const tint = mix(glowHex, cool, chill);
+            // Shaded underside, so the sphere is a ball and not a flat dot.
+            const shade = word(mix(tint, lm.body, 0.45));
+            const face = word(tint);
+            const litFace = word(mix(mix(lm.light, cool, chill * 0.6), '#ffffff', 0.25));
+            const rim = word(mix(lm.light, cool, chill));
             for (let y = -r; y <= r; y += 1) {
               for (let x = -r; x <= r; x += 1) {
-                if (Math.hypot(x + r * 0.4, y + r * 0.4) <= r * 0.45) put(cx + x, cy + y, glowLit);
+                if (x * x + y * y > r * r) continue;
+                put(cx + x, cy + y, Math.hypot(x - r * 0.35, y + r * 0.35) > r * 1.05 ? shade : face);
+              }
+            }
+            for (let y = -r; y <= r; y += 1) {
+              for (let x = -r; x <= r; x += 1) {
+                if (Math.hypot(x + r * 0.4, y + r * 0.4) <= r * 0.45) put(cx + x, cy + y, litFace);
               }
             }
             const ring = Math.max(8, Math.round(r * 2.4));
             for (let a = 0; a < ring; a += 1) {
               const ang = (a / ring) * Math.PI * 2;
-              put(cx + Math.round(Math.cos(ang) * r), cy + Math.round(Math.sin(ang) * r), light);
+              put(cx + Math.round(Math.cos(ang) * r), cy + Math.round(Math.sin(ang) * r), rim);
             }
           }
           // The mast carries on well above the top sphere.

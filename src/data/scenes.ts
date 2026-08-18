@@ -73,7 +73,19 @@ export const scenePixels: Record<string, ScenePixels> = {
             { kind: 'city', y: 0.66, amp: 0.12, color: '#101232', accent: '#ffe6b0', haze: 0.02 },
         ],
         landmarks: [
-            { kind: 'pearl', x: 0.14, base: 0.68, h: 0.66, body: '#3d2f78', light: '#ff2f8f', accent: '#e0338f' },
+            {
+                kind: 'pearl',
+                x: 0.14,
+                base: 0.68,
+                h: 0.66,
+                body: '#33306e',
+                light: '#f2a0cc',
+                accent: '#b8508f',
+                // Cool end of the tower's own colour cycle: the spheres are
+                // washed toward it as they climb, magenta at the base to blue
+                // at the aerial, rather than one flat pink.
+                colors: ['#3f62c8'],
+            },
             { kind: 'stepped', x: 0.62, base: 0.68, h: 0.4, body: '#2a2c60', light: '#ffe6a8' },
             { kind: 'billboard', x: 0.71, base: 0.68, h: 0.26, body: '#1d1f4a', light: '#e03434' },
             { kind: 'opener', x: 0.79, base: 0.68, h: 0.5, body: '#232a5c', light: '#ffd98a' },
