@@ -863,7 +863,12 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const cx = Math.round((narrow ? Math.min(lm.x, 0.06) : lm.x) * width);
           const trunkW = Math.max(3, Math.round(th * 0.085));
           const tips = [];
-          const limb = (x0, y0, ang, len, w, depth) => {
+          // A tree does not fill out by forking evenly at the ends. Each limb
+          // runs on as a leader and sheds shoots off its flanks along the way,
+          // which is what puts growth into the middle of the crown instead of
+          // only at its rim, and what keeps the outline uneven. Splitting in
+          // threes at every tip filled the gap but read as a diagram.
+          const limb = (x0, y0, ang, len, w, depth, bare) => {
             // Limbs bend a little under their own weight as they go. The tip
             // has to be read back off that same bend: computing it from the
             // unbent angle leaves each child starting somewhere the parent
@@ -886,22 +891,41 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             const x1 = ax(1);
             const y1 = ay(1);
             const tipAng = ang - bend;
-            if (depth <= 0 || w < 2) {
-              tips.push({ x: x1, y: y1, r: th * (0.07 + lr() * 0.06) });
+            if (depth <= 0 || len < 4) {
+              // The trunk ends in a fork, not in flower.
+              if (!bare) tips.push({ x: x1, y: y1, r: th * (0.06 + lr() * 0.06) });
               return;
             }
-            // Children carry on from the direction the parent actually ends
-            // pointing, so a fork reads as a fork and not a broken joint.
-            // Two-way forks alone threw all the growth out to the sides and
-            // left a bare gap up the middle, with the right arm reaching
-            // furthest of all; every fork now also sends a limb straight on,
-            // and the outer two are held back and kept even with each other.
-            const spread = 0.32 + lr() * 0.24;
-            limb(x1, y1, tipAng + spread * (0.8 + lr() * 0.3), len * (0.56 + lr() * 0.16), w * 0.6, depth - 1);
-            limb(x1, y1, tipAng - spread * (0.8 + lr() * 0.3), len * (0.56 + lr() * 0.16), w * 0.6, depth - 1);
-            limb(x1, y1, tipAng + (lr() - 0.5) * 0.22, len * (0.6 + lr() * 0.2), w * 0.52, depth - 1);
+            // Shoots leave the flanks at points spaced up the limb, alternating
+            // sides the way buds do, each shorter than the wood it grew from.
+            const shoots = 1 + (lr() < 0.55 ? 1 : 0);
+            let side = lr() < 0.5 ? 1 : -1;
+            for (let n = 0; n < shoots; n += 1) {
+              const f = 0.42 + (n + lr()) * (0.5 / shoots);
+              limb(
+                ax(f),
+                ay(f),
+                ang - f * bend + side * (0.42 + lr() * 0.4),
+                len * (0.4 + lr() * 0.22),
+                Math.max(1, w * 0.5),
+                depth - 1,
+              );
+              side = -side;
+            }
+            // The leader carries on, leaning off only slightly, so the limb
+            // still reads as one piece of wood running out to its own end.
+            limb(x1, y1, tipAng + (lr() - 0.5) * 0.34, len * (0.6 + lr() * 0.18), w * 0.66, depth - 1);
+            // Now and then it loses the argument and forks in earnest.
+            if (lr() < 0.35) {
+              limb(x1, y1, tipAng - (0.4 + lr() * 0.3) * side, len * (0.5 + lr() * 0.2), w * 0.55, depth - 1);
+            }
           };
-          limb(cx, base, Math.PI / 2 + 0.1, th * 0.36, trunkW, 4);
+          // Two scaffold limbs off a short trunk, as a garden cherry is grown,
+          // rather than everything hanging off one pole.
+          const forkY = base - th * 0.3;
+          limb(cx, base, Math.PI / 2 + 0.1, th * 0.3, trunkW, 0, true);
+          limb(cx, forkY, Math.PI / 2 - 0.24, th * 0.3, trunkW * 0.82, 4);
+          limb(cx, forkY, Math.PI / 2 + 0.3, th * 0.26, trunkW * 0.7, 4);
 
           // Blossom is laid over the tips as speckled cloud rather than solid
           // discs, so the sky still shows through the way it does under a real
