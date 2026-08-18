@@ -896,39 +896,33 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const petal = word(petalHex);
           const petalLit = word(mix(petalHex, '#ffffff', 0.5));
           const petalDeep = word(mix(petalHex, lm.body, 0.45));
-          // On a phone the frame is far narrower than it is tall. A tree sized
-          // off the height alone grows wider than the whole picture, and the
-          // usual horizontal squeeze that keeps landmarks in view drags it in
-          // from the edge to sit on the summit. So on a narrow frame it is
-          // both cut back and pinned to the left margin, clear of the peak:
-          // the mountain is what the scene is of, the tree only frames it.
+          // On a phone the frame is far narrower than it is tall, so a tree
+          // sized off the height alone grows wider than the whole picture and
+          // buries the mountain. Take the size from whichever is tighter, and
+          // on a narrow frame skip the horizontal squeeze that would otherwise
+          // drag the tree in off the margin and stand it on the summit.
           const narrow = width < rows * 0.9;
-          const th = Math.min(h, Math.round(width * (narrow ? 0.58 : 0.85)));
-          const cx = Math.round((narrow ? Math.min(lm.x, 0.06) : lm.x) * width);
-          const trunkW = Math.max(3, Math.round(th * 0.085));
+          const th = Math.round(Math.min(h, width * 0.85) * 0.75);
+          const cx = Math.round((narrow ? Math.min(lm.x, 0.13) : lm.x) * width);
+          const trunkW = Math.max(3, Math.round(th * 0.075));
           const tips = [];
-          // A tree does not fill out by forking evenly at the ends. Each limb
-          // runs on as a leader and sheds shoots off its flanks along the way,
-          // which is what puts growth into the middle of the crown instead of
-          // only at its rim, and what keeps the outline uneven. Splitting in
-          // threes at every tip filled the gap but read as a diagram.
+          const UP = Math.PI / 2;
+          // Wood reaches for the light: a limb arcs gently back toward upright
+          // as it rises, which is what closes the crown into a head instead of
+          // letting it sprawl outward and down into separate drooping lumps.
           const limb = (x0, y0, ang, len, w, depth, bare) => {
-            // Limbs bend a little under their own weight as they go. The tip
-            // has to be read back off that same bend: computing it from the
-            // unbent angle leaves each child starting somewhere the parent
-            // never reached, which saws the tree into loose pieces.
-            const bend = 0.18 * Math.sign(Math.cos(ang) || 1);
-            const ax = (f) => x0 + Math.cos(ang - f * bend) * (f * len);
-            const ay = (f) => y0 - Math.sin(ang - f * bend) * (f * len);
+            const aimed = (f) => ang + (UP - ang) * f * 0.12;
+            const ax = (f) => x0 + Math.cos(aimed(f)) * (f * len);
+            const ay = (f) => y0 - Math.sin(aimed(f)) * (f * len);
             // Half-pixel steps, so a limb leaning near the diagonal stays a
             // solid line instead of a dotted one.
             const steps = Math.max(2, Math.round(len * 2));
             for (let i = 0; i <= steps; i += 1) {
               const f = i / steps;
-              // No wood thinner than two pixels: a one-pixel limb running at
-              // an angle reads as a dotted line and breaks the tree at every
-              // joint. Only the last twigs, under the blossom, go to one.
-              const bw = Math.max(depth > 0 ? 2 : 1, Math.round(w * (1 - f * 0.4)));
+              // No wood but the last twigs thins to a single pixel: a one-pixel
+              // limb running at an angle reads as a dotted line and breaks the
+              // tree apart at every joint.
+              const bw = Math.max(depth > 0 ? 2 : 1, Math.round(w * (1 - f * 0.35)));
               const x = ax(f);
               const y = ay(f);
               for (let k = 0; k < bw; k += 1) {
@@ -937,65 +931,50 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             }
             const x1 = ax(1);
             const y1 = ay(1);
-            const tipAng = ang - bend;
-            // Blossom is carried along the outer wood, not only on its ends.
-            // Sizing the clumps off the limb they sit on lets neighbours touch,
-            // so the crown holds together instead of breaking into loose dots.
+            // Read off the arc, not off the angle it set out at: a child
+            // started anywhere else begins where its parent never reached.
+            const tipAng = aimed(1);
+            // Blossom rides the outer wood along its length, and each clump is
+            // sized off the limb carrying it, so neighbours overlap and the
+            // crown holds together rather than breaking into loose dots.
             if (!bare && depth <= 2) {
-              tips.push({ x: ax(0.4), y: ay(0.4), r: Math.max(3, len * 0.6) });
-              tips.push({ x: ax(0.78), y: ay(0.78), r: Math.max(3, len * 0.66) });
+              tips.push({ x: ax(0.5), y: ay(0.5), r: Math.max(3, len * 0.55) });
+              tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.7) });
             }
-            if (depth <= 0 || len < 4) {
+            if (depth <= 0 || len < 5) {
               // The trunk ends in a fork, not in flower.
-              if (!bare) tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.78) });
+              if (!bare) tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.85) });
               return { x: x1, y: y1, ang: tipAng };
             }
-            // Shoots leave the flanks at points spaced up the limb, alternating
-            // sides the way buds do, each shorter than the wood it grew from.
-            const shoots = 1 + (lr() < 0.55 ? 1 : 0);
-            let side = lr() < 0.5 ? 1 : -1;
-            for (let n = 0; n < shoots; n += 1) {
-              const f = 0.42 + (n + lr()) * (0.5 / shoots);
-              limb(
-                ax(f),
-                ay(f),
-                ang - f * bend + side * (0.42 + lr() * 0.4),
-                len * (0.4 + lr() * 0.22),
-                Math.max(1, w * 0.5),
-                depth - 1,
-              );
-              side = -side;
+            // Shoots leave the flanks partway up, alternating sides the way
+            // buds do, before the leader carries the limb on to its own end.
+            const side = lr() < 0.5 ? 1 : -1;
+            const f = 0.5 + lr() * 0.25;
+            limb(ax(f), ay(f), aimed(f) + side * (0.75 + lr() * 0.3), len * (0.5 + lr() * 0.16), Math.max(1.5, w * 0.55), depth - 1);
+            if (lr() < 0.75) {
+              limb(ax(f * 0.75), ay(f * 0.75), aimed(f * 0.75) - side * (0.75 + lr() * 0.3), len * (0.46 + lr() * 0.16), Math.max(1.5, w * 0.5), depth - 1);
             }
-            // The leader carries on, leaning off only slightly, so the limb
-            // still reads as one piece of wood running out to its own end.
-            limb(x1, y1, tipAng + (lr() - 0.5) * 0.34, len * (0.6 + lr() * 0.18), w * 0.66, depth - 1);
-            // Now and then it loses the argument and forks in earnest.
-            if (lr() < 0.35) {
-              limb(x1, y1, tipAng - (0.4 + lr() * 0.3) * side, len * (0.5 + lr() * 0.2), w * 0.55, depth - 1);
-            }
+            limb(x1, y1, tipAng + (lr() - 0.5) * 0.5, len * (0.66 + lr() * 0.14), w * 0.68, depth - 1);
             return { x: x1, y: y1, ang: tipAng };
           };
-          // Two scaffold limbs off a short trunk, as a garden cherry is grown,
-          // rather than everything hanging off one pole. They have to start
-          // from where the trunk actually ends: the trunk leans as it rises,
-          // so a fork placed at a guessed height sits off to one side of the
-          // wood and leaves the tree snapped in half above the ground.
-          const trunk = limb(cx, base, Math.PI / 2 + 0.1, th * 0.3, trunkW, 0, true);
-          limb(trunk.x, trunk.y, trunk.ang - 0.3, th * 0.3, trunkW * 0.84, 4);
-          limb(trunk.x, trunk.y, trunk.ang + 0.24, th * 0.26, trunkW * 0.72, 4);
+          // A short trunk carrying a fan of scaffold limbs, as a garden cherry
+          // is grown. They start from where the trunk actually ends — it leans
+          // as it rises, and a fork placed at a guessed height sits beside the
+          // wood and leaves the tree snapped in two above the ground — and the
+          // fan is even either side, so neither flank is left bare.
+          const trunk = limb(cx, base, UP + 0.06, th * 0.34, trunkW, 0, true);
+          for (const a of [-1.05, -0.4, 0.35, 1.0]) {
+            limb(trunk.x, trunk.y, trunk.ang + a, th * (0.3 - Math.abs(a) * 0.09), trunkW * (0.8 - Math.abs(a) * 0.12), 4);
+          }
 
-          // Blossom is laid over the tips as speckled cloud rather than solid
-          // discs, so the sky still shows through the way it does under a real
-          // tree, and the lit petals gather on the side facing the light.
+          // Each clump is nearly solid at its heart and thins to lace at its
+          // edge: the sky belongs between the clumps, not through them.
           for (const t of tips) {
             const r = Math.max(3, Math.round(t.r));
             for (let dx = -r; dx <= r; dx += 1) {
               for (let dy = -r; dy <= r; dy += 1) {
                 const d = Math.sqrt(dx * dx + dy * dy) / r;
                 if (d > 1) continue;
-                // Nearly solid at the heart of a clump, thinning to lace at
-                // its edge: the sky belongs between the clumps, not through
-                // the middle of them.
                 if (lr() < 0.02 + d * d * 0.5) continue;
                 const c = dy < -r * 0.2 && dx < r * 0.3 ? petalLit : d > 0.65 ? petalDeep : petal;
                 put(t.x + dx, t.y + dy, c);
