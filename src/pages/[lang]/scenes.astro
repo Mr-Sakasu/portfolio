@@ -807,6 +807,58 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               put(cx + dx, y, c);
             }
           }
+        } else if (lm.kind === 'sakura') {
+          // A cherry standing right at the viewer: the trunk runs out of the
+          // bottom of the frame, the limbs reach across the sky, and the
+          // blossom is dense enough to read as mass. Near dark wood against
+          // the far pale mountain — the whole reason to stand on this side.
+          const petalHex = lm.accent ?? '#ffb8d2';
+          const petal = word(petalHex);
+          const petalLit = word(mix(petalHex, '#ffffff', 0.5));
+          const petalDeep = word(mix(petalHex, lm.body, 0.45));
+          const trunkW = Math.max(3, Math.round(h * 0.085));
+          const tips = [];
+          const limb = (x0, y0, ang, len, w, depth) => {
+            const steps = Math.max(2, Math.round(len));
+            for (let i = 0; i <= steps; i += 1) {
+              const f = i / steps;
+              // Limbs taper as they go, and bend a little under their own weight.
+              const bw = Math.max(1, Math.round(w * (1 - f * 0.5)));
+              const a = ang - f * 0.18 * Math.sign(Math.cos(ang) || 1);
+              const x = x0 + Math.cos(a) * (f * len);
+              const y = y0 - Math.sin(a) * (f * len);
+              for (let k = 0; k < bw; k += 1) {
+                put(x - Math.floor(bw / 2) + k, y, k === 0 ? lit : k === bw - 1 ? edge : body);
+              }
+            }
+            const x1 = x0 + Math.cos(ang - 0.18) * len;
+            const y1 = y0 - Math.sin(ang - 0.18) * len;
+            if (depth <= 0 || w < 2) {
+              tips.push({ x: x1, y: y1, r: h * (0.07 + lr() * 0.06) });
+              return;
+            }
+            const spread = 0.4 + lr() * 0.35;
+            limb(x1, y1, ang + spread, len * (0.6 + lr() * 0.18), w * 0.62, depth - 1);
+            limb(x1, y1, ang - spread * (0.7 + lr() * 0.7), len * (0.58 + lr() * 0.2), w * 0.62, depth - 1);
+            if (lr() < 0.45) limb(x1, y1, ang + (lr() - 0.5) * 0.5, len * 0.52, w * 0.5, depth - 1);
+          };
+          limb(cx, base, Math.PI / 2 + 0.1, h * 0.36, trunkW, 4);
+
+          // Blossom is laid over the tips as speckled cloud rather than solid
+          // discs, so the sky still shows through the way it does under a real
+          // tree, and the lit petals gather on the side facing the light.
+          for (const t of tips) {
+            const r = Math.max(3, Math.round(t.r));
+            for (let dx = -r; dx <= r; dx += 1) {
+              for (let dy = -r; dy <= r; dy += 1) {
+                const d = Math.sqrt(dx * dx + dy * dy) / r;
+                if (d > 1) continue;
+                if (lr() < 0.22 + d * 0.5) continue;
+                const c = dy < -r * 0.2 && dx < r * 0.3 ? petalLit : d > 0.65 ? petalDeep : petal;
+                put(t.x + dx, t.y + dy, c);
+              }
+            }
+          }
         } else if (lm.kind === 'tokyotower') {
           // Tokyo Tower: legs splaying out to the plaza with the sky showing
           // through the lattice, the big deck a third of the way up, the small

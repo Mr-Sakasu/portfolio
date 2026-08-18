@@ -20,7 +20,7 @@ export interface SceneLandmark {
         | 'pearl' | 'twist' | 'opener' | 'stepped'
         | 'boc' | 'crown' | 'pyramid' | 'slab' | 'spire'
         | 'skytree' | 'tokyotower' | 'fuji'
-        | 'canopy' | 'statue' | 'hall' | 'wall'
+        | 'canopy' | 'statue' | 'hall' | 'wall' | 'sakura'
         | 'junk' | 'ferry' | 'promenade' | 'billboard';
     /** Centre position, 0 (left) to 1 (right). */
     x: number;
@@ -177,6 +177,15 @@ export const scenePixels: Record<string, ScenePixels> = {
                 light: '#fff4e4',
                 accent: '#f2f4fb',
                 behind: true,
+            },
+            {
+                kind: 'sakura',
+                x: 0.16,
+                base: 1.14,
+                h: 0.92,
+                body: '#4a3340',
+                light: '#7a5a66',
+                accent: '#ffb8d2',
             },
         ],
         weather: 'petals',
