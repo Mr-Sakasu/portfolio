@@ -79,12 +79,13 @@ export const scenePixels: Record<string, ScenePixels> = {
                 base: 0.68,
                 h: 0.66,
                 body: '#33306e',
-                light: '#f2a0cc',
-                accent: '#b8508f',
+                light: '#eea6de',
+                accent: '#b455b4',
                 // Cool end of the tower's own colour cycle: the spheres are
-                // washed toward it as they climb, magenta at the base to blue
-                // at the aerial, rather than one flat pink.
-                colors: ['#3f62c8'],
+                // washed toward it as they climb. It stays inside the violets
+                // rather than running out to blue, so the whole tower reads as
+                // a light purple carrying some red in it.
+                colors: ['#7a52cc'],
             },
             { kind: 'stepped', x: 0.62, base: 0.68, h: 0.4, body: '#2a2c60', light: '#ffe6a8' },
             { kind: 'billboard', x: 0.71, base: 0.68, h: 0.26, body: '#1d1f4a', light: '#e03434' },
