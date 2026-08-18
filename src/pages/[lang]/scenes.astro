@@ -852,11 +852,15 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const petal = word(petalHex);
           const petalLit = word(mix(petalHex, '#ffffff', 0.5));
           const petalDeep = word(mix(petalHex, lm.body, 0.45));
-          // On a phone the frame is far narrower than it is tall, and a tree
-          // sized off the height alone grows wider than the whole picture and
-          // buries the mountain. Size it off whichever of the two is tighter,
-          // so it stays a foreground tree rather than a wall of blossom.
-          const th = Math.min(h, Math.round(width * 0.85));
+          // On a phone the frame is far narrower than it is tall. A tree sized
+          // off the height alone grows wider than the whole picture, and the
+          // usual horizontal squeeze that keeps landmarks in view drags it in
+          // from the edge to sit on the summit. So on a narrow frame it is
+          // both cut back and pinned to the left margin, clear of the peak:
+          // the mountain is what the scene is of, the tree only frames it.
+          const narrow = width < rows * 0.9;
+          const th = Math.min(h, Math.round(width * (narrow ? 0.58 : 0.85)));
+          const cx = Math.round((narrow ? Math.min(lm.x, 0.06) : lm.x) * width);
           const trunkW = Math.max(3, Math.round(th * 0.085));
           const tips = [];
           const limb = (x0, y0, ang, len, w, depth) => {
