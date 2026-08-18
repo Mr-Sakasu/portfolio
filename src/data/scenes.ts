@@ -19,6 +19,7 @@ export interface SceneLandmark {
     kind:
         | 'pearl' | 'twist' | 'opener' | 'stepped'
         | 'boc' | 'crown' | 'pyramid' | 'slab' | 'spire'
+        | 'skytree' | 'tokyotower' | 'fuji'
         | 'canopy' | 'statue' | 'hall' | 'wall'
         | 'junk' | 'ferry' | 'promenade' | 'billboard';
     /** Centre position, 0 (left) to 1 (right). */
@@ -36,6 +37,8 @@ export interface SceneLandmark {
     colors?: string[];
     /** Drawn after the water, so it floats instead of being submerged. */
     onWater?: boolean;
+    /** Drawn before the skyline, so the city stands in front of it. */
+    behind?: boolean;
 }
 
 export interface ScenePixels {
@@ -50,7 +53,7 @@ export interface ScenePixels {
     /** Named buildings drawn on top of the generic skyline. */
     landmarks?: SceneLandmark[];
     water?: { y: number; colors: string[]; shimmer: string; reflect: number };
-    weather?: 'fireflies';
+    weather?: 'fireflies' | 'petals';
     /** Deterministic terrain seed. */
     seed: number;
 }
@@ -96,7 +99,7 @@ export const scenePixels: Record<string, ScenePixels> = {
             { kind: 'trees', y: 0.8, amp: 0.09, color: '#3f5230', accent: '#647d3c' },
         ],
         landmarks: [
-            { kind: 'hall', x: 0.5, base: 0.84, h: 0.26, body: '#b0402f', light: '#e8b44c' },
+            { kind: 'hall', x: 0.5, base: 0.84, h: 0.26, body: '#b0402f', light: '#dda23f' },
             { kind: 'wall', x: 0.5, base: 1.0, h: 0.16, w: 1.02, body: '#a83c2c', light: '#e0aa42' },
         ],
         seed: 71,
@@ -120,15 +123,64 @@ export const scenePixels: Record<string, ScenePixels> = {
             { kind: 'slab', x: 0.12, base: 0.64, h: 0.26, body: '#8ba3bd', light: '#eaf4fc' },
             {
                 kind: 'canopy',
-                x: 0.46,
+                x: 0.5,
                 base: 0.73,
                 h: 0.1,
                 body: '#4c6a86',
-                light: '#6f93b4',
+                light: '#4a8cae',
                 colors: ['#c53a30', '#efc132'],
             },
         ],
         seed: 61,
+    },
+    tokyo: {
+        // Composed after the dusk view out over the city: the last of the sun
+        // along the horizon, rank behind rank of blocks running off into the
+        // haze, Tokyo Tower lit orange, the Skytree standing off to the right.
+        sky: ['#182450', '#4a3f7e', '#9c5f80', '#e08a5e', '#ffc890'],
+        haze: { color: '#f4a878', y: 0.56, strength: 0.6 },
+        clouds: { count: 7, color: '#e8a97e', shade: '#5c4a7a', y: 0.24, spread: 0.22 },
+        layers: [
+            { kind: 'city', y: 0.58, amp: 0.09, color: '#7a6a9a', accent: '#ffd8a0', haze: 0.6 },
+            { kind: 'city', y: 0.63, amp: 0.15, color: '#5a4f7e', accent: '#ffd8a0', haze: 0.34 },
+            { kind: 'city', y: 0.68, amp: 0.2, color: '#38335e', accent: '#ffd08a', haze: 0.12 },
+            { kind: 'city', y: 1.06, amp: 0.3, color: '#171a34', accent: '#ffdc9a' },
+        ],
+        landmarks: [
+            { kind: 'slab', x: 0.14, base: 0.7, h: 0.32, body: '#413a68', light: '#ffd08a' },
+            { kind: 'tokyotower', x: 0.42, base: 0.76, h: 0.5, body: '#d2542e', light: '#ffe0a8' },
+            { kind: 'skytree', x: 0.8, base: 0.72, h: 0.6, body: '#3f4a78', light: '#a8d8ff' },
+        ],
+        seed: 33,
+    },
+    fuji: {
+        // Composed after the mountain in spring, from the hills an hour west of
+        // the city: the cone over a hazy ridge, cedar along the valley, and a
+        // bank of cherry close enough to shed petals across the frame.
+        sky: ['#3f88cc', '#6fa9dc', '#a5cbe9', '#cfe2f2', '#f0e2e2'],
+        haze: { color: '#f2e0e4', y: 0.62, strength: 0.6 },
+        clouds: { count: 6, color: '#ffffff', shade: '#a8bcd8', y: 0.18, spread: 0.16 },
+        layers: [
+            { kind: 'hills', y: 0.68, amp: 0.06, color: '#7e88ac', haze: 0.6 },
+            { kind: 'trees', y: 0.75, amp: 0.05, color: '#4a6152', haze: 0.4 },
+            { kind: 'trees', y: 0.88, amp: 0.09, color: '#3c5545', accent: '#f7c9dc', bloom: 0.05 },
+            { kind: 'trees', y: 1.1, amp: 0.34, color: '#584250', accent: '#ffc3d8', bloom: 0.22 },
+        ],
+        landmarks: [
+            {
+                kind: 'fuji',
+                x: 0.5,
+                base: 0.72,
+                h: 0.46,
+                w: 2,
+                body: '#7c86b8',
+                light: '#fff4e4',
+                accent: '#f2f4fb',
+                behind: true,
+            },
+        ],
+        weather: 'petals',
+        seed: 24,
     },
     victoria: {
         sky: ['#04081a', '#0b1430', '#16204a', '#2a2a5e', '#4a3568'],
@@ -154,7 +206,7 @@ export const scenePixels: Record<string, ScenePixels> = {
 };
 
 /** Display order; nothing is labelled on the page itself. */
-export const sceneOrder = ['bund', 'gugong', 'shenzhen', 'victoria'];
+export const sceneOrder = ['bund', 'gugong', 'shenzhen', 'victoria', 'tokyo', 'fuji'];
 
 export const sceneNames: Record<string, Record<string, { name: string; place: string }>> = {
     en: {
@@ -162,17 +214,23 @@ export const sceneNames: Record<string, Record<string, { name: string; place: st
         gugong: { name: 'The Forbidden City', place: 'Beijing' },
         shenzhen: { name: 'Lianhua Hill Park', place: 'Shenzhen' },
         victoria: { name: 'Victoria Harbour', place: 'Hong Kong' },
+        tokyo: { name: 'The Skyline', place: 'Tokyo' },
+        fuji: { name: 'Mount Fuji', place: 'Yamanashi' },
     },
     zh: {
         bund: { name: '外滩', place: '上海' },
         gugong: { name: '故宫', place: '北京' },
         shenzhen: { name: '莲花山公园', place: '深圳' },
         victoria: { name: '维多利亚港', place: '香港' },
+        tokyo: { name: '东京天际线', place: '东京' },
+        fuji: { name: '富士山', place: '山梨' },
     },
     ja: {
         bund: { name: '外灘', place: '上海' },
         gugong: { name: '故宮', place: '北京' },
         shenzhen: { name: '蓮花山公園', place: '深圳' },
         victoria: { name: 'ビクトリア・ハーバー', place: '香港' },
+        tokyo: { name: '東京の街並み', place: '東京' },
+        fuji: { name: '富士山', place: '山梨' },
     },
 };

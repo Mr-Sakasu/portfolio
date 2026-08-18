@@ -218,6 +218,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       const spreadK = Math.max(0.4, Math.min(1, width / rows / 1.7));
       const X = (f) => Math.round((0.5 + (f - 0.5) * spreadK) * width);
       const buf = new Uint32Array(width * rows);
+      // Once the clouds start drifting, everything standing in front of them
+      // is mirrored onto a second, transparent layer that is laid back over
+      // the top each frame — so a cloud passes behind the towers, not across.
+      let front = null;
       const put = (px, py, c) => {
         // Coordinates must be whole numbers: a fractional index silently
         // wraps into the wrong row and leaves ghost pixels elsewhere.
@@ -225,6 +229,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         const y = Math.round(py);
         if (x < 0 || y < 0 || x >= width || y >= rows) return;
         buf[y * width + x] = c;
+        if (front) front[y * width + x] = c;
       };
       const at = (x, y) => buf[Math.max(0, Math.min(rows - 1, y)) * width + Math.max(0, Math.min(width - 1, x))];
       const box = (x0, y0, w, h, c) => {
@@ -263,6 +268,9 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       const rand = rng(spec.seed);
 
       // Cumulus, built from overlapping discs with a lit top and shaded belly.
+      // Each one is cut as its own little sprite rather than being stamped
+      // into the sky, so it can be drifted across the frame later.
+      const clouds = [];
       if (spec.clouds) {
         const c = spec.clouds;
         const core = word(c.color);
@@ -281,18 +289,46 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               r: Math.max(2, Math.round(scale * (0.6 + rand() * 0.7))),
             });
           }
-          for (const p of parts) disc(p.x, p.y, p.r, core);
+          let sx0 = Infinity;
+          let sy0 = Infinity;
+          let sx1 = -Infinity;
+          let sy1 = -Infinity;
+          for (const p of parts) {
+            sx0 = Math.min(sx0, p.x - p.r);
+            sy0 = Math.min(sy0, p.y - p.r);
+            sx1 = Math.max(sx1, p.x + p.r);
+            sy1 = Math.max(sy1, p.y + p.r);
+          }
+          const sw = sx1 - sx0 + 1;
+          const sh = sy1 - sy0 + 1;
+          // Zeroed, so anything the puffs miss stays transparent.
+          const px = new Uint32Array(sw * sh);
+          const set = (x, y, v) => {
+            if (x < 0 || y < 0 || x >= sw || y >= sh) return;
+            px[y * sw + x] = v;
+          };
+          for (const p of parts) {
+            for (let x = -p.r; x <= p.r; x += 1) {
+              for (let y = -p.r; y <= p.r; y += 1) {
+                if (x * x + y * y <= p.r * p.r) set(p.x + x - sx0, p.y + y - sy0, core);
+              }
+            }
+          }
           for (const p of parts) {
             for (let x = -p.r; x <= p.r; x += 1) {
               for (let y = -p.r; y <= p.r; y += 1) {
                 if (x * x + y * y > p.r * p.r) continue;
-                if (y < -p.r * 0.35) put(p.x + x, p.y + y, top);
-                else if (y > p.r * 0.45) put(p.x + x, p.y + y, belly);
+                if (y < -p.r * 0.35) set(p.x + x - sx0, p.y + y - sy0, top);
+                else if (y > p.r * 0.45) set(p.x + x - sx0, p.y + y - sy0, belly);
               }
             }
           }
+          // Fatter clouds read as nearer, so they cross a little faster.
+          const speed = unit * 0.004 * (0.7 + (scale / (unit * 0.05)) * 0.6);
+          clouds.push({ px, w: sw, h: sh, x: sx0, y: sy0, speed });
         }
       }
+      spec._clouds = clouds;
 
       if (spec.stars) {
         const stars = [];
@@ -360,12 +396,25 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       /** Distant layers wash toward the horizon colour. */
       const hazed = (color, amount) => (amount ? mix(color, horizon, amount) : color);
 
+      // From here down everything is solid ground, hills, towers and water:
+      // the part that has to sit in front of a passing cloud.
+      if (clouds.length) front = new Uint32Array(width * rows);
+
+      // A mountain on the horizon: drawn first, so the skyline overlaps its
+      // flanks the way the city does from any window in town.
+      if (spec.landmarks) {
+        for (const lm of spec.landmarks) if (lm.behind) drawLandmark(lm);
+      }
+
       for (const layer of spec.layers) {
         const top = surface(layer.kind, spec, layer, width, geom);
         const bodyHex = hazed(layer.color, layer.haze ?? 0);
         const body = word(bodyHex);
-        const lit = word(mix(bodyHex, '#ffffff', 0.14));
-        const shadow = word(mix(bodyHex, '#000000', 0.3));
+        // Contrast falls off with distance, so far ranks read as mass rather
+        // than a picket fence of lit and shaded edges.
+        const fade = 1 - (layer.haze ?? 0) * 0.75;
+        const lit = word(mix(bodyHex, '#ffffff', 0.14 * fade));
+        const shadow = word(mix(bodyHex, '#000000', 0.3 * fade));
         const accentHex = layer.accent ? hazed(layer.accent, (layer.haze ?? 0) * 0.5) : null;
         const accent = accentHex ? word(accentHex) : null;
         const lr = rng(spec.seed * 17 + Math.round(layer.y * 90));
@@ -414,42 +463,93 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             x = end;
           }
         } else if (layer.kind === 'roofs') {
-          // A courtyard rank of tiled halls, the signature of the palace seen
-          // from the hill: gold roof, dark ridge, red wall, repeated across.
+          // A quarter of the palace seen from the hill. Halls of every size
+          // jostle together over their courtyards — some broadside, some
+          // end-on, the odd corner pavilion or pine breaking the rank — so
+          // the roofscape reads as a crowd rather than a row of stamps.
           const scale = layer.amp * unit;
-          const unitW = Math.max(12, Math.round(scale * 2.8));
-          const roofH = Math.max(3, Math.round(scale * 0.62));
-          const wallH = Math.max(2, Math.round(scale * 0.5));
-          const baseY = Math.round(layer.y * rows);
           const goldHex = hazed(layer.accent ?? '#d9a441', (layer.haze ?? 0) * 0.8);
           const gold = word(goldHex);
           const goldLit = word(mix(goldHex, '#fff0c8', 0.45));
           const ridge = word(mix(goldHex, '#5a3418', 0.45));
           const wall = word(mix(bodyHex, '#000000', 0.05));
-          const shade = word(mix(bodyHex, '#000000', 0.35));
-          for (let x0 = -Math.round(lr() * unitW); x0 < width; x0 += unitW + 2 + Math.floor(lr() * 4)) {
-            const w = unitW - Math.floor(lr() * (unitW * 0.25));
-            const drop = Math.round(lr() * scale * 0.25);
-            const y = baseY + drop;
-            box(x0, y - wallH, w, wallH, wall);
-            for (let x = x0; x < x0 + w; x += 3) line(x, y - wallH, x, y - 1, shade);
-            for (let i = 0; i < roofH; i += 1) {
-              const f = i / roofH;
-              const rw = Math.round(w * (1 - f * 0.32)) + 2;
-              const rx = x0 + Math.round((w - rw) / 2);
-              for (let x = rx; x < rx + rw; x += 1) {
-                // Tiles read as fine ribs low on the roof, smooth toward the ridge.
-                const tile = f > 0.45 && (x - rx) % 4 === 0;
-                put(x, y - wallH - i, tile ? ridge : f < 0.35 ? goldLit : gold);
+          // Detail fades with distance, so hazy ranks read as mass, not texture.
+          const shade = word(mix(bodyHex, '#000000', 0.35 * (1 - (layer.haze ?? 0) * 0.8)));
+          const court = word(mix(bodyHex, '#000000', 0.22));
+          const pineHex = hazed('#4c5f33', (layer.haze ?? 0) * 0.85);
+          const pine = word(pineHex);
+          const pineLit = word(mix(pineHex, '#9db35c', 0.4));
+
+          // Courtyards behind, so no sky shows between the ranks.
+          for (let x = 0; x < width; x += 1) {
+            for (let y = Math.max(0, top[x] + Math.round(scale * 0.5)); y < rows; y += 1) put(x, y, court);
+          }
+
+          /** One tiled roof: hips falling away from the ridge to eave corners
+           *  that fly up, the way a palace roof is cut. */
+          const tiles = (mid, eave, halfW, rh) => {
+            const tip = rh * 0.5;
+            for (let dx = -halfW; dx <= halfW; dx += 1) {
+              const t = Math.abs(dx) / halfW;
+              const hip = t <= 0.42 ? rh : rh - ((t - 0.42) / 0.58) * (rh - tip);
+              const lift = t <= 0.68 ? 0 : ((t - 0.68) / 0.32) ** 2 * tip;
+              const yTop = eave - Math.round(hip);
+              const yBot = eave - Math.round(lift);
+              for (let y = yTop; y <= yBot; y += 1) {
+                // Tiles read as fine ribs, smoothing out toward the ridge.
+                const f = (eave - y) / rh;
+                put(mid + dx, y, y === yBot || (dx % 3 === 0 && f < 0.75) ? ridge : f > 0.6 ? goldLit : gold);
               }
             }
-            // Upturned eave tips and the ridge cap.
-            put(x0 - 2, y - wallH - 1, gold);
-            put(x0 + w + 1, y - wallH - 1, gold);
-            const capW = Math.round(w * 0.66);
-            for (let x = x0 + Math.round((w - capW) / 2); x < x0 + (w + capW) / 2; x += 1) {
-              put(x, y - wallH - roofH, ridge);
+          };
+
+          let x = -Math.round(lr() * scale * 2);
+          while (x < width) {
+            // Bigger halls stand nearer and lower, small ones sit back up the slope.
+            const s = scale * (0.6 + lr() * 1.1);
+            const ground = top[Math.max(0, Math.min(width - 1, x))] + Math.round(s * 1.05);
+            const pick = lr();
+            let step;
+            if (pick < 0.09) {
+              // Pine or scholar tree in a courtyard.
+              const r = Math.max(2, Math.round(s * 0.6));
+              disc(x, ground - r, r, pine);
+              disc(x - Math.round(r * 0.5), ground - Math.round(r * 1.4), Math.max(1, Math.round(r * 0.7)), pineLit);
+              line(x, ground - r, x, ground, shade);
+              step = r * 2;
+            } else if (pick < 0.19) {
+              // Corner pavilion: square tower under a pyramid roof.
+              const w2 = Math.max(4, Math.round(s * 1.3));
+              const tower = Math.max(3, Math.round(s * 1.1));
+              box(x - Math.floor(w2 / 2), ground - tower, w2, tower, wall);
+              for (let px = x - Math.floor(w2 / 2); px < x + w2 / 2; px += 3) line(px, ground - tower, px, ground - 1, shade);
+              tiles(x, ground - tower, Math.round(w2 * 0.62), Math.max(3, Math.round(s * 0.8)));
+              line(x, ground - tower - Math.round(s * 0.8), x, ground - tower - Math.round(s * 1.15), ridge);
+              step = w2 * 1.2;
+            } else if (pick < 0.37) {
+              // Hall seen end-on: narrow, with a steeper roof.
+              const w2 = Math.max(4, Math.round(s * 1.5));
+              const wallH = Math.max(2, Math.round(s * 0.55));
+              box(x - Math.floor(w2 / 2), ground - wallH, w2, wallH, wall);
+              tiles(x, ground - wallH, Math.round(w2 * 0.6), Math.max(3, Math.round(s * 0.85)));
+              step = w2 * (0.9 + lr() * 0.5);
+            } else {
+              // Hall broadside, one storey or two.
+              const w2 = Math.max(8, Math.round(s * (2.4 + lr() * 1.6)));
+              const wallH = Math.max(2, Math.round(s * 0.5));
+              box(x - Math.floor(w2 / 2), ground - wallH, w2, wallH, wall);
+              for (let px = x - Math.floor(w2 / 2); px < x + w2 / 2; px += 3) line(px, ground - wallH, px, ground - 1, shade);
+              const rh = Math.max(3, Math.round(s * 0.6));
+              tiles(x, ground - wallH, Math.round(w2 * 0.5), rh);
+              if (pick > 0.86) {
+                // A double eave marks out the halls that matter.
+                const upper = Math.max(2, Math.round(s * 0.3));
+                box(x - Math.round(w2 * 0.34), ground - wallH - rh - upper, Math.round(w2 * 0.68), upper, wall);
+                tiles(x, ground - wallH - rh - upper, Math.round(w2 * 0.38), Math.max(2, Math.round(s * 0.45)));
+              }
+              step = w2 * (0.72 + lr() * 0.5);
             }
+            x += Math.max(3, Math.round(step));
           }
         } else if (layer.kind === 'trees') {
           for (let x = 0; x < width; x += 1) {
@@ -488,15 +588,19 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           for (let x = 0; x < width; x += 1) {
             const t = top[x];
             for (let y = Math.max(0, t); y < bottom; y += 1) put(x, y, y === t ? lit : body);
-            // Slope shading: the side falling away from the light goes darker.
-            if (x > 0 && top[x] > top[x - 1]) {
-              for (let y = t; y < Math.min(bottom, t + 3); y += 1) put(x, y, shadow);
+            // Slope shading: the side falling away from the light goes darker,
+            // no deeper than the step itself, or a soft ridge grows fence posts.
+            const drop = x > 0 ? top[x] - top[x - 1] : 0;
+            if (drop > 0) {
+              for (let y = t; y < Math.min(bottom, t + Math.min(3, drop)); y += 1) put(x, y, shadow);
             }
           }
         }
       }
 
-      const drawLandmark = (lm) => {
+      // Declared, not assigned: a landmark marked `behind` is drawn further up,
+      // before the skyline that has to stand in front of it.
+      function drawLandmark(lm) {
         const cx = X(lm.x);
         const base = geom.Y(lm.base);
         const h = Math.max(8, geom.S(lm.h));
@@ -670,52 +774,200 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           line(cx, top - nose, cx, top - nose - Math.round(h * 0.08), body);
           windows(5);
           beacon(top - nose - Math.round(h * 0.08), 2.4);
+        } else if (lm.kind === 'fuji') {
+          // Fuji on the horizon, backlit at dusk: a flat cone with a lit rim,
+          // flanks that flare as they fall, the Hoei crater shouldering out of
+          // the right one, and a snowline that breaks into fingers down the
+          // gullies. The foot washes into the haze, far behind the city.
+          const halfW = Math.min(Math.round(h * (lm.w ?? 2.4)), Math.round(width * 0.62));
+          const snowHex = lm.accent ?? mix(lm.body, '#ffffff', 0.7);
+          const snow = word(snowHex);
+          const snowLit = word(mix(snowHex, lm.light, 0.4));
+          const snowEdge = word(mix(snowHex, lm.body, 0.45));
+          const rim = word(mix(lm.light, lm.body, 0.3));
+          const rock = word(mix(lm.body, '#000000', 0.1));
+          const far = word(horizon);
+          const snowRow = base - Math.round(h * 0.5);
+          const crater = Math.max(1, Math.round(h * 0.08));
+          const fadeFrom = base - Math.round(h * 0.45);
+          for (let dx = -halfW; dx <= halfW; dx += 1) {
+            const u = Math.abs(dx) / halfW;
+            let t = h * (1 - u) ** 1.45;
+            if (dx > halfW * 0.2 && dx < halfW * 0.6) {
+              t += h * 0.05 * Math.sin(((dx - halfW * 0.2) / (halfW * 0.4)) * Math.PI);
+            }
+            // The summit is a crater rim, not a point.
+            if (Math.abs(dx) < crater) t -= h * 0.03 * (1 - Math.abs(dx) / crater);
+            const yTop = base - Math.round(t);
+            const snowTo = snowRow + Math.round(Math.sin(dx * 0.45) * 1.3 + Math.sin(dx * 0.16 + 2.1) * 2.4 + (lr() - 0.5) * 1.6);
+            for (let y = yTop; y < base; y += 1) {
+              let c = y <= snowTo ? (y > snowTo - 2 ? snowEdge : dx < 0 ? snowLit : snow) : rock;
+              if (y === yTop) c = y <= snowTo ? snowLit : rim;
+              if (y > fadeFrom) c = blend(c, far, Math.min(0.8, (y - fadeFrom) / (h * 0.5)));
+              put(cx + dx, y, c);
+            }
+          }
+        } else if (lm.kind === 'tokyotower') {
+          // Tokyo Tower: legs splaying out to the plaza with the sky showing
+          // through the lattice, the big deck a third of the way up, the small
+          // one under the aerial. Floodlit, so it glows against the dusk.
+          const deckY = Math.round(h * 0.44);
+          const topY = Math.round(h * 0.72);
+          const paint = word(lm.body);
+          const pale = word(mix(lm.body, '#ffe8c8', 0.45));
+          const dark = word(mix(lm.body, '#000000', 0.4));
+          const glass = word(lm.light);
+          const halfAt = (i) =>
+            i < deckY
+              ? Math.max(2, Math.round(h * (0.03 + 0.1 * (1 - i / deckY) ** 1.9)))
+              : Math.max(1, Math.round(h * 0.03 * (1 - ((i - deckY) / (topY - deckY)) * 0.4)));
+          // Cross bracing between the legs, drawn before them.
+          const step = Math.max(3, Math.round(h * 0.07));
+          for (let i = 0; i < deckY; i += step) {
+            const j = Math.min(deckY, i + step);
+            line(cx - halfAt(i), base - i, cx + halfAt(j), base - j, dark);
+            line(cx + halfAt(i), base - i, cx - halfAt(j), base - j, dark);
+          }
+          const bandH = Math.max(2, Math.round(h * 0.05));
+          for (let i = 0; i < topY; i += 1) {
+            const w = halfAt(i);
+            const y = base - i;
+            const c = Math.floor(i / bandH) % 2 === 0 ? paint : pale;
+            if (i < deckY) {
+              const t = Math.max(1, Math.round(h * 0.02));
+              for (let k = 0; k < t; k += 1) {
+                put(cx - w + k, y, k ? dark : c);
+                put(cx + w - k, y, k ? dark : c);
+              }
+            } else {
+              for (let x = cx - w; x <= cx + w; x += 1) put(x, y, x === cx + w ? dark : c);
+            }
+          }
+          const deck = (i, over, tall) => {
+            const w = halfAt(i) + over;
+            box(cx - w, base - i - tall, w * 2 + 1, tall, paint);
+            for (let x = cx - w + 1; x < cx + w; x += 2) put(x, base - i - Math.max(1, tall >> 1), glass);
+            for (let x = cx - w; x <= cx + w; x += 1) {
+              put(x, base - i - tall, pale);
+              put(x, base - i - 1, dark);
+            }
+          };
+          deck(deckY, Math.max(2, Math.round(h * 0.05)), Math.max(3, Math.round(h * 0.06)));
+          deck(topY, Math.max(1, Math.round(h * 0.02)), Math.max(2, Math.round(h * 0.035)));
+          line(cx, base - topY - Math.max(2, Math.round(h * 0.035)), cx, base - h, paint);
+          beacon(base - h, 2.2);
+        } else if (lm.kind === 'skytree') {
+          // Skytree: a tripod at the foot gathering into a round shaft, the two
+          // observation rings, then the gain tower. Lit pale blue.
+          const shaft = Math.round(h * 0.76);
+          const deckA = Math.round(h * 0.5);
+          const deckB = Math.round(h * 0.68);
+          const dA = Math.max(2, Math.round(h * 0.05));
+          const dB = Math.max(2, Math.round(h * 0.035));
+          const steel = word(lm.body);
+          const litSteel = word(mix(lm.body, lm.light, 0.45));
+          const glow = word(lm.light);
+          const dark = word(mix(lm.body, '#000000', 0.45));
+          const foot = Math.max(3, Math.round(h * 0.14));
+          for (let i = 0; i < shaft; i += 1) {
+            let w = Math.max(1, Math.round(h * (0.05 - 0.036 * (i / shaft) ** 0.7)));
+            if (i < foot) w += Math.round(h * 0.035 * (1 - i / foot) ** 1.4); // splayed legs
+            if (i >= deckA && i < deckA + dA) w += Math.max(2, Math.round(h * 0.022));
+            if (i >= deckB && i < deckB + dB) w += Math.max(1, Math.round(h * 0.014));
+            const y = base - i;
+            for (let x = cx - w; x <= cx + w; x += 1) put(x, y, x === cx - w ? litSteel : x === cx + w ? dark : steel);
+            // Lattice picked out by the floodlights, ring decks brightest.
+            if (i === deckA + dA - 1 || i === deckB + dB - 1) for (let x = cx - w; x <= cx + w; x += 1) put(x, y, glow);
+            else if (i % 5 === 0) for (let x = cx - w + 1; x < cx + w; x += 2) put(x, y, litSteel);
+          }
+          line(cx, base - shaft, cx, base - h, litSteel);
+          beacon(base - h, 2);
         } else if (lm.kind === 'canopy') {
-          // Shenzhen Civic Center: a long blue wing of a roof, with the red
-          // block left of centre and the yellow one to its right.
-          const w = Math.round(h * 8);
-          const x0 = cx - Math.floor(w / 2);
+          // Shenzhen Civic Center: one long wing of a roof over the plaza, with
+          // the red hall's wedge and the yellow one's rising through it, each
+          // pointed at the axis between them.
+          // Narrow frames get a shorter wing rather than one running off both
+          // sides: the tips are the whole point of the shape.
+          const w = Math.min(Math.round(h * 8), Math.round(width * 0.94));
+          const x0 = Math.max(0, Math.min(width - w, cx - Math.floor(w / 2)));
           const roof = word(lm.light);
-          const roofLit = word(mix(lm.light, '#dfeaf2', 0.5));
-          const roofEdge = word(mix(lm.light, '#12283c', 0.45));
+          const roofLit = word(mix(lm.light, '#d4ecf6', 0.42));
+          const roofEdge = word(mix(lm.light, '#0e2436', 0.55));
           const deck = Math.round(h * 0.55);
+          const deckTop = base - deck;
 
-          // Wing profile: rises after the left tip, dips at the centre, rises again.
-          const crest = (f) => h * (0.34 * Math.sin(f * Math.PI) + 0.3 * Math.cos((f - 0.12) * Math.PI * 2.4));
+          // Wing profile, traced off the photograph: one broad crest over the
+          // middle, a shade wider on the falling side, dropping away to tips
+          // that hang just clear of the deck and turn up as they run out.
+          const bell = (f, at, s) => Math.exp(-(((f - at) / s) ** 2));
+          const wave = (f) =>
+            bell(f, 0.5, f < 0.5 ? 0.21 : 0.25) + 0.1 * bell(f, 0.12, 0.09) + 0.07 * bell(f, 0.86, 0.09);
+          const crest = (f) => h * (0.2 + 0.6 * wave(f));
+          const roofTop = (f) => deckTop - Math.round(crest(f));
+          // Thin at the very ends, where the wing runs out to nothing.
+          const roofThick = (f) =>
+            Math.max(2, Math.round(h * (0.3 - 0.06 * bell(f, 0.5, 0.23)) * Math.min(1, (0.5 - Math.abs(f - 0.5)) / 0.09)));
 
-          // The two coloured halls, standing behind the roof line.
+          // Banded podium wings, either side of the plaza the two halls stand
+          // in, with the paved axis running down the middle of it.
+          const podium = word(mix(lm.body, '#e8f0f6', 0.26));
+          const plazaHex = mix('#2b4a26', lm.body, 0.2);
+          const plaza = word(plazaHex);
+          const plazaLit = word(mix(plazaHex, '#6f9c42', 0.45));
+          const gx0 = x0 + Math.round(w * 0.34);
+          const gw = Math.round(w * 0.32);
+          box(gx0, deckTop, gw, deck, plaza);
+          // Park trees fill the plaza between the halls, in the roof's shade.
+          for (let x = gx0; x < gx0 + gw; x += 2 + Math.floor(lr() * 2)) {
+            const r = 1 + Math.floor(lr() * 2);
+            disc(x, deckTop + r, r, lr() < 0.4 ? plazaLit : plaza);
+          }
+          for (const [a, b] of [[0.06, 0.36], [0.64, 0.94]]) {
+            const wx = x0 + Math.round(w * a);
+            const ww = Math.round(w * (b - a));
+            box(wx, deckTop, ww, deck, podium);
+            for (let y = deckTop + 2; y < base - 1; y += 3) {
+              for (let x = wx; x < wx + ww; x += 1) put(x, y, edge);
+            }
+          }
+          const axis = x0 + Math.floor(w / 2);
+          line(axis, deckTop, axis, base - 1, word(mix(lm.body, '#f0f6fa', 0.55)));
+
+          // The two coloured halls: mirrored wedges, each standing tall on its
+          // outer edge and tapering to a point that dips back into the roof.
           const blocks = [
-            { at: 0.38, color: lm.colors?.[0] ?? '#c8443c' },
-            { at: 0.56, color: lm.colors?.[1] ?? '#e0a23a' },
+            { tall: 0.355, tip: 0.427, color: lm.colors?.[0] ?? '#c8443c' },
+            { tall: 0.645, tip: 0.573, color: lm.colors?.[1] ?? '#e0a23a' },
           ];
           for (const b of blocks) {
-            const bw = Math.round(w * 0.085);
-            const bx = x0 + Math.round(w * b.at) - Math.floor(bw / 2);
-            const by = base - deck - Math.round(crest(b.at)) - Math.round(h * 0.5);
+            const tallX = x0 + Math.round(w * b.tall);
+            const tipX = x0 + Math.round(w * b.tip);
+            const steps = Math.max(1, Math.abs(tipX - tallX));
+            const dir = tipX > tallX ? 1 : -1;
+            const topY = deckTop - Math.round(h * 0.95);
+            const tipY = roofTop(b.tip) - Math.round(h * 0.06);
             const bc = word(b.color);
-            const bcLit = word(mix(b.color, '#ffffff', 0.28));
-            const bcEdge = word(mix(b.color, '#000000', 0.35));
-            box(bx, by, bw, base - deck - by, bc);
-            for (let y = by; y < base - deck; y += 1) {
-              put(bx, y, bcLit);
-              put(bx + bw - 1, y, bcEdge);
+            const bcLit = word(mix(b.color, '#ffffff', 0.22));
+            // Below the roof the hall stands in its own shadow.
+            const bcShade = word(mix(b.color, '#12283c', 0.5));
+            for (let i = 0; i <= steps; i += 1) {
+              const x = tallX + dir * i;
+              const f = (x - x0) / w;
+              const yTop = Math.round(topY + ((tipY - topY) * i) / steps);
+              const under = roofTop(f) + roofThick(f);
+              for (let y = yTop; y < deckTop; y += 1) {
+                put(x, y, y === yTop ? bcLit : y >= under ? bcShade : bc);
+              }
             }
-            for (let x = bx; x < bx + bw; x += 1) put(x, by, bcLit);
           }
 
-          // Long glazed deck under the roof.
-          box(x0 + Math.round(w * 0.06), base - deck, Math.round(w * 0.88), deck, edge);
-          for (let x = x0 + Math.round(w * 0.06); x < x0 + w * 0.94; x += 3) {
-            line(x, base - deck + 1, x, base - 1, word(mix(lm.body, '#e8f0f6', 0.35)));
-          }
-
-          // The roof itself: thick at the crest, tapering to the tips.
+          // The roof itself: sunlit top surface over a shaded fascia.
           for (let x = 0; x < w; x += 1) {
             const f = x / w;
-            const y = base - deck - Math.round(crest(f));
-            const thick = Math.max(2, Math.round(h * (0.2 - Math.abs(f - 0.5) * 0.16)));
+            const y = roofTop(f);
+            const thick = roofThick(f);
             for (let k = 0; k < thick; k += 1) {
-              put(x0 + x, y + k, k === 0 ? roofLit : k === thick - 1 ? roofEdge : roof);
+              put(x0 + x, y + k, k === 0 ? roofLit : k >= thick - 2 ? roofEdge : roof);
             }
           }
         } else if (lm.kind === 'statue') {
@@ -739,14 +991,19 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           line(cx + Math.round(s2 * 0.07), feet - Math.round(figure * 0.82), cx + Math.round(s2 * 0.2), feet - Math.round(figure * 0.5), body);
           line(cx - Math.round(s2 * 0.07), feet - Math.round(figure * 0.82), cx - Math.round(s2 * 0.17), feet - Math.round(figure * 0.45), body);
         } else if (lm.kind === 'hall') {
-          // Hall of Supreme Harmony: marble terrace, red hall, twin gold roofs.
-          const u = h;
+          // The gate hall: marble terrace, red hall under painted beams, twin
+          // gold roofs with their eaves sweeping up at the corners. It carries
+          // the picture, so on a wide frame it grows with the frame rather
+          // than staying pinned to the height of the composition.
+          const u = Math.max(h, Math.min(Math.round(width * 0.2), h * 2));
           const marbleHex = lm.accent ?? '#e6ded0';
           const marble = word(marbleHex);
           const marbleEdge = word(mix(marbleHex, '#000000', 0.28));
           const stair = word(mix(marbleHex, '#ffffff', 0.35));
           const gold = word(lm.light);
-          const goldLit = word(mix(lm.light, '#fff3c0', 0.5));
+          const goldLit = word(mix(lm.light, '#fff3c0', 0.32));
+          const goldRib = word(mix(lm.light, '#8a5620', 0.3));
+          const goldDeep = word(mix(lm.light, '#8a5620', 0.55));
           const goldEdge = word(mix(lm.light, '#000000', 0.4));
           let y = base;
           const tiers = lm.accent ? 3 : 0; // a gate hall sits straight on its wall
@@ -765,62 +1022,96 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             }
             y -= th;
           }
-          const wallW = Math.round(u * 1.75);
-          const wallH = Math.round(u * 0.3);
+          // Marble balustrade the hall stands on.
+          const railH = Math.max(2, Math.round(u * 0.055));
+          const railW = Math.round(u * 2.3);
+          box(cx - Math.floor(railW / 2), y - railH, railW, railH, marble);
+          for (let x = cx - Math.floor(railW / 2); x < cx + railW / 2; x += 1) put(x, y - railH, stair);
+          for (let x = cx - Math.floor(railW / 2); x < cx + railW / 2; x += 3) line(x, y - railH + 1, x, y - 1, marbleEdge);
+          y -= railH;
+
+          const wallW = Math.round(u * 1.9);
+          const wallH = Math.max(4, Math.round(u * 0.34));
+          const bay = Math.max(4, Math.round(u * 0.19));
           box(cx - Math.floor(wallW / 2), y - wallH, wallW, wallH, body);
-          for (let x = cx - Math.floor(wallW / 2); x < cx + wallW / 2; x += Math.max(4, Math.round(u * 0.16))) {
-            line(x, y - wallH, x, y - 1, edge);
-            line(x + 1, y - wallH, x + 1, y - 1, lit);
-          }
-          for (let d = -2; d <= 2; d += 1) {
-            const dx = cx + Math.round(d * u * 0.32);
-            const dw = Math.max(3, Math.round(u * 0.13));
-            box(dx - Math.floor(dw / 2), y - Math.round(wallH * 0.78), dw, Math.round(wallH * 0.78), gold);
-            for (let yy = y - Math.round(wallH * 0.78); yy < y; yy += 3) {
-              for (let x = dx - Math.floor(dw / 2); x < dx + dw / 2; x += 1) put(x, yy, goldEdge);
+          // Lattice doors hung between the red columns.
+          const doorHex = mix(lm.body, '#4a1608', 0.35);
+          const door = word(doorHex);
+          const slat = word(mix(doorHex, lm.light, 0.45));
+          for (let x = cx - Math.floor(wallW / 2); x < cx + wallW / 2; x += bay) {
+            const dh = Math.round(wallH * 0.82);
+            box(x + 2, y - dh, bay - 3, dh, door);
+            for (let dx = x + 3; dx < x + bay - 2; dx += 2) line(dx, y - dh + 1, dx, y - 2, slat);
+            for (let yy = y - dh + 1; yy < y - 1; yy += Math.max(3, Math.round(dh * 0.4))) {
+              for (let dx = x + 2; dx < x + bay - 1; dx += 1) put(dx, yy, door);
             }
+            line(x, y - wallH, x, y - 1, lit); // the column itself
+            line(x + 1, y - wallH, x + 1, y - 1, edge);
           }
           y -= wallH;
-          const roof = (bottomW, topW, rh) => {
-            // Bracket set (dougong) band under the eave.
-            for (let x = cx - Math.floor(bottomW / 2); x < cx + bottomW / 2; x += 3) {
-              put(x, y, goldEdge);
-              put(x + 1, y, goldLit);
+
+          /** Painted beam band: the teal course that carries each eave. */
+          const teal = word(mix('#4d8b86', lm.body, 0.06));
+          const tealDark = word(mix('#153337', lm.body, 0.08));
+          const beams = (halfW, bh) => {
+            box(cx - halfW, y - bh, halfW * 2 + 1, bh, tealDark);
+            for (let x = cx - halfW + 2; x < cx + halfW - 2; x += bay) {
+              box(x, y - bh + 1, Math.max(2, bay - 3), Math.max(1, bh - 2), teal);
             }
-            for (let i = 0; i < rh; i += 1) {
-              const f = i / rh;
-              const w = Math.round(bottomW + (topW - bottomW) * f);
-              const x0 = cx - Math.floor(w / 2);
-              for (let x = x0; x < x0 + w; x += 1) {
-                const tile = (x - x0) % 4 === 0;
-                put(x, y - i, i === rh - 1 ? goldEdge : tile ? goldEdge : i < rh * 0.35 ? goldLit : gold);
+            for (let x = cx - halfW; x <= cx + halfW; x += 1) {
+              put(x, y - bh, goldEdge);
+              put(x, y - 1, goldEdge);
+            }
+            y -= bh;
+          };
+
+          /** A tiled roof: hips falling from the ridge to eave corners that fly
+           *  up, shaded dark at the eave and bright along the ridge. */
+          const roof = (halfW, rh) => {
+            const eave = y;
+            for (let dx = -halfW; dx <= halfW; dx += 1) {
+              const t = Math.abs(dx) / halfW;
+              // A long ridge, hips falling away from its ends, and the eave
+              // flicking up into a point at the very corner.
+              const tip = rh * 0.32;
+              const hip = t <= 0.6 ? rh : rh - ((t - 0.6) / 0.4) * (rh - tip);
+              const lift = t <= 0.85 ? 0 : ((t - 0.85) / 0.15) ** 2 * tip;
+              const yTop = eave - Math.round(hip);
+              const yBot = eave - Math.round(lift);
+              const span = Math.max(1, yBot - yTop);
+              for (let yy = yTop; yy <= yBot; yy += 1) {
+                const g = (yBot - yy) / span; // 0 at the eave, 1 at the ridge
+                const band = g < 0.16 ? goldDeep : g > 0.84 ? goldLit : gold;
+                put(cx + dx, yy, yy === yBot ? goldEdge : dx % 4 === 0 && g < 0.78 ? goldRib : band);
               }
             }
-            const bw = Math.floor(bottomW / 2);
-            for (let k = 0; k < 4; k += 1) {
-              put(cx - bw - k, y - k, gold);
-              put(cx + bw + k, y - k, gold);
-              put(cx - bw - k, y - k - 1, goldLit);
-              put(cx + bw + k, y - k - 1, goldLit);
-            }
-            for (let x = cx - bw; x <= cx + bw; x += 1) put(x, y + 1, goldEdge);
             y -= rh;
           };
-          roof(Math.round(u * 2.1), Math.round(u * 1.5), Math.max(4, Math.round(u * 0.14)));
-          const upperH = Math.max(3, Math.round(u * 0.1));
-          box(cx - Math.round(u * 0.7), y - upperH, Math.round(u * 1.4), upperH, body);
-          for (let x = cx - Math.round(u * 0.7); x < cx + u * 0.7; x += Math.max(4, Math.round(u * 0.18))) {
-            line(x, y - upperH, x, y - 1, edge);
+
+          beams(Math.round(u * 1.0), Math.max(3, Math.round(u * 0.09)));
+          roof(Math.round(u * 1.2), Math.max(4, Math.round(u * 0.23)));
+
+          // Between the eaves: one more painted band, carrying the name plaque.
+          beams(Math.round(u * 0.88), Math.max(3, Math.round(u * 0.11)));
+          const pw = Math.max(5, Math.round(u * 0.19));
+          const ph = Math.max(3, Math.round(u * 0.09));
+          box(cx - Math.floor(pw / 2), y + 1, pw, ph, word(mix('#243a6a', lm.body, 0.12)));
+          for (let x = cx - Math.floor(pw / 2); x < cx + pw / 2; x += 1) {
+            put(x, y + 1, gold);
+            put(x, y + ph, gold);
           }
-          y -= upperH;
-          roof(Math.round(u * 1.85), Math.round(u * 0.8), Math.max(5, Math.round(u * 0.18)));
+          roof(Math.round(u * 1.0), Math.max(5, Math.round(u * 0.36)));
+
+          // Ridge along the top, with a beast reared up at either end.
           const rw = Math.round(u * 0.8);
-          for (let x = cx - Math.floor(rw / 2); x <= cx + rw / 2; x += 1) put(x, y, goldEdge);
           for (let x = cx - Math.floor(rw / 2); x <= cx + rw / 2; x += 1) put(x, y - 1, goldLit);
-          // Ridge beasts at both ends.
-          for (let k = 0; k < 3; k += 1) {
-            put(cx - Math.floor(rw / 2) - k, y - 1 - k, gold);
-            put(cx + Math.ceil(rw / 2) + k, y - 1 - k, gold);
+          const beast = Math.max(2, Math.round(u * 0.035));
+          for (let k = 0; k <= beast; k += 1) {
+            const rise = beast - k;
+            for (let t = 0; t <= rise; t += 1) {
+              put(cx - Math.floor(rw / 2) - k, y - 1 - t, t === rise ? goldLit : gold);
+              put(cx + Math.ceil(rw / 2) + k, y - 1 - t, t === rise ? goldLit : gold);
+            }
           }
         } else if (lm.kind === 'wall') {
           // Gate wall: red mass, stone plinth, three arched passages, plaque.
@@ -873,6 +1164,29 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           }
           for (let x = cx - Math.round(pw * 0.3); x < cx + pw * 0.3; x += 3) {
             line(x, py + 1, x, py + ph - 2, gold);
+          }
+
+          // Cypresses standing along the wall, well clear of the gates.
+          const pineHex = mix('#33472a', lm.body, 0.12);
+          const pine = word(pineHex);
+          const pineLit = word(mix(pineHex, '#8fa85a', 0.3));
+          const cypress = (tx, th) => {
+            const tw = Math.max(2, Math.round(th * 0.5));
+            for (let i = 0; i < th; i += 1) {
+              const half = Math.max(0, Math.round((tw / 2) * Math.sin((i / th) * Math.PI * 0.9) ** 0.7));
+              for (let x = tx - half; x <= tx + half; x += 1) {
+                put(x, base - plinth - i, x === tx - half ? pineLit : pine);
+              }
+            }
+          };
+          // A clump at either end of the wall, the way they stand in the photo.
+          for (const side of [-1, 1]) {
+            const near = cx + side * Math.round(wallH * 2.4);
+            const far = side < 0 ? x0 + wallH * 0.3 : x0 + w - wallH * 0.3;
+            for (let i = 0; i < 5; i += 1) {
+              const tx = Math.round(near + (far - near) * (i / 5 + lr() * 0.14));
+              cypress(tx, Math.round(wallH * (0.4 + lr() * 0.45)));
+            }
           }
         } else if (lm.kind === 'promenade') {
           // Foreground embankment: railing, lamps, a few onlookers.
@@ -944,10 +1258,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           line(cx + Math.round(s * 0.2), base - hull - Math.round(s * 0.5), cx + Math.round(s * 0.2), base - hull - Math.round(s * 0.9), body);
           for (let x = cx - Math.round(s * 1.4); x < cx + s * 1.4; x += 3) put(x, base - Math.round(hull * 0.6), light);
         }
-      };
+      }
 
       if (spec.landmarks) {
-        for (const lm of spec.landmarks) if (!lm.onWater) drawLandmark(lm);
+        for (const lm of spec.landmarks) if (!lm.onWater && !lm.behind) drawLandmark(lm);
       }
 
       // Water: bands, then a wobbled mirror of everything standing above it.
@@ -980,6 +1294,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       if (!spec.landmarks || !spec.landmarks.some((l) => l.kind === 'promenade')) spec._waterBottom = rows;
       spec._blinkers = blinkers;
       spec._beacons = beacons.filter((b) => b.period > 0);
+      spec._front = front;
       return buf;
     };
 
@@ -995,9 +1310,21 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       let rows = ROWS;
       let image = null;
       let particles = [];
+      let clouds = [];
+      let front = null;
       let visible = true;
       let raf = 0;
       let lastDraw = 0;
+
+      /** Packed pixels onto an offscreen canvas, keeping transparency. */
+      const sprite = (px, w, h) => {
+        const cv = document.createElement('canvas');
+        cv.width = w;
+        cv.height = h;
+        const sctx = cv.getContext('2d');
+        sctx.putImageData(new ImageData(new Uint8ClampedArray(px.buffer), w, h), 0, 0);
+        return cv;
+      };
 
       const build = () => {
         const rect = canvas.getBoundingClientRect();
@@ -1016,18 +1343,37 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         ctx.imageSmoothingEnabled = false;
         const buf = buildStatic(spec, width, rows);
         image = new ImageData(new Uint8ClampedArray(buf.buffer), width, rows);
+        clouds = spec._clouds.map((c) => ({ ...c, cv: sprite(c.px, c.w, c.h) }));
+        front = spec._front ? sprite(spec._front, width, rows) : null;
 
         particles = [];
         if (spec.weather) {
           const pr = rng(spec.seed * 3 + 1);
-          for (let i = 0; i < 26; i += 1) {
+          const petals = spec.weather === 'petals';
+          for (let i = 0; i < (petals ? 34 : 26); i += 1) {
             particles.push({
               x: pr() * width,
-              y: rows * (0.72 + pr() * 0.26),
+              // Fireflies keep to the grass; petals are already falling.
+              y: petals ? pr() * rows : rows * (0.72 + pr() * 0.26),
               phase: pr() * Math.PI * 2,
+              fall: 0.4 + pr() * 0.7,
+              tone: pr(),
             });
           }
         }
+      };
+
+      /** Sky, then the clouds at their drifted position, then the skyline. */
+      const paint = (clock) => {
+        ctx.putImageData(image, 0, 0);
+        if (!clouds.length) return;
+        for (const c of clouds) {
+          // Wrap a sprite's width past each edge, so one leaves as it enters.
+          const span = width + c.w;
+          const x = c.x + (reduced ? 0 : clock * c.speed) + c.w;
+          ctx.drawImage(c.cv, Math.round((((x % span) + span) % span) - c.w), c.y);
+        }
+        if (front) ctx.drawImage(front, 0, 0);
       };
 
       const frame = (time) => {
@@ -1035,9 +1381,9 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         if (!visible || !image) return;
         if (time - lastDraw < 140) return; // ~7fps keeps a slow pixel cadence
         lastDraw = time;
-        ctx.putImageData(image, 0, 0);
         const t = (time / 1000) * 0.35; // everything drifts at roughly a third speed
         const clock = time / 1000;
+        paint(clock);
 
         if (!reduced) {
           // Windows switching on and off, one slow room at a time.
@@ -1084,19 +1430,39 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           }
         }
 
-        // Fireflies over the park, drifting and pulsing.
-        for (const p of particles) {
-          if (!reduced) {
-            p.x += Math.sin(t + p.phase) * 0.22;
-            p.y += Math.cos(t * 0.8 + p.phase) * 0.16;
+        if (spec.weather === 'petals') {
+          // Blossom coming off the bank: each petal sinks at its own pace and
+          // tips from side to side as it turns over, then starts again above
+          // the frame a little further along.
+          for (const p of particles) {
+            if (!reduced) {
+              p.y += p.fall * 0.55;
+              p.x += Math.sin(t * 1.7 + p.phase) * 0.9 + 0.3;
+              if (p.y > rows) {
+                p.y = -2;
+                p.x += width * 0.37;
+              }
+              if (p.x > width) p.x -= width;
+            }
+            ctx.fillStyle = p.tone < 0.3 ? '#fff2f6' : p.tone < 0.72 ? '#ffcadd' : '#f6a8c4';
+            // Edge-on for most of the turn, broadside at the ends of it.
+            ctx.fillRect(Math.round(p.x), Math.round(p.y), Math.cos(t * 1.7 + p.phase) > 0.55 ? 2 : 1, 1);
           }
-          ctx.fillStyle = Math.sin(t * 3 + p.phase) > 0 ? '#e8ff9a' : '#9ec55a';
-          ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
+        } else {
+          // Fireflies over the park, drifting and pulsing.
+          for (const p of particles) {
+            if (!reduced) {
+              p.x += Math.sin(t + p.phase) * 0.22;
+              p.y += Math.cos(t * 0.8 + p.phase) * 0.16;
+            }
+            ctx.fillStyle = Math.sin(t * 3 + p.phase) > 0 ? '#e8ff9a' : '#9ec55a';
+            ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1);
+          }
         }
       };
 
       build();
-      ctx.putImageData(image, 0, 0);
+      paint(performance.now() / 1000);
       raf = requestAnimationFrame(frame);
 
       const io = new IntersectionObserver((entries) => {
@@ -1109,7 +1475,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
           build();
-          ctx.putImageData(image, 0, 0);
+          paint(performance.now() / 1000);
         }, 150);
       };
       window.addEventListener('resize', onResize);
