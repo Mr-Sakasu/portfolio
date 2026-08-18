@@ -912,15 +912,25 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const petalLit = word(mix(petalHex, '#ffffff', 0.5));
           const petalDeep = word(mix(petalHex, lm.body, 0.45));
           // This tree is the near end of the picture and the mountain is the
-          // far end, so it has to be read as close: big enough that the frame
-          // crops it, standing over the ridge rather than beside it. Sized to
-          // fit inside the frame it just looks like a small tree that happens
-          // to be in shot. On a phone the frame is far narrower than it is
-          // tall, so it takes its size from the width and leans the other way,
-          // keeping to the near corner and leaving the summit clear.
-          const narrow = width < rows * 0.9;
-          const th = Math.round(Math.min(h, width * 0.85) * (narrow ? 1 : 1.25));
-          const cx = Math.round((narrow ? Math.min(lm.x, 0.06) : lm.x) * width);
+          // far end, so it has to read as close: big enough that the frame
+          // crops it, standing over the ridge rather than beside it.
+          //
+          // Which is only worth anything if the mountain survives it. Picking
+          // the layout off a coarse portrait/landscape test was the mistake —
+          // a phone whose canvas comes out wider than it is tall took the wide
+          // layout, where the crown runs out to four fifths of the tree's
+          // height, and on a frame that narrow that buried the mountain
+          // whole. So the tree leans away from the summit on every frame, and
+          // its size is worked back from the room it is allowed: the crown
+          // reaches about a third of the tree's height past the trunk, so
+          // whatever the frame, take the largest tree whose crown still stops
+          // short of the mountain. On a wide frame nothing binds and it grows
+          // to full size; on a narrow one it comes down to fit, and what is
+          // lost off the near edge only helps it read as near.
+          const narrow = width < rows * 1.6;
+          const cx = Math.round((narrow ? 0.06 : 0.11) * width);
+          const room = width * (narrow ? 0.38 : 0.42) - cx;
+          const th = Math.min(Math.round(Math.min(h, width * 0.85) * 1.25), Math.round(room / 0.33));
           const trunkW = Math.max(3, Math.round(th * 0.075));
           const tips = [];
           // The heavier wood is kept and laid back over the flower, so limbs
@@ -982,8 +992,8 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           // actually ends — it leans as it rises, and a fork placed at a
           // guessed height sits beside the wood and leaves the tree snapped in
           // two above the ground.
-          const trunk = limb(cx, base, UP + (narrow ? 0.1 : -0.1), th * 0.3, trunkW, 0, true);
-          for (const a of narrow ? [-0.45, 0.05, 0.45, 0.9] : [-0.9, -0.45, -0.05, 0.45]) {
+          const trunk = limb(cx, base, UP + 0.1, th * 0.3, trunkW, 0, true);
+          for (const a of [-0.45, 0.05, 0.45, 0.9]) {
             limb(trunk.x, trunk.y, trunk.ang + a, th * (0.32 - Math.abs(a) * 0.07), trunkW * (0.8 - Math.abs(a) * 0.12), 4);
           }
 
