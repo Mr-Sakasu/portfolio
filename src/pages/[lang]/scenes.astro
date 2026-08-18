@@ -852,7 +852,12 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const petal = word(petalHex);
           const petalLit = word(mix(petalHex, '#ffffff', 0.5));
           const petalDeep = word(mix(petalHex, lm.body, 0.45));
-          const trunkW = Math.max(3, Math.round(h * 0.085));
+          // On a phone the frame is far narrower than it is tall, and a tree
+          // sized off the height alone grows wider than the whole picture and
+          // buries the mountain. Size it off whichever of the two is tighter,
+          // so it stays a foreground tree rather than a wall of blossom.
+          const th = Math.min(h, Math.round(width * 0.85));
+          const trunkW = Math.max(3, Math.round(th * 0.085));
           const tips = [];
           const limb = (x0, y0, ang, len, w, depth) => {
             // Limbs bend a little under their own weight as they go. The tip
@@ -878,7 +883,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             const y1 = ay(1);
             const tipAng = ang - bend;
             if (depth <= 0 || w < 2) {
-              tips.push({ x: x1, y: y1, r: h * (0.07 + lr() * 0.06) });
+              tips.push({ x: x1, y: y1, r: th * (0.07 + lr() * 0.06) });
               return;
             }
             // Children carry on from the direction the parent actually ends
@@ -888,7 +893,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             limb(x1, y1, tipAng - spread * (0.7 + lr() * 0.7), len * (0.58 + lr() * 0.2), w * 0.62, depth - 1);
             if (lr() < 0.45) limb(x1, y1, tipAng + (lr() - 0.5) * 0.5, len * 0.52, w * 0.5, depth - 1);
           };
-          limb(cx, base, Math.PI / 2 + 0.1, h * 0.36, trunkW, 4);
+          limb(cx, base, Math.PI / 2 + 0.1, th * 0.36, trunkW, 4);
 
           // Blossom is laid over the tips as speckled cloud rather than solid
           // discs, so the sky still shows through the way it does under a real
