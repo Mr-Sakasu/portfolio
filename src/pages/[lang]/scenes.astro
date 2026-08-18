@@ -645,10 +645,30 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         if (lm.kind === 'pearl') {
           // Oriental Pearl: three spheres threaded on a mast, splayed legs.
           const mast = Math.max(2, Math.round(h * 0.028));
-          box(cx - Math.floor(mast / 2), base - h, mast, h, body);
-          line(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.14), base, body);
-          line(cx + mast, base - Math.round(h * 0.3), cx + Math.round(h * 0.14), base, body);
-          line(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.07), base, edge);
+          // The columns are lit from within, not silhouetted: a bright core
+          // running the height of the shaft with the tint darkening off to
+          // either edge, so the whole tower carries light up to the aerial.
+          const coolShaft = lm.colors?.[0] ?? '#3f62c8';
+          const shaftHex = mix(lm.accent ?? lm.light, coolShaft, 0.35);
+          const shaftCore = word(mix(shaftHex, '#ffffff', 0.55));
+          const shaftBody = word(shaftHex);
+          const shaftEdge = word(mix(shaftHex, lm.body, 0.5));
+          const column = (x0, y0, x1, y1, w) => {
+            const steps = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0)));
+            for (let i = 0; i <= steps; i += 1) {
+              const f = i / steps;
+              const x = x0 + (x1 - x0) * f;
+              const y = y0 + (y1 - y0) * f;
+              for (let k = 0; k < w; k += 1) {
+                const off = k - Math.floor(w / 2);
+                put(x + off, y, w < 3 ? shaftBody : off === 0 ? shaftCore : Math.abs(off) === 1 ? shaftBody : shaftEdge);
+              }
+            }
+          };
+          column(cx, base - h, cx, base, mast + 2);
+          column(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.14), base, 2);
+          column(cx + mast, base - Math.round(h * 0.3), cx + Math.round(h * 0.14), base, 2);
+          column(cx - mast, base - Math.round(h * 0.3), cx - Math.round(h * 0.07), base, 2);
           const glowHex = lm.accent ?? mix(lm.body, lm.light, 0.5);
           // The tower's floodlights run a gradient rather than one colour:
           // magenta down at the big sphere, cooling through violet to blue by
@@ -686,8 +706,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               put(cx + Math.round(Math.cos(ang) * r), cy + Math.round(Math.sin(ang) * r), rim);
             }
           }
-          // The mast carries on well above the top sphere.
-          line(cx, base - Math.round(h * 0.78), cx, base - h, body);
+          // The aerial carries on well above the top sphere, thinning to a
+          // point and cooling to the blue the top of the cycle sits at.
+          const aerial = word(mix(lm.light, coolShaft, 0.7));
+          line(cx, base - Math.round(h * 0.78), cx, base - h, aerial);
           beacon(base - h, 2.8);
         } else if (lm.kind === 'twist') {
           // Shanghai Tower: tapered and turning as it rises.
