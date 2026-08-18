@@ -925,10 +925,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             const steps = Math.max(2, Math.round(len * 2));
             for (let i = 0; i <= steps; i += 1) {
               const f = i / steps;
-              // Wood that still has branches to carry stays at least two
-              // pixels thick: a one-pixel limb running at an angle reads as a
-              // dotted line and the tree looks broken apart at every joint.
-              const bw = Math.max(depth > 0 ? 2 : 1, Math.round(w * (1 - f * 0.5)));
+              // No wood thinner than two pixels: a one-pixel limb running at
+              // an angle reads as a dotted line and breaks the tree at every
+              // joint. Only the last twigs, under the blossom, go to one.
+              const bw = Math.max(depth > 0 ? 2 : 1, Math.round(w * (1 - f * 0.4)));
               const x = ax(f);
               const y = ay(f);
               for (let k = 0; k < bw; k += 1) {
@@ -942,12 +942,13 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             // Sizing the clumps off the limb they sit on lets neighbours touch,
             // so the crown holds together instead of breaking into loose dots.
             if (!bare && depth <= 2) {
-              tips.push({ x: ax(0.55), y: ay(0.55), r: Math.max(3, len * 0.62) });
+              tips.push({ x: ax(0.4), y: ay(0.4), r: Math.max(3, len * 0.6) });
+              tips.push({ x: ax(0.78), y: ay(0.78), r: Math.max(3, len * 0.66) });
             }
             if (depth <= 0 || len < 4) {
               // The trunk ends in a fork, not in flower.
               if (!bare) tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.78) });
-              return;
+              return { x: x1, y: y1, ang: tipAng };
             }
             // Shoots leave the flanks at points spaced up the limb, alternating
             // sides the way buds do, each shorter than the wood it grew from.
@@ -972,13 +973,16 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             if (lr() < 0.35) {
               limb(x1, y1, tipAng - (0.4 + lr() * 0.3) * side, len * (0.5 + lr() * 0.2), w * 0.55, depth - 1);
             }
+            return { x: x1, y: y1, ang: tipAng };
           };
           // Two scaffold limbs off a short trunk, as a garden cherry is grown,
-          // rather than everything hanging off one pole.
-          const forkY = base - th * 0.3;
-          limb(cx, base, Math.PI / 2 + 0.1, th * 0.3, trunkW, 0, true);
-          limb(cx, forkY, Math.PI / 2 - 0.24, th * 0.3, trunkW * 0.82, 4);
-          limb(cx, forkY, Math.PI / 2 + 0.3, th * 0.26, trunkW * 0.7, 4);
+          // rather than everything hanging off one pole. They have to start
+          // from where the trunk actually ends: the trunk leans as it rises,
+          // so a fork placed at a guessed height sits off to one side of the
+          // wood and leaves the tree snapped in half above the ground.
+          const trunk = limb(cx, base, Math.PI / 2 + 0.1, th * 0.3, trunkW, 0, true);
+          limb(trunk.x, trunk.y, trunk.ang - 0.3, th * 0.3, trunkW * 0.84, 4);
+          limb(trunk.x, trunk.y, trunk.ang + 0.24, th * 0.26, trunkW * 0.72, 4);
 
           // Blossom is laid over the tips as speckled cloud rather than solid
           // discs, so the sky still shows through the way it does under a real
@@ -992,7 +996,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
                 // Nearly solid at the heart of a clump, thinning to lace at
                 // its edge: the sky belongs between the clumps, not through
                 // the middle of them.
-                if (lr() < 0.06 + d * d * 0.55) continue;
+                if (lr() < 0.02 + d * d * 0.5) continue;
                 const c = dy < -r * 0.2 && dx < r * 0.3 ? petalLit : d > 0.65 ? petalDeep : petal;
                 put(t.x + dx, t.y + dy, c);
               }
