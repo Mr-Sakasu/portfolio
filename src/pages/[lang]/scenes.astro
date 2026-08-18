@@ -675,11 +675,19 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           // the aerial. `cool` is that far end; each sphere is washed toward
           // it by how high it sits, and the lit face and rim ring follow.
           const cool = lm.colors?.[0] ?? '#3f62c8';
+          // The string of small spheres up the lower mast, and the pair of
+          // big ones, and the little one under the aerial: eleven in all on
+          // the real tower, and it is the string that makes it read as the
+          // Pearl rather than a mast with two balls on it.
           const spheres = [
             [0.34, 0.082, 0.16],
             [0.6, 0.05, 0.46],
             [0.75, 0.028, 0.68],
           ];
+          for (let n = 0; n < 5; n += 1) {
+            spheres.push([0.42 + n * 0.036, 0.012, 0.2 + n * 0.05]);
+          }
+          spheres.push([0.68, 0.016, 0.56]);
           for (const [sy, sr, chill] of spheres) {
             const r = Math.max(2, Math.round(h * sr));
             const cy = base - Math.round(h * sy);
@@ -689,10 +697,34 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             const face = word(tint);
             const litFace = word(mix(mix(lm.light, cool, chill * 0.6), '#ffffff', 0.25));
             const rim = word(mix(lm.light, cool, chill));
+            // Light spilling off the glass into the night air. Dithered, so
+            // it falls away as a haze rather than a hard second disc.
+            const halo = Math.round(r * 2.1);
+            for (let y = -halo; y <= halo; y += 1) {
+              for (let x = -halo; x <= halo; x += 1) {
+                const d = Math.hypot(x, y);
+                if (d <= r || d > halo) continue;
+                const f = (1 - (d - r) / (halo - r)) ** 2 * 0.5;
+                const th = (BAYER[(cy + y) & 3][(cx + x) & 3] + 0.5) / 16;
+                if (f > th * 0.55) put(cx + x, cy + y, blend(at(cx + x, cy + y), face, f));
+              }
+            }
             for (let y = -r; y <= r; y += 1) {
               for (let x = -r; x <= r; x += 1) {
                 if (x * x + y * y > r * r) continue;
                 put(cx + x, cy + y, Math.hypot(x - r * 0.35, y + r * 0.35) > r * 1.05 ? shade : face);
+              }
+            }
+            // The observation decks belt the two big spheres.
+            if (r > 4) {
+              const beltY = Math.round(r * 0.25);
+              for (let x = -r; x <= r; x += 1) {
+                const yy = Math.round(Math.sqrt(Math.max(0, r * r - x * x)));
+                // Only where the sphere is actually that tall, or the belt
+                // runs on past its edge as a pair of stray whiskers.
+                if (yy <= beltY) continue;
+                put(cx + x, cy - beltY, litFace);
+                if (yy > beltY) put(cx + x, cy + Math.round(beltY * 0.6), rim);
               }
             }
             for (let y = -r; y <= r; y += 1) {
@@ -710,6 +742,18 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           // point and cooling to the blue the top of the cycle sits at.
           const aerial = word(mix(lm.light, coolShaft, 0.7));
           line(cx, base - Math.round(h * 0.78), cx, base - h, aerial);
+          // Bands of light ringing the shaft, closer together as it thins,
+          // and the lit podium the whole thing stands on.
+          for (let y = base - Math.round(h * 0.78); y < base; y += Math.max(3, Math.round(h * 0.045))) {
+            const bandHex = mix(lm.light, coolShaft, Math.max(0, (base - y) / h));
+            box(cx - Math.floor(mast / 2) - 1, y, mast + 2, 1, word(mix(bandHex, '#ffffff', 0.35)));
+          }
+          const podW = Math.max(6, Math.round(h * 0.2));
+          const podH = Math.max(3, Math.round(h * 0.055));
+          box(cx - Math.floor(podW / 2), base - podH, podW, podH, word(mix(lm.body, coolShaft, 0.35)));
+          for (let x = cx - Math.floor(podW / 2) + 1; x < cx + podW / 2 - 1; x += 2) {
+            put(x, base - podH + 1, word(mix(lm.light, '#ffffff', 0.2)));
+          }
           beacon(base - h, 2.8);
         } else if (lm.kind === 'twist') {
           // Shanghai Tower: tapered and turning as it rises.
