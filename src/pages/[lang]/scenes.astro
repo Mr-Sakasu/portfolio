@@ -925,7 +925,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             const steps = Math.max(2, Math.round(len * 2));
             for (let i = 0; i <= steps; i += 1) {
               const f = i / steps;
-              const bw = Math.max(1, Math.round(w * (1 - f * 0.5)));
+              // Wood that still has branches to carry stays at least two
+              // pixels thick: a one-pixel limb running at an angle reads as a
+              // dotted line and the tree looks broken apart at every joint.
+              const bw = Math.max(depth > 0 ? 2 : 1, Math.round(w * (1 - f * 0.5)));
               const x = ax(f);
               const y = ay(f);
               for (let k = 0; k < bw; k += 1) {
@@ -935,18 +938,15 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             const x1 = ax(1);
             const y1 = ay(1);
             const tipAng = ang - bend;
-            // Blossom sits on the outer wood, so once a limb is fine enough
-            // to carry it, seed the canopy the whole way along it. Seeding
-            // only the very ends left the flower in scattered dots with bare
-            // sky between them.
+            // Blossom is carried along the outer wood, not only on its ends.
+            // Sizing the clumps off the limb they sit on lets neighbours touch,
+            // so the crown holds together instead of breaking into loose dots.
             if (!bare && depth <= 2) {
-              for (let f = 0.25; f <= 1.001; f += 0.25) {
-                tips.push({ x: ax(f), y: ay(f), r: Math.max(3, len * (0.72 + lr() * 0.3)) });
-              }
+              tips.push({ x: ax(0.55), y: ay(0.55), r: Math.max(3, len * 0.62) });
             }
             if (depth <= 0 || len < 4) {
               // The trunk ends in a fork, not in flower.
-              if (!bare) tips.push({ x: x1, y: y1, r: Math.max(3, len * (0.9 + lr() * 0.4)) });
+              if (!bare) tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.78) });
               return;
             }
             // Shoots leave the flanks at points spaced up the limb, alternating
@@ -980,59 +980,21 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           limb(cx, forkY, Math.PI / 2 - 0.24, th * 0.3, trunkW * 0.82, 4);
           limb(cx, forkY, Math.PI / 2 + 0.3, th * 0.26, trunkW * 0.7, 4);
 
-          // The canopy is one mass, not a cluster stamped on each branch end.
-          // The seeds lay down overlapping mounds of density and the blossom
-          // is wherever those add up past a threshold, so neighbouring clumps
-          // run together instead of standing apart as torn dots. Only the rim
-          // is broken up, and only into the sky — punching holes through the
-          // body of it is what kept tearing the tree into pieces.
-          if (tips.length) {
-            let bx0 = Infinity;
-            let by0 = Infinity;
-            let bx1 = -Infinity;
-            let by1 = -Infinity;
-            for (const t of tips) {
-              bx0 = Math.min(bx0, t.x - t.r);
-              by0 = Math.min(by0, t.y - t.r);
-              bx1 = Math.max(bx1, t.x + t.r);
-              by1 = Math.max(by1, t.y + t.r);
-            }
-            bx0 = Math.max(0, Math.floor(bx0));
-            by0 = Math.max(0, Math.floor(by0));
-            bx1 = Math.min(width - 1, Math.ceil(bx1));
-            by1 = Math.min(rows - 1, Math.ceil(by1));
-            const bw2 = Math.max(1, bx1 - bx0 + 1);
-            const bh2 = Math.max(1, by1 - by0 + 1);
-            const field = new Float32Array(bw2 * bh2);
-            for (const t of tips) {
-              const r = t.r;
-              const x0 = Math.max(bx0, Math.floor(t.x - r));
-              const x1 = Math.min(bx1, Math.ceil(t.x + r));
-              const y0 = Math.max(by0, Math.floor(t.y - r));
-              const y1 = Math.min(by1, Math.ceil(t.y + r));
-              for (let y = y0; y <= y1; y += 1) {
-                for (let x = x0; x <= x1; x += 1) {
-                  const d = Math.sqrt((x - t.x) ** 2 + (y - t.y) ** 2) / r;
-                  if (d >= 1) continue;
-                  field[(y - by0) * bw2 + (x - bx0)] += (1 - d) ** 1.4;
-                }
-              }
-            }
-            for (let y = by0; y <= by1; y += 1) {
-              for (let x = bx0; x <= bx1; x += 1) {
-                const v = field[(y - by0) * bw2 + (x - bx0)];
-                if (v < 0.2) continue;
-                // A soft ragged edge where the blossom thins out, so the
-                // outline is foliage and not a drawn curve.
-                if (v < 0.42 && lr() > (v - 0.2) / 0.22) continue;
-                // Light from the upper left: the far side of the crown and
-                // the depth under it fall away into shadow, and clumps catch
-                // the light along their tops.
-                const t2 = field[(y - 1 - by0) * bw2 + (x - bx0)] ?? 0;
-                let c = petal;
-                if (v > 1.9) c = petalDeep;
-                else if (t2 < v * 0.75 && v < 1.5) c = petalLit;
-                put(x, y, c);
+          // Blossom is laid over the tips as speckled cloud rather than solid
+          // discs, so the sky still shows through the way it does under a real
+          // tree, and the lit petals gather on the side facing the light.
+          for (const t of tips) {
+            const r = Math.max(3, Math.round(t.r));
+            for (let dx = -r; dx <= r; dx += 1) {
+              for (let dy = -r; dy <= r; dy += 1) {
+                const d = Math.sqrt(dx * dx + dy * dy) / r;
+                if (d > 1) continue;
+                // Nearly solid at the heart of a clump, thinning to lace at
+                // its edge: the sky belongs between the clumps, not through
+                // the middle of them.
+                if (lr() < 0.06 + d * d * 0.55) continue;
+                const c = dy < -r * 0.2 && dx < r * 0.3 ? petalLit : d > 0.65 ? petalDeep : petal;
+                put(t.x + dx, t.y + dy, c);
               }
             }
           }
