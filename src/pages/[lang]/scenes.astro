@@ -855,28 +855,38 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const trunkW = Math.max(3, Math.round(h * 0.085));
           const tips = [];
           const limb = (x0, y0, ang, len, w, depth) => {
-            const steps = Math.max(2, Math.round(len));
+            // Limbs bend a little under their own weight as they go. The tip
+            // has to be read back off that same bend: computing it from the
+            // unbent angle leaves each child starting somewhere the parent
+            // never reached, which saws the tree into loose pieces.
+            const bend = 0.18 * Math.sign(Math.cos(ang) || 1);
+            const ax = (f) => x0 + Math.cos(ang - f * bend) * (f * len);
+            const ay = (f) => y0 - Math.sin(ang - f * bend) * (f * len);
+            // Half-pixel steps, so a limb leaning near the diagonal stays a
+            // solid line instead of a dotted one.
+            const steps = Math.max(2, Math.round(len * 2));
             for (let i = 0; i <= steps; i += 1) {
               const f = i / steps;
-              // Limbs taper as they go, and bend a little under their own weight.
               const bw = Math.max(1, Math.round(w * (1 - f * 0.5)));
-              const a = ang - f * 0.18 * Math.sign(Math.cos(ang) || 1);
-              const x = x0 + Math.cos(a) * (f * len);
-              const y = y0 - Math.sin(a) * (f * len);
+              const x = ax(f);
+              const y = ay(f);
               for (let k = 0; k < bw; k += 1) {
                 put(x - Math.floor(bw / 2) + k, y, k === 0 ? lit : k === bw - 1 ? edge : body);
               }
             }
-            const x1 = x0 + Math.cos(ang - 0.18) * len;
-            const y1 = y0 - Math.sin(ang - 0.18) * len;
+            const x1 = ax(1);
+            const y1 = ay(1);
+            const tipAng = ang - bend;
             if (depth <= 0 || w < 2) {
               tips.push({ x: x1, y: y1, r: h * (0.07 + lr() * 0.06) });
               return;
             }
+            // Children carry on from the direction the parent actually ends
+            // pointing, so a fork reads as a fork and not a broken joint.
             const spread = 0.4 + lr() * 0.35;
-            limb(x1, y1, ang + spread, len * (0.6 + lr() * 0.18), w * 0.62, depth - 1);
-            limb(x1, y1, ang - spread * (0.7 + lr() * 0.7), len * (0.58 + lr() * 0.2), w * 0.62, depth - 1);
-            if (lr() < 0.45) limb(x1, y1, ang + (lr() - 0.5) * 0.5, len * 0.52, w * 0.5, depth - 1);
+            limb(x1, y1, tipAng + spread, len * (0.6 + lr() * 0.18), w * 0.62, depth - 1);
+            limb(x1, y1, tipAng - spread * (0.7 + lr() * 0.7), len * (0.58 + lr() * 0.2), w * 0.62, depth - 1);
+            if (lr() < 0.45) limb(x1, y1, tipAng + (lr() - 0.5) * 0.5, len * 0.52, w * 0.5, depth - 1);
           };
           limb(cx, base, Math.PI / 2 + 0.1, h * 0.36, trunkW, 4);
 
