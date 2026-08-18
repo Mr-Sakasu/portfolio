@@ -897,26 +897,33 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const petalLit = word(mix(petalHex, '#ffffff', 0.5));
           const petalDeep = word(mix(petalHex, lm.body, 0.45));
           // On a phone the frame is far narrower than it is tall, so a tree
-          // sized off the height alone grows wider than the whole picture and
-          // buries the mountain. Take the size from whichever is tighter, and
-          // on a narrow frame skip the horizontal squeeze that would otherwise
-          // drag the tree in off the margin and stand it on the summit.
+          // sized off the height alone grows wider than the whole picture.
+          // There it also leans the other way and keeps to the corner: a
+          // foreground tree cropped by the near edge is honest framing, and
+          // it leaves the mountain — which is what the scene is of — clear.
           const narrow = width < rows * 0.9;
-          const th = Math.round(Math.min(h, width * 0.85) * 0.75);
-          const cx = Math.round((narrow ? Math.min(lm.x, 0.13) : lm.x) * width);
+          const th = Math.round(Math.min(h, width * 0.85) * (narrow ? 0.85 : 0.75));
+          const cx = Math.round((narrow ? Math.min(lm.x, 0.06) : lm.x) * width);
           const trunkW = Math.max(3, Math.round(th * 0.075));
           const tips = [];
+          // The heavier wood is kept and laid back over the flower, so limbs
+          // read through the blossom the way they do on a cherry in bloom.
+          const heavy = [];
           const UP = Math.PI / 2;
-          // Wood reaches for the light: a limb arcs gently back toward upright
-          // as it rises, which is what closes the crown into a head instead of
-          // letting it sprawl outward and down into separate drooping lumps.
           const limb = (x0, y0, ang, len, w, depth, bare) => {
-            const aimed = (f) => ang + (UP - ang) * f * 0.12;
+            // A cherry spreads: limbs lean further off upright as they run,
+            // and the outermost branchlets bow down at their ends. Arcing them
+            // back toward vertical instead packs the crown into a ball, which
+            // is a shrub, not this tree.
+            const droop = depth <= 1 ? 0.3 : 0;
+            const away = ang > UP ? 1 : -1;
+            const aimed = (f) => ang - (UP - ang) * f * 0.3 + away * droop * f * f;
             const ax = (f) => x0 + Math.cos(aimed(f)) * (f * len);
             const ay = (f) => y0 - Math.sin(aimed(f)) * (f * len);
             // Half-pixel steps, so a limb leaning near the diagonal stays a
             // solid line instead of a dotted one.
             const steps = Math.max(2, Math.round(len * 2));
+            const keep = w >= trunkW * 0.3;
             for (let i = 0; i <= steps; i += 1) {
               const f = i / steps;
               // No wood but the last twigs thins to a single pixel: a one-pixel
@@ -926,7 +933,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               const x = ax(f);
               const y = ay(f);
               for (let k = 0; k < bw; k += 1) {
-                put(x - Math.floor(bw / 2) + k, y, k === 0 ? lit : k === bw - 1 ? edge : body);
+                const px = x - Math.floor(bw / 2) + k;
+                const c = k === 0 ? lit : k === bw - 1 ? edge : body;
+                put(px, y, c);
+                if (keep) heavy.push([px, y, c]);
               }
             }
             const x1 = ax(1);
@@ -934,53 +944,49 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             // Read off the arc, not off the angle it set out at: a child
             // started anywhere else begins where its parent never reached.
             const tipAng = aimed(1);
-            // Blossom rides the outer wood along its length, and each clump is
-            // sized off the limb carrying it, so neighbours overlap and the
-            // crown holds together rather than breaking into loose dots.
-            if (!bare && depth <= 2) {
-              tips.push({ x: ax(0.5), y: ay(0.5), r: Math.max(3, len * 0.55) });
-              tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.7) });
-            }
-            if (depth <= 0 || len < 5) {
-              // The trunk ends in a fork, not in flower.
-              if (!bare) tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.85) });
-              return { x: x1, y: y1, ang: tipAng };
-            }
+            // Blossom rides the outer wood, each clump sized off the limb that
+            // carries it, so neighbours overlap and the crown holds together
+            // instead of breaking into loose dots.
+            if (!bare && depth <= 1) tips.push({ x: x1, y: y1, r: Math.max(3, len * 0.72) });
+            if (depth <= 0 || len < 5) return { x: x1, y: y1, ang: tipAng };
             // Shoots leave the flanks partway up, alternating sides the way
             // buds do, before the leader carries the limb on to its own end.
             const side = lr() < 0.5 ? 1 : -1;
-            const f = 0.5 + lr() * 0.25;
-            limb(ax(f), ay(f), aimed(f) + side * (0.75 + lr() * 0.3), len * (0.5 + lr() * 0.16), Math.max(1.5, w * 0.55), depth - 1);
-            if (lr() < 0.75) {
-              limb(ax(f * 0.75), ay(f * 0.75), aimed(f * 0.75) - side * (0.75 + lr() * 0.3), len * (0.46 + lr() * 0.16), Math.max(1.5, w * 0.5), depth - 1);
+            const f = 0.45 + lr() * 0.3;
+            limb(ax(f), ay(f), aimed(f) + side * (0.62 + lr() * 0.35), len * (0.52 + lr() * 0.16), Math.max(1.5, w * 0.55), depth - 1);
+            if (lr() < 0.8) {
+              limb(ax(f * 0.7), ay(f * 0.7), aimed(f * 0.7) - side * (0.62 + lr() * 0.35), len * (0.48 + lr() * 0.16), Math.max(1.5, w * 0.5), depth - 1);
             }
-            limb(x1, y1, tipAng + (lr() - 0.5) * 0.5, len * (0.66 + lr() * 0.14), w * 0.68, depth - 1);
+            limb(x1, y1, tipAng + (lr() - 0.5) * 0.45, len * (0.6 + lr() * 0.14), w * 0.68, depth - 1);
             return { x: x1, y: y1, ang: tipAng };
           };
           // A short trunk carrying a fan of scaffold limbs, as a garden cherry
-          // is grown. They start from where the trunk actually ends — it leans
-          // as it rises, and a fork placed at a guessed height sits beside the
-          // wood and leaves the tree snapped in two above the ground — and the
-          // fan is even either side, so neither flank is left bare.
-          const trunk = limb(cx, base, UP + 0.06, th * 0.34, trunkW, 0, true);
-          for (const a of [-1.05, -0.4, 0.35, 1.0]) {
-            limb(trunk.x, trunk.y, trunk.ang + a, th * (0.3 - Math.abs(a) * 0.09), trunkW * (0.8 - Math.abs(a) * 0.12), 4);
+          // is grown, leaning into the frame. They start from where the trunk
+          // actually ends — it leans as it rises, and a fork placed at a
+          // guessed height sits beside the wood and leaves the tree snapped in
+          // two above the ground.
+          const trunk = limb(cx, base, UP + (narrow ? 0.12 : -0.12), th * 0.3, trunkW, 0, true);
+          for (const a of narrow ? [-0.45, 0.1, 0.5, 0.95] : [-0.95, -0.5, -0.12, 0.42]) {
+            limb(trunk.x, trunk.y, trunk.ang + a, th * (0.32 - Math.abs(a) * 0.07), trunkW * (0.8 - Math.abs(a) * 0.12), 3);
           }
 
-          // Each clump is nearly solid at its heart and thins to lace at its
-          // edge: the sky belongs between the clumps, not through them.
+          // Blossom hangs in tiers, each clump wider than it is deep, nearly
+          // solid at its heart and thinning to lace at its edge: the sky
+          // belongs between the clumps, not through the middle of them.
           for (const t of tips) {
-            const r = Math.max(3, Math.round(t.r));
-            for (let dx = -r; dx <= r; dx += 1) {
-              for (let dy = -r; dy <= r; dy += 1) {
-                const d = Math.sqrt(dx * dx + dy * dy) / r;
+            const rx = Math.max(3, Math.round(t.r * 1.3));
+            const ry = Math.max(2, Math.round(t.r * 0.62));
+            for (let dx = -rx; dx <= rx; dx += 1) {
+              for (let dy = -ry; dy <= ry; dy += 1) {
+                const d = Math.sqrt((dx / rx) ** 2 + (dy / ry) ** 2);
                 if (d > 1) continue;
-                if (lr() < 0.02 + d * d * 0.5) continue;
-                const c = dy < -r * 0.2 && dx < r * 0.3 ? petalLit : d > 0.65 ? petalDeep : petal;
+                if (lr() < 0.05 + d * d * 0.55) continue;
+                const c = dy < -ry * 0.2 && dx < rx * 0.3 ? petalLit : d > 0.65 ? petalDeep : petal;
                 put(t.x + dx, t.y + dy, c);
               }
             }
           }
+          for (const [x, y, c] of heavy) put(x, y, c);
         } else if (lm.kind === 'tokyotower') {
           // Tokyo Tower: legs splaying out to the plaza with the sky showing
           // through the lattice, the big deck a third of the way up, the small
