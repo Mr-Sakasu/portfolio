@@ -42,7 +42,18 @@ const t = ui[lang] ?? ui.en;
 const playlistRoot = playlistData as PlaylistData;
 const playlistCollection = playlistRoot.byLang?.[lang] ?? playlistRoot;
 const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
+  zh: [
+    'PLiz-kupUIzB5Wl6V7K-nHcq0OUOafpUDn',
+    'PLiz-kupUIzB5_O-O6c-zNcdKe1BGJVXDZ',
+    'PLSLTYW3TVWwo',
+  ],
+  en: [
+    'PLiz-kupUIzB6AgBtn-rl0VEtX_wiyZiEY',
+    'PLiz-kupUIzB78ViYoU-wQ6iaJ3_1G_ezI',
+    'PLSLTYW3TVWwo',
+  ],
   ja: [
+    'PLiz-kupUIzB6Db5tdAPYR5SqKuM7gNY-9',
     'PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le',
     'PLiz-kupUIzB6fO7Svf1w3dUi3GSss_H6f',
     'PLiz-kupUIzB70ktndKK9cPKR2zz9siN2A',
@@ -52,6 +63,7 @@ const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
     'PLiz-kupUIzB4bOwHGV_WKNPi6m7m2mT8l',
     'PLiz-kupUIzB7x5yWRVSGXdNcRjnDaom6M',
     'PLiz-kupUIzB75wypS-rh2V1ZPLgae3jcu',
+    'PLSLTYW3TVWwo',
   ],
 };
 const homePlaylistByLang: Partial<Record<keyof typeof ui, string[]>> = {
