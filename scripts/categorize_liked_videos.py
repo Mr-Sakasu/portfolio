@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 import time
@@ -24,23 +25,40 @@ from fetch_ytmusic_playlist import (
 )
 
 
-CATEGORY_TITLES = OrderedDict(
+ARTIST_KEYWORDS = OrderedDict(
+    [
+        ("Yorushika", ("Liked: JPOP - Yorushika", {"yorushika", "ヨルシカ", "n-buna", "ナブナ"})),
+        ("Zutomayo", ("Liked: JPOP - Zutomayo", {"zutomayo", "ずっと真夜中", "ずとまよ", "zutto mayonaka"})),
+        ("YonezuKenshi", ("Liked: JPOP - YonezuKenshi", {"yonezu", "kenshi yonezu", "米津玄師", "米津"})),
+        ("Ado", ("Liked: JPOP - Ado", {"ado - topic", "ado 官方", "うっせぇわ", "singer ado"})),
+        ("YOASOBI", ("Liked: JPOP - YOASOBI", {"yoasobi", "ヨアソビ", "ikura"})),
+        ("RADWIMPS", ("Liked: JPOP - RADWIMPS", {"radwimps", "ラッドウィンプス", "野田洋次郎"})),
+        ("SEKAINOOWARI", ("Liked: JPOP - SEKAI NO OWARI", {"sekai no owari", "セカイノオワリ", "セカオワ", "end of the world"})),
+        ("Orangestar", ("Liked: JPOP - Orangestar", {"orangestar", "オレンジスター", "アスノヨゾラ"})),
+        ("Aqu3ra", ("Liked: JPOP - Aqu3ra", {"aqu3ra", "アキュラ"})),
+    ]
+)
+
+LANGUAGE_TITLES = OrderedDict(
     [
         ("Zn", "Liked: Zn"),
         ("En", "Liked: En"),
         ("Jpop", "Liked: Jpop"),
+        ("Kpop", "Liked: Kpop"),
     ]
+)
+
+CATEGORY_TITLES = OrderedDict(
+    list(LANGUAGE_TITLES.items()) + [(key, title) for key, (title, _) in ARTIST_KEYWORDS.items()]
 )
 
 CPOP_KEYWORDS = {
     "c-pop",
     "cpop",
     "mandopop",
-    "chinese",
     "華語",
     "国语",
     "國語",
-    "中文",
     "抖音",
     "周杰倫",
     "周杰伦",
@@ -83,6 +101,56 @@ YORUSHIKA_KEYWORDS = {"yorushika", "ヨルシカ", "n-buna", "ナブナ"}
 ZUTOMAYO_KEYWORDS = {"zutomayo", "ずっと真夜中", "ずとまよ", "zutto mayonaka"}
 YONEZU_KEYWORDS = {"yonezu", "kenshi yonezu", "米津玄師", "米津", "ハチ", "hachi"}
 
+KPOP_KEYWORDS = {
+    "k-pop",
+    "kpop",
+    "hybe labels",
+    "jyp entertainment",
+    "sm entertainment",
+    "yg entertainment",
+    "illit",
+    "newjeans",
+    "le sserafim",
+    "aespa",
+    "nmixx",
+    "twice",
+    "blackpink",
+    "stray kids",
+    "seventeen",
+    "enhypen",
+    "kiiikiii",
+}
+
+NON_MUSIC_KEYWORDS = {
+    "learn chinese",
+    "learnchinese",
+    "hsk",
+    "中国語",
+    "中文课",
+    "中文課",
+    "学中文",
+    "説中文",
+    "说中文",
+    "英会話",
+    "lesson",
+    "レッスン",
+    "tutorial",
+    "レシピ",
+    "作り方",
+    "クラシル",
+    "recipe",
+    "大喜利",
+    "お笑い",
+    "コント",
+    "芸人",
+    "漫才",
+    "切り抜き",
+    ".mp3",
+    "第一課",
+    "要点",
+}
+
+HANGUL_RE = re.compile(r"[\uac00-\ud7af]")
 HIRAGANA_KATAKANA_RE = re.compile(r"[\u3040-\u30ff]")
 CJK_RE = re.compile(r"[\u3400-\u9fff]")
 LATIN_RE = re.compile(r"[a-zA-Z]")
@@ -99,6 +167,17 @@ def text_blob(video: dict[str, Any]) -> str:
     return " ".join(parts)
 
 
+def artist_blob(video: dict[str, Any]) -> str:
+    """Title and channel only.
+
+    Uploader tags are stuffed with related-artist names ("丸の内サディスティック"
+    carries four), so they are unusable for attribution even though
+    text_blob() keeps them for language detection.
+    """
+    snippet = video.get("snippet") if isinstance(video.get("snippet"), dict) else {}
+    return " ".join([str(snippet.get("title") or ""), str(snippet.get("channelTitle") or "")])
+
+
 def has_any(text: str, keywords: set[str]) -> bool:
     lowered = text.lower()
     return any(keyword.lower() in lowered for keyword in keywords)
@@ -109,27 +188,82 @@ def is_music(video: dict[str, Any]) -> bool:
     topics = video.get("topicDetails", {}).get("topicCategories", [])
     blob = text_blob(video)
 
+    # Auto-generated "- Topic" channels only host licensed music assets, so they
+    # outrank the keyword heuristics below.
+    if str(snippet.get("channelTitle") or "").strip().endswith("- Topic"):
+        return True
+
+    # Lessons, recipes and comedy shorts otherwise slip through on a single
+    # keyword match (e.g. a restaurant named "4000Chinese Restaurant").
+    if has_any(blob, NON_MUSIC_KEYWORDS):
+        return False
+
     if str(snippet.get("categoryId") or "") == "10":
         return True
-    if any("Music" in str(topic) for topic in topics):
-        return True
-    return has_any(blob, JPOP_KEYWORDS | CPOP_KEYWORDS | YORUSHIKA_KEYWORDS | ZUTOMAYO_KEYWORDS | YONEZU_KEYWORDS)
+    return any("Music" in str(topic) for topic in topics)
 
 
-def classify(video: dict[str, Any]) -> str | None:
+def declared_language(video: dict[str, Any]) -> str:
+    """Uploader-declared audio language, e.g. "ja", "zh-Hant". Empty when unset."""
+    snippet = video.get("snippet") if isinstance(video.get("snippet"), dict) else {}
+    for key in ("defaultAudioLanguage", "defaultLanguage"):
+        value = str(snippet.get(key) or "").strip().lower()
+        if value:
+            return value
+    return ""
+
+
+LANGUAGE_PREFIXES = (("ja", "Jpop"), ("zh", "Zn"), ("ko", "Kpop"), ("en", "En"))
+
+
+def classify(video: dict[str, Any]) -> set[str]:
+    """Return every category a video belongs to; a track may span several."""
     blob = text_blob(video)
-    has_kana = bool(HIRAGANA_KATAKANA_RE.search(blob))
+    categories: set[str] = set()
+
+    attribution = artist_blob(video)
+    for key, (_, keywords) in ARTIST_KEYWORDS.items():
+        if has_any(attribution, keywords):
+            categories.add(key)
+            categories.add("Jpop")
+
+    if has_any(blob, KPOP_KEYWORDS):
+        categories.add("Kpop")
+    if has_any(blob, CPOP_KEYWORDS):
+        categories.add("Zn")
+    if has_kana_signal(blob):
+        categories.add("Jpop")
+
+    # The uploader-declared language beats script guessing: kanji-only Japanese
+    # titles (tuki. -「晩餐歌」) otherwise read as Chinese. Only ja/zh/ko are
+    # trustworthy though - auto-generated "- Topic" uploads default to "en"
+    # regardless of what is actually sung.
+    language = declared_language(video)
+    for prefix, category in LANGUAGE_PREFIXES:
+        if not language.startswith(prefix):
+            continue
+        if category == "En" and (categories or CJK_RE.search(blob) or HANGUL_RE.search(blob) or HIRAGANA_KATAKANA_RE.search(blob)):
+            break
+        categories.add(category)
+        break
+
+    if categories:
+        return categories
+
     has_cjk = bool(CJK_RE.search(blob))
-    has_latin = bool(LATIN_RE.search(blob))
+    if bool(HANGUL_RE.search(blob)):
+        return {"Kpop"}
+    if has_cjk:
+        return {"Zn"}
+    if bool(LATIN_RE.search(blob)):
+        return {"En"}
+    return set()
 
-    if has_any(blob, CPOP_KEYWORDS) or (has_cjk and not has_kana and not has_any(blob, YONEZU_KEYWORDS)):
-        return "Zn"
 
-    if has_kana or has_any(blob, JPOP_KEYWORDS | YORUSHIKA_KEYWORDS | ZUTOMAYO_KEYWORDS | YONEZU_KEYWORDS):
-        return "Jpop"
-    if has_latin and not has_cjk:
-        return "En"
-    return None
+def has_kana_signal(blob: str) -> bool:
+    return bool(HIRAGANA_KATAKANA_RE.search(blob)) or has_any(
+        blob, JPOP_KEYWORDS | YORUSHIKA_KEYWORDS | ZUTOMAYO_KEYWORDS | YONEZU_KEYWORDS
+    )
 
 
 def fetch_liked_videos(access_token: str, limit: int | None) -> list[dict[str, Any]]:
@@ -310,9 +444,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=Path("artifacts/liked-video-categories.json"),
         help="Dry-run/classification report path.",
     )
-    parser.add_argument("--oauth-credentials", default="")
-    parser.add_argument("--oauth-client-id", default="")
-    parser.add_argument("--oauth-client-secret", default="")
+    parser.add_argument(
+        "--oauth-credentials",
+        default=os.environ.get("YTMUSIC_OAUTH_CREDENTIALS_JSON")
+        or os.environ.get("YTMUSIC_OAUTH_CREDENTIALS_FILE", ""),
+        help="Defaults to YTMUSIC_OAUTH_CREDENTIALS_JSON/FILE, normally set in .env.",
+    )
+    parser.add_argument("--oauth-client-id", default=os.environ.get("YTMUSIC_OAUTH_CLIENT_ID", ""))
+    parser.add_argument("--oauth-client-secret", default=os.environ.get("YTMUSIC_OAUTH_CLIENT_SECRET", ""))
     return parser
 
 
@@ -347,11 +486,12 @@ def main() -> int:
         if not is_music(video):
             skipped.append(video)
             continue
-        category = classify(video)
-        if category is None:
+        categories = classify(video)
+        if not categories:
             skipped.append(video)
             continue
-        groups[category].append(video)
+        for category in categories:
+            groups[category].append(video)
 
     write_report(project_path(str(args.report)), groups, skipped)
 
