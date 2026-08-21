@@ -1,0 +1,276 @@
+---
+// First-visit fireworks. The overlay paints over the site background, fires a
+// few shells, and hands the page back a beat after the main burst.
+---
+
+<div id="site-intro" aria-hidden="true">
+  <canvas id="site-intro-canvas"></canvas>
+</div>
+
+<style is:global>
+  #site-intro {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 900ms ease;
+  }
+
+  #site-intro.is-fading {
+    opacity: 0;
+  }
+
+  #site-intro-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Nothing to cover when the intro never runs, so keep it out of the way. */
+  html:not(.intro-active) #site-intro {
+    display: none;
+  }
+
+  /* Held back while the shells are in the air, then floated in together. */
+  html.intro-active .site-header,
+  html.intro-active main,
+  html.intro-active .site-footer {
+    opacity: 0;
+  }
+
+  html.intro-done .site-header,
+  html.intro-done main,
+  html.intro-done .site-footer {
+    animation: site-intro-content 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes site-intro-content {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #site-intro {
+      display: none;
+    }
+
+    html.intro-done .site-header,
+    html.intro-done main,
+    html.intro-done .site-footer {
+      animation: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const root = document.documentElement;
+    if (!root.classList.contains('intro-active')) {
+      return;
+    }
+
+    // Marked as played up front, not on completion: navigating away mid-burst
+    // would otherwise set the fireworks off again on the next page.
+    try {
+      window.sessionStorage.setItem('portfolio-intro-played', '1');
+    } catch (error) {
+      /* private mode: the intro simply plays again next load */
+    }
+
+    const overlay = document.getElementById('site-intro');
+    const canvas = document.getElementById('site-intro-canvas');
+    const context = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+
+    let revealed = false;
+    const revealContent = () => {
+      if (revealed) {
+        return;
+      }
+      revealed = true;
+      root.classList.remove('intro-active');
+      root.classList.add('intro-done');
+      // ClientRouter reuses <html>, so leaving the class on would re-run the
+      // float-in for every later navigation.
+      window.setTimeout(() => root.classList.remove('intro-done'), 1400);
+    };
+
+    let finished = false;
+    // Whatever happens below — no canvas, a thrown frame, a backgrounded tab —
+    // the page must come back, so every exit routes through here.
+    const finish = () => {
+      if (finished) {
+        return;
+      }
+      finished = true;
+      revealContent();
+      if (overlay) {
+        overlay.classList.add('is-fading');
+        window.setTimeout(() => overlay.remove(), 1000);
+      }
+    };
+
+    // Backstop against a wedged animation frame holding the page hostage.
+    const bailout = window.setTimeout(finish, 6000);
+
+    if (!context) {
+      window.clearTimeout(bailout);
+      finish();
+      return;
+    }
+
+    let width = 0;
+    let height = 0;
+    const resize = () => {
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = Math.floor(width * ratio);
+      canvas.height = Math.floor(height * ratio);
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    };
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    // Purple, blue, green: the artist-chart palette, so the intro and the
+    // charts further down the page read as the same site.
+    const palette = ['#d695e4', '#a5a6ff', '#61b9fd', '#38c2ef', '#47cba2', '#ffffff'];
+    const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+    const shells = [];
+    const sparks = [];
+    let mainBurstAt = 0;
+
+    const launch = (xRatio, peakRatio, isMain) => {
+      const targetY = height * peakRatio;
+      const startY = height + 12;
+      shells.push({
+        x: width * xRatio,
+        y: startY,
+        // Chosen so the shell arrives at its peak under gravity below.
+        vy: -Math.sqrt(2 * 0.00042 * (startY - targetY)),
+        targetY,
+        color: pick(palette),
+        isMain,
+        trail: [],
+      });
+    };
+
+    const explode = (shell) => {
+      const count = shell.isMain ? 130 : 80;
+      const power = shell.isMain ? 0.42 : 0.3;
+      for (let index = 0; index < count; index += 1) {
+        const angle = (Math.PI * 2 * index) / count + Math.random() * 0.12;
+        // Squared random keeps most sparks near the rim rather than the centre.
+        const speed = power * (0.35 + Math.random() * Math.random());
+        sparks.push({
+          x: shell.x,
+          y: shell.y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: 0.00055 + Math.random() * 0.0006,
+          color: Math.random() < 0.22 ? '#ffffff' : shell.color,
+        });
+      }
+    };
+
+    const startedAt = performance.now();
+    const schedule = [
+      { at: 0, x: 0.5, peak: 0.32, main: true },
+      { at: 260, x: 0.24, peak: 0.44, main: false },
+      { at: 430, x: 0.76, peak: 0.4, main: false },
+      { at: 900, x: 0.62, peak: 0.26, main: false },
+    ];
+    let scheduled = 0;
+
+    let previous = startedAt;
+    const frame = (now) => {
+      if (finished) {
+        return;
+      }
+      // Tab switches produce huge gaps; clamping keeps the physics sane.
+      const delta = Math.min(now - previous, 48);
+      previous = now;
+      const elapsed = now - startedAt;
+
+      while (scheduled < schedule.length && elapsed >= schedule[scheduled].at) {
+        const item = schedule[scheduled];
+        launch(item.x, item.peak, item.main);
+        scheduled += 1;
+      }
+
+      context.clearRect(0, 0, width, height);
+      context.globalCompositeOperation = 'lighter';
+
+      for (let index = shells.length - 1; index >= 0; index -= 1) {
+        const shell = shells[index];
+        shell.vy += 0.00042 * delta;
+        shell.y += shell.vy * delta;
+        shell.trail.push({ x: shell.x, y: shell.y });
+        if (shell.trail.length > 9) {
+          shell.trail.shift();
+        }
+
+        shell.trail.forEach((point, order) => {
+          context.globalAlpha = (order / shell.trail.length) * 0.55;
+          context.fillStyle = shell.color;
+          context.beginPath();
+          context.arc(point.x, point.y, 1.8, 0, Math.PI * 2);
+          context.fill();
+        });
+
+        if (shell.y <= shell.targetY || shell.vy >= 0) {
+          explode(shell);
+          if (shell.isMain && !mainBurstAt) {
+            mainBurstAt = now;
+            // "Slightly after the explosion": the page floats in while the
+            // first burst is still falling.
+            window.setTimeout(revealContent, 520);
+          }
+          shells.splice(index, 1);
+        }
+      }
+
+      for (let index = sparks.length - 1; index >= 0; index -= 1) {
+        const spark = sparks[index];
+        spark.vy += 0.00022 * delta;
+        spark.vx *= 0.994;
+        spark.vy *= 0.994;
+        spark.x += spark.vx * delta;
+        spark.y += spark.vy * delta;
+        spark.life -= spark.decay * delta;
+
+        if (spark.life <= 0) {
+          sparks.splice(index, 1);
+          continue;
+        }
+
+        context.globalAlpha = Math.max(spark.life, 0);
+        context.fillStyle = spark.color;
+        context.beginPath();
+        context.arc(spark.x, spark.y, 1.7, 0, Math.PI * 2);
+        context.fill();
+      }
+
+      context.globalAlpha = 1;
+      context.globalCompositeOperation = 'source-over';
+
+      const spent = scheduled >= schedule.length && !shells.length && !sparks.length;
+      if (spent || (mainBurstAt && now - mainBurstAt > 3200)) {
+        window.clearTimeout(bailout);
+        finish();
+        return;
+      }
+      window.requestAnimationFrame(frame);
+    };
+
+    window.requestAnimationFrame(frame);
+  })();
+</script>
