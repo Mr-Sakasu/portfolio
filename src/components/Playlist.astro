@@ -265,35 +265,35 @@ const artistChartItems = lang === 'ja'
     : [];
 const artistChartMaxCount = Math.max(...artistChartItems.map((item) => item.count), 1);
 const artistChartTotalCount = artistChartItems.reduce((total, item) => total + item.count, 0);
-// A single cool arc walked in order, OKLCH hue 182 -> 320 (teal, cyan, azure,
-// indigo, violet), with lightness alternating 0.76/0.55 so neighbouring slices
+// A single arc walked in order, OKLCH hue 140 -> 320: green through teal and
+// blue into purple, with lightness alternating 0.76/0.55 so neighbouring slices
 // separate on lightness as well as hue. The card behind them is a fixed dark
 // #0f151f in both themes, so the light steps stay readable. Adjacent pairs
 // (including the wrap from the last slice back to the first) clear the
 // normal-vision ΔE 15 floor at ΔE 21.1 worst case for any slice count from 9
 // to 20 (the list is 20 long so a 17-artist chart cannot wrap onto its own
-// first colour); the legend rows carry name
-// and count, so colour never identifies alone.
+// first colour); the legend rows carry name and count, so colour never
+// identifies alone.
 const artistChartPalette = [
-  '#3fcab7',
-  '#07837d',
-  '#30c8cb',
-  '#00818b',
-  '#36c5dc',
-  '#057f98',
-  '#4ac0eb',
-  '#007ca9',
-  '#63bbf5',
-  '#0076c1',
-  '#7bb4fc',
-  '#3a6dcd',
-  '#92adfe',
-  '#5c64cd',
-  '#a7a6fb',
-  '#745bc6',
-  '#bba0f3',
-  '#8853bb',
-  '#cb9ae8',
+  '#83c575',
+  '#00893b',
+  '#5cca93',
+  '#048666',
+  '#30ccb1',
+  '#00837b',
+  '#0ec9cd',
+  '#01818d',
+  '#20c5e5',
+  '#027d9f',
+  '#4ebef7',
+  '#0177ba',
+  '#77b5fe',
+  '#3e6cce',
+  '#97abff',
+  '#6660cb',
+  '#b2a1fd',
+  '#8356bf',
+  '#cb99ee',
   '#994caa',
 ];
 let artistChartOffset = 0;
