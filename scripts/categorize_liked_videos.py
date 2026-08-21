@@ -68,7 +68,7 @@ ARTIST_KEYWORDS = OrderedDict(
 LANGUAGE_TITLES = OrderedDict(
     [
         ("Zn", "Liked: Zn"),
-        ("En", "Liked: En"),
+        ("En", "English Songs"),
         ("Jpop", "Liked: Jpop"),
         ("Kpop", "Liked: Kpop"),
     ]
@@ -174,6 +174,10 @@ NON_MUSIC_KEYWORDS = {
     ".mp3",
     "第一課",
     "要点",
+    "shutdown sound",
+    "midi art",
+    "drawing a synthesizer",
+    "yodel + beatbox",
 }
 
 HANGUL_RE = re.compile(r"[\uac00-\ud7af]")
@@ -242,6 +246,55 @@ def declared_language(video: dict[str, Any]) -> str:
 LANGUAGE_PREFIXES = (("ja", "Jpop"), ("zh", "Zn"), ("ko", "Kpop"), ("en", "En"))
 
 
+NON_LATIN_RE = re.compile(r"[^\W\d_]", re.UNICODE)
+ASCII_LETTER_RE = re.compile(r"[A-Za-z]")
+
+
+def has_music_evidence(video: dict[str, Any]) -> bool:
+    snippet = video.get("snippet") if isinstance(video.get("snippet"), dict) else {}
+    if str(snippet.get("channelTitle") or "").strip().endswith("- Topic"):
+        return True
+    topics = video.get("topicDetails", {}).get("topicCategories", [])
+    return any("Music" in str(topic) for topic in topics)
+
+
+def looks_english(video: dict[str, Any]) -> bool:
+    """Evidence that the song is *sung* in English.
+
+    What matters is the vocal language, not the script of the title, so the
+    uploader-declared audio language wins wherever it means anything: an
+    English cover of a Japanese song carries a Japanese title and still counts,
+    while a romanised Japanese title ("(sped up) natori - overdose") does not.
+
+    That field is meaningless on auto-generated "- Topic" uploads, which
+    default to "en" whatever is actually sung, so those fall back to script.
+    """
+    snippet = video.get("snippet") if isinstance(video.get("snippet"), dict) else {}
+    if not has_music_evidence(video):
+        return False
+
+    channel = str(snippet.get("channelTitle") or "").strip()
+    is_topic = channel.endswith("- Topic")
+    language = declared_language(video)
+
+    if language:
+        if not language.startswith("en"):
+            return False
+        if not is_topic:
+            return True
+
+    # No usable declaration: fall back to the naming. A single Latin character
+    # is not evidence - virtually every title has one - so require the naming
+    # to be essentially all Latin.
+    naming = artist_blob(video)
+    if CJK_RE.search(naming) or HANGUL_RE.search(naming) or HIRAGANA_KATAKANA_RE.search(naming):
+        return False
+    letters = NON_LATIN_RE.findall(naming)
+    if len(letters) < 4:
+        return False
+    return len(ASCII_LETTER_RE.findall(naming)) / len(letters) >= 0.9
+
+
 def classify(video: dict[str, Any]) -> set[str]:
     """Return every category a video belongs to; a track may span several."""
     blob = text_blob(video)
@@ -268,7 +321,7 @@ def classify(video: dict[str, Any]) -> set[str]:
     for prefix, category in LANGUAGE_PREFIXES:
         if not language.startswith(prefix):
             continue
-        if category == "En" and (categories or CJK_RE.search(blob) or HANGUL_RE.search(blob) or HIRAGANA_KATAKANA_RE.search(blob)):
+        if category == "En" and (categories or not looks_english(video)):
             break
         categories.add(category)
         break
@@ -281,7 +334,7 @@ def classify(video: dict[str, Any]) -> set[str]:
         return {"Kpop"}
     if has_cjk:
         return {"Zn"}
-    if bool(LATIN_RE.search(blob)):
+    if looks_english(video):
         return {"En"}
     return set()
 
