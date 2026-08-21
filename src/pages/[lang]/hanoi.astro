@@ -1,0 +1,12 @@
+---
+import HanoiPage from '../../features/hanoi/HanoiPage.astro';
+import { getLocale, localeStaticPaths } from '../../i18n';
+
+export function getStaticPaths() {
+  return localeStaticPaths;
+}
+
+const lang = getLocale(Astro.params.lang);
+---
+
+<HanoiPage lang={lang} />

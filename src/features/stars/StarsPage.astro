@@ -1572,6 +1572,10 @@ const labels = {
     if ('ResizeObserver' in window) {
       skyResizeObserver = new ResizeObserver(() => {
         resizeSkyCanvas();
+        // Changing a canvas bitmap clears it. Paint in the same resize cycle
+        // so a fresh load or a viewport resize never leaves the sky blank
+        // until the next animation frame arrives.
+        drawSky(performance.now());
       });
       skyResizeObserver.observe(skyCanvas);
     }

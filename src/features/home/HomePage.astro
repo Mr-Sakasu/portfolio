@@ -5,7 +5,7 @@ import { getUi, type Locale } from '../../i18n';
 import Timeline from '../../components/shared/Timeline.astro';
 import SkillStack from '../../components/shared/SkillStack.astro';
 import Playlist from '../playlist/Playlist.astro';
-import { projectData } from '../../data/projects';
+import { projectData, projectSlugs } from '../../data/projects';
 import profileImage from '../../assets/sakasu.jpg';
 import erProjectImage from '../../assets/er.png';
 
@@ -24,7 +24,7 @@ const heroTitle = t['hero.title'];
     <section class="home-bento-section pt-5 md:pt-8">
         <div class="home-bento-grid">
             <section class="home-bento-card home-profile-card md:col-span-7" data-reveal>
-                <div class="relative flex h-full flex-col justify-between gap-9 p-6 sm:p-8 md:p-9">
+                <div class="relative z-10 flex h-full flex-col justify-between gap-9 p-6 sm:p-8 md:p-9">
                     <div class="flex items-start justify-between gap-6">
                         <span class="home-eyebrow">Sakasu / Portfolio</span>
                         <span class="home-online-status">
@@ -33,7 +33,7 @@ const heroTitle = t['hero.title'];
                         </span>
                     </div>
 
-                    <div class="flex flex-col gap-6 sm:flex-row sm:items-end">
+                    <div class="home-profile-identity flex flex-col gap-6 sm:flex-row sm:items-end">
                         <span class="home-avatar-ring self-start shrink-0">
                             <Image
                                 src={profileImage}
@@ -48,13 +48,17 @@ const heroTitle = t['hero.title'];
                             />
                         </span>
                         <div class="min-w-0">
-                            <h1 class="text-4xl font-extrabold leading-[0.96] text-white sm:text-5xl md:text-6xl">
+                            <h1 class="home-name font-extrabold leading-[0.96] text-white">
                                 <span id="hero-typewriter" class="typewriter-title" data-text={heroTitle} aria-label={heroTitle}>
                                     <span class="typewriter-title__text" aria-hidden="true"></span>
                                 </span>
                             </h1>
                             <p class="mt-4 max-w-xl text-sm leading-relaxed text-slate-300 sm:text-base md:text-lg">
-                                {t['hero.subtitle']}
+                                {lang === 'ja' ? (
+                                    <>
+                                        修士2年 <strong class="font-bold text-white">数理最適化</strong>や<strong class="font-bold text-white">感情コンピューティング</strong>の研究をしています
+                                    </>
+                                ) : t['hero.subtitle']}
                             </p>
                         </div>
                     </div>
@@ -73,6 +77,13 @@ const heroTitle = t['hero.title'];
                         </a>
                     </div>
                 </div>
+                <svg class="home-card-figure home-profile-figure" viewBox="0 0 240 160" aria-hidden="true">
+                    <path d="M22 136H222M35 148V18" />
+                    <path d="M34 112C66 38 104 142 139 82S190 44 220 30" />
+                    <circle cx="74" cy="79" r="4" />
+                    <circle cx="139" cy="82" r="4" />
+                    <circle cx="194" cy="42" r="4" />
+                </svg>
             </section>
 
             <a href={`/${lang}/stars/`} class="home-bento-card home-stars-card group md:col-span-5" data-reveal style="--reveal-delay: 80ms;">
@@ -87,7 +98,6 @@ const heroTitle = t['hero.title'];
                 <div class="relative z-10 flex h-full min-h-[280px] flex-col justify-between p-6 sm:p-7">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--sky">{t['stars.sky.time']}</span>
-                        <span class="home-arrow" aria-hidden="true">↗</span>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-sky-100/85">{t['stars.subtitle']}</p>
@@ -100,10 +110,14 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-4" data-reveal style="--reveal-delay: 130ms;">
+                <svg class="home-card-figure home-playlist-figure" viewBox="0 0 180 120" aria-hidden="true">
+                    <circle cx="132" cy="62" r="39" />
+                    <circle cx="132" cy="62" r="7" />
+                    <path d="M16 70V56M27 78V48M38 66V60M49 84V42M60 74V52M71 80V46" />
+                </svg>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
-                        <span class="home-arrow" aria-hidden="true">↗</span>
                     </div>
                     <div>
                         <p class="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">{t['playlist.subtitle']}</p>
@@ -115,10 +129,14 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/scenes/`} class="home-bento-card home-scenes-card group md:col-span-3" data-reveal style="--reveal-delay: 170ms;">
+                <svg class="home-card-figure home-scenes-figure" viewBox="0 0 180 120" aria-hidden="true">
+                    <circle cx="139" cy="27" r="12" />
+                    <path d="M4 102L54 48L83 77L111 43L176 102" />
+                    <path d="M4 102H176M25 91L54 61L69 77" />
+                </svg>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['nav.scenes']}</span>
-                        <span class="home-arrow" aria-hidden="true">↗</span>
                     </div>
                     <div>
                         <h2 class="max-w-[12rem] text-2xl font-black leading-tight text-white">{t['scenes.page.title']}</h2>
@@ -130,16 +148,59 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/bandit/`} class="home-bento-card home-bandit-card group md:col-span-5" data-reveal style="--reveal-delay: 210ms;">
+                <svg class="home-card-figure home-bandit-figure" viewBox="0 0 220 130" aria-hidden="true">
+                    <circle cx="110" cy="24" r="7" />
+                    <path d="M110 31V48M110 48L35 89M110 48L84 89M110 48L136 89M110 48L185 89" />
+                    <circle cx="35" cy="96" r="9" />
+                    <circle cx="84" cy="96" r="9" />
+                    <circle cx="136" cy="96" r="9" />
+                    <circle cx="185" cy="96" r="9" />
+                </svg>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6 sm:p-7">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--cyan">{t['home.minigame.title']}</span>
-                        <span class="home-arrow" aria-hidden="true">↗</span>
                     </div>
                     <div class="max-w-md">
                         <h2 class="text-2xl font-black leading-tight text-white sm:text-3xl">{t['bandit.title']}</h2>
-                        <p class="mt-2 text-sm leading-relaxed text-cyan-50/75">{t['home.minigame.subtitle']} {t['bandit.subtitle']}</p>
+                        <p class="mt-2 text-sm leading-relaxed text-cyan-50/75">{t['bandit.subtitle']}</p>
                         <span class="mt-4 inline-flex items-center gap-2 text-sm font-bold text-cyan-100 transition-transform duration-300 group-hover:translate-x-1">
                             {t['home.minigame.play']} <span aria-hidden="true">→</span>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <a href={`/${lang}/hanoi/`} class="home-bento-card home-hanoi-card group md:col-span-12" data-reveal style="--reveal-delay: 250ms;">
+                <div class="relative flex min-h-[220px] overflow-hidden p-6 sm:p-7 md:items-center md:p-8">
+                    <div class="relative z-10 max-w-xl">
+                        <div class="flex items-start justify-between gap-4">
+                            <span class="home-eyebrow home-eyebrow--violet">{t['hanoi.eyebrow']}</span>
+                        </div>
+                        <h2 class="mt-7 text-3xl font-black leading-none text-white sm:text-4xl">{t['hanoi.title']}</h2>
+                        <p class="mt-3 text-sm leading-relaxed text-violet-100/80">{t['hanoi.subtitle']}</p>
+                        <span class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-violet-100 transition-transform duration-300 group-hover:translate-x-1">
+                            {t['home.minigame.play']} <span aria-hidden="true">→</span>
+                        </span>
+                    </div>
+
+                    <div class="home-hanoi-preview" aria-hidden="true">
+                        <span class="home-hanoi-preview__tower">
+                            <span class="home-hanoi-preview__rod"></span>
+                            <span class="home-hanoi-preview__disk home-hanoi-preview__disk--large"></span>
+                            <span class="home-hanoi-preview__disk home-hanoi-preview__disk--medium"></span>
+                            <span class="home-hanoi-preview__disk home-hanoi-preview__disk--small"></span>
+                            <span class="home-hanoi-preview__base"></span>
+                        </span>
+                        <span class="home-hanoi-preview__tower">
+                            <span class="home-hanoi-preview__rod"></span>
+                            <span class="home-hanoi-preview__disk home-hanoi-preview__disk--medium"></span>
+                            <span class="home-hanoi-preview__disk home-hanoi-preview__disk--small"></span>
+                            <span class="home-hanoi-preview__base"></span>
+                        </span>
+                        <span class="home-hanoi-preview__tower">
+                            <span class="home-hanoi-preview__rod"></span>
+                            <span class="home-hanoi-preview__disk home-hanoi-preview__disk--large"></span>
+                            <span class="home-hanoi-preview__base"></span>
                         </span>
                     </div>
                 </div>
@@ -147,11 +208,7 @@ const heroTitle = t['hero.title'];
         </div>
     </section>
 
-    <div class="home-playlist-module">
-        <Playlist lang={lang} />
-    </div>
-
-    <section class="home-projects-section">
+    <section id="work" class="home-projects-section">
         <div class="home-section-heading" data-reveal>
             <div>
                 <span class="home-eyebrow">Selected work</span>
@@ -163,9 +220,7 @@ const heroTitle = t['hero.title'];
         <div class="home-project-grid">
             {projects.map((project, projectIndex) => (
                 <a
-                    href={project.link}
-                    target="_blank"
-                    rel="noopener"
+                    href={`/${lang}/projects/${projectSlugs[projectIndex]}/`}
                     class={`home-project-card group ${projectIndex === 0 ? 'home-project-card--feature md:col-span-7' : projectIndex === 1 ? 'md:col-span-5' : 'md:col-span-4'}`}
                     data-reveal
                     style={`--reveal-delay: ${(projectIndex % 3) * 80}ms;`}
@@ -182,7 +237,7 @@ const heroTitle = t['hero.title'];
                                     data-src={project.video}
                                     data-project-video
                                     aria-label={`${project.title} demo video`}
-                                    class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                    class="h-full w-full object-cover"
                                 ></video>
                                 <span class="home-project-card__demo">
                                     <span aria-hidden="true"></span> Demo
@@ -197,7 +252,7 @@ const heroTitle = t['hero.title'];
                                 widths={[320, 560, 840]}
                                 quality={70}
                                 loading="lazy"
-                                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                class="h-full w-full object-cover"
                             />
                         ) : (
                             <img
@@ -205,14 +260,13 @@ const heroTitle = t['hero.title'];
                                 alt={project.title}
                                 loading="lazy"
                                 decoding="async"
-                                class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                                class="h-full w-full object-cover"
                             />
                         )}
                     </div>
                     <div class="home-project-card__body">
                         <div class="flex items-start justify-between gap-4">
                             <h3>{project.title}</h3>
-                            <span class="home-arrow shrink-0" aria-hidden="true">↗</span>
                         </div>
                         <p>{project.desc}</p>
                         <div class="mt-5 flex flex-wrap gap-1.5">
@@ -225,6 +279,10 @@ const heroTitle = t['hero.title'];
             ))}
         </div>
     </section>
+
+    <div class="home-playlist-module">
+        <Playlist lang={lang} />
+    </div>
 
     <div class="home-skills-module">
         <SkillStack lang={lang} />
@@ -268,12 +326,10 @@ const heroTitle = t['hero.title'];
         isolation: isolate;
         overflow: hidden;
         border: 1px solid var(--site-card-border);
-        border-radius: 0.75rem;
-        background: color-mix(in srgb, var(--site-card-bg) 94%, #0f172a);
+        border-radius: 0.25rem;
+        background: var(--site-card-bg);
         box-shadow: none;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+        transition: border-color 160ms ease;
     }
 
     a.home-bento-card,
@@ -285,17 +341,77 @@ const heroTitle = t['hero.title'];
 
     a.home-bento-card:hover,
     a.home-project-card:hover {
-        transform: translateY(-1px);
         border-color: var(--site-card-border-hover);
-        background: color-mix(in srgb, var(--site-card-bg) 98%, #1e293b);
     }
 
     .home-profile-card {
         min-height: 380px;
-        background:
-            linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent 42%),
-            linear-gradient(315deg, rgba(16, 185, 129, 0.055), transparent 52%),
-            var(--site-card-bg);
+        container-type: inline-size;
+        border-left: 3px solid #60a5fa;
+        background: var(--site-card-bg);
+    }
+
+    .home-name {
+        max-width: 100%;
+        font-size: clamp(1.85rem, 5vw, 3.35rem);
+        letter-spacing: -0.045em;
+    }
+
+    @supports (font-size: 1cqw) {
+        .home-name {
+            font-size: clamp(1.85rem, 7cqw, 3.35rem);
+        }
+    }
+
+    @container (max-width: 32rem) {
+        .home-profile-identity {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    .home-card-figure {
+        position: absolute;
+        z-index: 0;
+        display: block;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
+    }
+
+    .home-profile-figure {
+        right: -1rem;
+        bottom: 4.5rem;
+        width: min(42%, 18rem);
+        color: #60a5fa;
+        opacity: 0.16;
+    }
+
+    .home-playlist-figure {
+        top: 2.2rem;
+        right: 0.8rem;
+        width: 52%;
+        color: #a78bfa;
+        opacity: 0.3;
+    }
+
+    .home-scenes-figure {
+        right: -0.8rem;
+        bottom: 1.1rem;
+        width: 72%;
+        color: #6ee7b7;
+        opacity: 0.23;
+    }
+
+    .home-bandit-figure {
+        top: 1rem;
+        right: 0.8rem;
+        width: 45%;
+        color: #38bdf8;
+        opacity: 0.27;
     }
 
     .home-profile-card::after {
@@ -304,7 +420,7 @@ const heroTitle = t['hero.title'];
         right: 1.5rem;
         width: 3.5rem;
         height: 1px;
-        background: linear-gradient(90deg, #60a5fa, #a78bfa, #6ee7b7);
+        background: #6ee7b7;
         content: '';
     }
 
@@ -356,7 +472,7 @@ const heroTitle = t['hero.title'];
         display: inline-flex;
         padding: 2px;
         border-radius: 50%;
-        background: linear-gradient(135deg, #60a5fa, #a78bfa 54%, #6ee7b7);
+        background: #60a5fa;
         box-shadow: none;
     }
 
@@ -388,30 +504,10 @@ const heroTitle = t['hero.title'];
         transform: translateX(2px);
     }
 
-    .home-arrow {
-        display: grid;
-        width: 1.75rem;
-        height: 1.75rem;
-        flex-shrink: 0;
-        place-items: center;
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 0.2rem;
-        background: transparent;
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 0.95rem;
-        line-height: 1;
-        transition: transform 220ms ease, background-color 220ms ease;
-    }
-
-    .group:hover .home-arrow {
-        transform: translate(2px, -2px);
-        background: rgba(255, 255, 255, 0.06);
-    }
-
     .home-stars-card {
         min-height: 380px;
         background: #080d19;
-        border-top-color: rgba(96, 165, 250, 0.82);
+        border-left: 3px solid #60a5fa;
     }
 
     .home-stars-card iframe {
@@ -422,34 +518,99 @@ const heroTitle = t['hero.title'];
         position: absolute;
         inset: 0;
         z-index: -2;
-        background:
-            linear-gradient(180deg, rgba(4, 10, 26, 0.08), rgba(4, 10, 26, 0.3) 42%, rgba(4, 10, 26, 0.94)),
-            linear-gradient(110deg, rgba(2, 8, 23, 0.67), transparent 72%);
+        background: rgba(4, 10, 26, 0.58);
     }
 
     .home-playlist-card {
         min-height: 220px;
-        border-top-color: rgba(167, 139, 250, 0.88);
-        background:
-            linear-gradient(135deg, rgba(109, 40, 217, 0.12), transparent 58%),
-            var(--site-card-bg);
+        border-left: 3px solid #a78bfa;
+        background: var(--site-card-bg);
     }
 
     .home-scenes-card {
         min-height: 220px;
-        border-top-color: rgba(110, 231, 183, 0.88);
-        background:
-            linear-gradient(135deg, rgba(16, 185, 129, 0.12), transparent 58%),
-            var(--site-card-bg);
+        border-left: 3px solid #6ee7b7;
+        background: var(--site-card-bg);
     }
 
     .home-bandit-card {
         min-height: 220px;
-        border-top-color: rgba(96, 165, 250, 0.82);
-        background:
-            linear-gradient(135deg, rgba(59, 130, 246, 0.11), transparent 55%),
-            linear-gradient(315deg, rgba(16, 185, 129, 0.08), transparent 52%),
-            var(--site-card-bg);
+        border-left: 3px solid #38bdf8;
+        background: var(--site-card-bg);
+    }
+
+    .home-hanoi-card {
+        min-height: 220px;
+        border-left: 3px solid #a78bfa;
+        background: var(--site-card-bg);
+    }
+
+    .home-hanoi-preview {
+        position: absolute;
+        right: 11%;
+        bottom: 1.2rem;
+        display: flex;
+        width: min(38%, 30rem);
+        height: 11.25rem;
+        align-items: end;
+        justify-content: space-between;
+        opacity: 0.92;
+    }
+
+    .home-hanoi-preview__tower {
+        position: relative;
+        display: block;
+        width: 30%;
+        height: 100%;
+    }
+
+    .home-hanoi-preview__rod {
+        position: absolute;
+        bottom: 0.7rem;
+        left: 50%;
+        width: 0.42rem;
+        height: 76%;
+        border-radius: 999px 999px 0 0;
+        background: #94a3b8;
+        transform: translateX(-50%);
+    }
+
+    .home-hanoi-preview__base {
+        position: absolute;
+        right: 0;
+        bottom: 0.42rem;
+        left: 0;
+        height: 0.45rem;
+        border-radius: 999px;
+        background: #64748b;
+    }
+
+    .home-hanoi-preview__disk {
+        position: absolute;
+        left: 50%;
+        height: 1.15rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 999px;
+        background: #8b5cf6;
+        box-shadow: none;
+        transform: translateX(-50%);
+    }
+
+    .home-hanoi-preview__disk--large {
+        bottom: 0.86rem;
+        width: 100%;
+    }
+
+    .home-hanoi-preview__disk--medium {
+        bottom: 2rem;
+        width: 75%;
+        background: #3b82f6;
+    }
+
+    .home-hanoi-preview__disk--small {
+        bottom: 3.14rem;
+        width: 50%;
+        background: #10b981;
     }
 
     .home-playlist-module {
@@ -462,6 +623,7 @@ const heroTitle = t['hero.title'];
         margin-top: 5.5rem;
         border-top: 1px solid var(--site-card-border);
         padding-top: 1.2rem;
+        scroll-margin-top: 6.5rem;
     }
 
     .home-section-heading {
@@ -496,6 +658,10 @@ const heroTitle = t['hero.title'];
         flex-direction: column;
     }
 
+    .home-project-card:nth-child(3n + 1) { border-top-color: rgba(96, 165, 250, 0.68); }
+    .home-project-card:nth-child(3n + 2) { border-top-color: rgba(167, 139, 250, 0.68); }
+    .home-project-card:nth-child(3n) { border-top-color: rgba(110, 231, 183, 0.68); }
+
     .home-project-card__media {
         position: relative;
         height: 10.75rem;
@@ -507,14 +673,6 @@ const heroTitle = t['hero.title'];
         height: 15rem;
     }
 
-    .home-project-card__media::after {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(180deg, transparent 50%, rgba(2, 6, 23, 0.22));
-        content: '';
-        pointer-events: none;
-    }
-
     .home-project-card__demo {
         position: absolute;
         top: 0.85rem;
@@ -524,8 +682,8 @@ const heroTitle = t['hero.title'];
         align-items: center;
         gap: 0.38rem;
         border: 1px solid rgba(167, 243, 208, 0.3);
-        border-radius: 999px;
-        background: rgba(2, 6, 23, 0.58);
+        border-radius: 0.2rem;
+        background: rgba(2, 6, 23, 0.78);
         padding: 0.32rem 0.55rem;
         color: #ecfdf5;
         font-size: 0.62rem;
@@ -539,7 +697,7 @@ const heroTitle = t['hero.title'];
         height: 0.38rem;
         border-radius: 50%;
         background: #6ee7b7;
-        box-shadow: 0 0 8px rgba(110, 231, 183, 0.9);
+        box-shadow: none;
     }
 
     .home-project-card__body {
@@ -558,10 +716,6 @@ const heroTitle = t['hero.title'];
         transition: color 180ms ease;
     }
 
-    .home-project-card:hover .home-project-card__body h3 {
-        color: #7dd3fc;
-    }
-
     .home-project-card__body > p {
         margin-top: 0.6rem;
         color: var(--site-muted);
@@ -569,11 +723,15 @@ const heroTitle = t['hero.title'];
         line-height: 1.6;
     }
 
+    .home-playlist-module :global([data-playlist-card]),
     .home-skills-module :global(.site-card),
     .home-timeline-section :global(.timeline-card--current),
     .home-timeline-section :global([class*='rounded-xl']) {
-        border-radius: 0.5rem;
+        border-radius: 0.25rem;
+        background: var(--site-card-bg);
         box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 
     .home-skills-module :global(.section-rule),
@@ -590,10 +748,7 @@ const heroTitle = t['hero.title'];
     }
 
     :global(html[data-theme='light']) .home-profile-card {
-        background:
-            linear-gradient(135deg, rgba(37, 99, 235, 0.13), transparent 47%),
-            linear-gradient(315deg, rgba(14, 165, 233, 0.1), transparent 48%),
-            var(--site-card-bg);
+        background: var(--site-card-bg);
     }
 
     :global(html[data-theme='light']) .home-tag {
@@ -627,12 +782,6 @@ const heroTitle = t['hero.title'];
         color: #475569;
     }
 
-    :global(html[data-theme='light']) .home-bento-card:not(.home-stars-card) .home-arrow,
-    :global(html[data-theme='light']) .home-project-card .home-arrow {
-        border-color: rgba(15, 23, 42, 0.24);
-        color: #0f172a;
-    }
-
     :global(html[data-theme='light']) .home-playlist-card [class*='text-violet-100'] {
         color: #5b21b6 !important;
     }
@@ -645,6 +794,10 @@ const heroTitle = t['hero.title'];
         color: #155e75 !important;
     }
 
+    :global(html[data-theme='light']) .home-hanoi-card [class*='text-violet-100'] {
+        color: #5b21b6 !important;
+    }
+
     /* The sky tile deliberately stays dark in both themes, so its white and
        pale-blue editorial type needs to opt out of the page-wide light rules. */
     :global(html[data-theme='light']) .home-stars-card .text-white {
@@ -655,8 +808,7 @@ const heroTitle = t['hero.title'];
         color: #e0f2fe !important;
     }
 
-    :global(html[data-theme='light']) .home-stars-card .home-eyebrow--sky,
-    :global(html[data-theme='light']) .home-stars-card .home-arrow {
+    :global(html[data-theme='light']) .home-stars-card .home-eyebrow--sky {
         color: #bae6fd;
     }
 
@@ -691,6 +843,31 @@ const heroTitle = t['hero.title'];
             min-height: 300px;
         }
 
+        .home-hanoi-preview {
+            right: -2rem;
+            width: 47%;
+            opacity: 0.28;
+        }
+
+        .home-card-figure {
+            opacity: 0.18;
+        }
+
+        .home-profile-figure {
+            right: -2.5rem;
+            bottom: 5.5rem;
+            width: 58%;
+        }
+
+        .home-playlist-figure,
+        .home-bandit-figure {
+            width: 44%;
+        }
+
+        .home-scenes-figure {
+            width: 52%;
+        }
+
         .home-projects-section {
             margin-top: 4rem;
         }
@@ -707,7 +884,6 @@ const heroTitle = t['hero.title'];
     @media (prefers-reduced-motion: reduce) {
         .home-bento-card,
         .home-project-card,
-        .group:hover .home-arrow,
         .home-text-link:hover {
             transform: none;
         }

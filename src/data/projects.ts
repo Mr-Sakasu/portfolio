@@ -8,6 +8,15 @@ export interface Project {
     tags: string[];
 }
 
+export const projectSlugs = [
+    'nhk-student-robocon',
+    'competitive-programming',
+    'typing-game',
+    'ai-commerce-agent',
+    'virtual-contest-bot',
+    'web-development-portfolio',
+] as const;
+
 export const projectData: Record<string, Project[]> = {
     en: [
         {
@@ -153,4 +162,11 @@ export const projectData: Record<string, Project[]> = {
             tags: ["Astro", "TypeScript", "Tailwind"]
         }
     ]
+};
+
+export const getProjectBySlug = (lang: string, slug: string) => {
+    const projectIndex = projectSlugs.indexOf(slug as typeof projectSlugs[number]);
+    if (projectIndex === -1) return undefined;
+
+    return (projectData[lang] ?? projectData.en)[projectIndex];
 };

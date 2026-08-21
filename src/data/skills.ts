@@ -59,6 +59,16 @@ export const skillStack: SkillStackItem[] = [
         ],
     },
     {
+        name: 'C#',
+        icon: '/icons/skills/csharp.svg',
+        level: 1,
+        summary: {
+            en: 'Learning and using C# out of personal interest.',
+            zh: '出于个人兴趣学习和使用 C#。',
+            ja: '個人的な興味で触れています。',
+        },
+    },
+    {
         name: 'Python',
         icon: '/icons/skills/python.svg',
         level: 2,
@@ -74,6 +84,8 @@ export const skillStack: SkillStackItem[] = [
             { name: 'scikit-learn', icon: '/icons/skills/scikitlearn.svg' },
             { name: 'Seaborn', icon: '/icons/skills/seaborn.svg' },
             { name: 'NetworkX', icon: '/icons/skills/networkx.svg' },
+            { name: 'PySpark', icon: '/icons/skills/pyspark.svg' },
+            { name: 'Folium', icon: '/icons/skills/folium.svg' },
         ],
     },
     {

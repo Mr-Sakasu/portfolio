@@ -29,6 +29,16 @@ export const initPlaylistPlayer = () => {
 
   document.addEventListener('click', (event) => {
     const target = event.target;
+    const playlistTarget = target instanceof Element
+      ? target.closest<HTMLElement>('[data-playlist-target]')
+      : null;
+
+    if (playlistTarget?.dataset.playlistTarget) {
+      document.getElementById(`playlist-${playlistTarget.dataset.playlistTarget}`)
+        ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
+
     const button = target instanceof Element
       ? target.closest<HTMLButtonElement>('[data-play-button]')
       : null;

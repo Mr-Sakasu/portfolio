@@ -20,6 +20,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
+            date: '2026-09',
+            title: 'GAMEFREAK Build Optimization Internship',
+            desc: 'Joining a GAMEFREAK internship focused on build optimization.',
+            color: 'green',
+            icon: '💼'
+        },
+        {
             date: '2026-08',
             title: 'LINEYahoo Software Engineer Internship',
             desc: 'Worked on geographic data analysis as a software engineer intern.',
@@ -92,6 +99,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             icon: '✒'
         },
         {
+            date: '2026-09',
+            title: 'GAMEFREAK 构建效率优化实习',
+            desc: '将参加专注于构建效率优化的 GAMEFREAK 实习。',
+            color: 'green',
+            icon: '💼'
+        },
+        {
             date: '2026-08',
             title: 'LINEYahoo 软件工程师实习',
             desc: '作为软件工程师实习生，负责地理数据的分析。',
@@ -162,6 +176,13 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: '日中のダブルディグリーを目指して研究中...',
             color: 'blue',
             icon: '✒'
+        },
+        {
+            date: '2026-09',
+            title: 'GAMEFREAK ビルド効率化インターンシップ',
+            desc: 'ビルド効率化に取り組むインターンシップに参加。',
+            color: 'green',
+            icon: '💼'
         },
         {
             date: '2026-08',
