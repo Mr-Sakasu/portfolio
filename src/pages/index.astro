@@ -90,28 +90,31 @@ import Background from '../components/Background.astro';
             const HANG_MS = 3700;   // and the flower: five seconds of sky
             const DRAG_TAU = 820;   // ms for the air to take a star's speed away
             const TRAIL_TAU = 190;  // and to rub its streak off the sky
-            const FLASH_MS = 220;
-            // Sized off the shorter edge, so a phone gets a shell that fits
-            // rather than one that flies past the corners.
-            const REACH = Math.min(width, height) * 0.34;
+            const FLASH_MS = 280;
+            // Big enough to fill the sky: held off the height so the sphere
+            // clears the top and bottom, and off the width only loosely, so on
+            // a phone it spills past the sides the way a shell overhead does.
+            const REACH = Math.min(width * 0.72, height * 0.44);
             const SINK = REACH * 1.05e-4; // the speed the air lets a star fall at
             const PACE = REACH / DRAG_TAU; // opening speed of the outer petals
             const GOLDEN = Math.PI * (3 - Math.sqrt(5));
 
             // `turn` is the point in a star's burn where its colour changes:
             // the flash leaves everything white-hot, and it settles from there.
-            const CORE = { count: 80, pace: 0.42, life: 2500, vary: 60, size: 1.7,
+            const CORE = { count: 110, pace: 0.42, life: 2500, vary: 60, size: 2,
                 turn: 0.88, from: '#eaf2ff', to: '#47cba2' };   // 芯
-            const PETAL = { count: 210, pace: 1, life: 2500, vary: 60, size: 1.9,
+            const PETAL = { count: 300, pace: 1, life: 2500, vary: 60, size: 2.2,
                 turn: 0.88, from: '#eaf2ff', to: '#8fa8ff' };   // 花弁
-            const CROWN = { count: 70, pace: 0.72, life: 3350, vary: 130, size: 1.8,
+            const CROWN = { count: 110, pace: 0.72, life: 3350, vary: 130, size: 2.1,
                 turn: 0.55, from: '#ffe9b0', to: '#f0a63c' };   // 冠
             // 昇り曲導 — what the shell sheds on the way up.
             const RISER = { life: 420, vary: 140, size: 1.3,
                 turn: 0.5, from: '#fff4d6', to: '#e0912f' };
 
             const stars = [];
-            const targetY = height * 0.34;
+            // Burst near the middle of the screen: a sphere this wide needs the
+            // room above it.
+            const targetY = height * 0.46;
             const startY = height + 10;
             // Solve the launch for a fixed climb instead of a fixed gravity, so
             // the burst lands on time on a phone and on a tall desktop alike:
@@ -207,10 +210,10 @@ import Background from '../components/Background.astro';
                     // 割火薬 — the flash that opens the shell.
                     const spent = (now - burstAt) / FLASH_MS;
                     if (spent < 1) {
-                        const radius = REACH * (0.12 + 0.5 * spent);
+                        const radius = REACH * (0.15 + 0.65 * spent);
                         const glow = context.createRadialGradient(
                             shell.x, shell.y, 0, shell.x, shell.y, radius);
-                        glow.addColorStop(0, `rgba(255, 252, 240, ${0.85 * (1 - spent)})`);
+                        glow.addColorStop(0, `rgba(255, 252, 240, ${1 - spent})`);
                         glow.addColorStop(1, 'rgba(255, 252, 240, 0)');
                         context.globalAlpha = 1;
                         context.fillStyle = glow;
