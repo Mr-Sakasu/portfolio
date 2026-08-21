@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Add the new liked-video categories to the portfolio's playlist JSON.
 
-Reads the four category playlists through the YouTube Data API and splices them
+Reads the category playlists through the YouTube Data API and splices them
 into src/data/ytmusic-playlist.json, preserving the existing curation. Safe to
 re-run: a playlist already present in a locale keeps its position.
 
@@ -32,19 +32,20 @@ from fetch_ytmusic_playlist import (
 )
 
 
+# "Liked: Jpop" and "Liked: Kpop" still exist on the channel but are kept off
+# the site on purpose: Jpop duplicated all nine artist playlists at 351 tracks,
+# and Kpop is a stub. Do not re-add them here without asking.
 NEW_CATEGORIES = {
-    "Liked: Jpop": "PLiz-kupUIzB6Db5tdAPYR5SqKuM7gNY-9",
     "Liked: Zn": "PLiz-kupUIzB5Wl6V7K-nHcq0OUOafpUDn",
     "Liked: En": "PLiz-kupUIzB6AgBtn-rl0VEtX_wiyZiEY",
-    "Liked: Kpop": "PLSLTYW3TVWwo",
 }
 
 # The umbrella lists go to the locale whose music they hold. Kpop has no locale
 # of its own, so it surfaces in all three rather than being hidden.
 PLACEMENT = {
-    "ja": ["Liked: Jpop", "Liked: Kpop"],
-    "zh": ["Liked: Zn", "Liked: Kpop"],
-    "en": ["Liked: En", "Liked: Kpop"],
+    "ja": [],
+    "zh": ["Liked: Zn"],
+    "en": ["Liked: En"],
 }
 
 # Artist playlists are created by categorize_liked_videos.py, which knows their
