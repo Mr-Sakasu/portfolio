@@ -2,7 +2,7 @@
 """Add the new liked-video categories to the portfolio's playlist JSON.
 
 Reads the category playlists through the YouTube Data API and splices them
-into src/data/ytmusic-playlist.json, preserving the existing curation. Safe to
+into src/data/generated/ytmusic-playlist.json, preserving the existing curation. Safe to
 re-run: a playlist already present in a locale keeps its position.
 
 By default it also re-reads the playlists already in the file, because the ja

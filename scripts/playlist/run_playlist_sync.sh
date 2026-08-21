@@ -20,7 +20,7 @@ PY="$ROOT/.venv/bin/python3"
 LOG="$ROOT/artifacts/playlist-sync.log"
 
 mkdir -p "$ROOT/artifacts"
-cd "$ROOT/scripts" || exit 1
+cd "$ROOT/scripts/playlist" || exit 1
 
 echo "=== $(date -Is) starting ===" >>"$LOG"
 
@@ -36,7 +36,7 @@ run "categorize_liked_videos" "$PY" categorize_liked_videos.py \
   --report artifacts/liked-video-categories-v6.json \
   --create --max-adds 150
 
-# 2. Re-read the playlists into src/data/ytmusic-playlist.json so the portfolio
+# 2. Re-read the playlists into src/data/generated/ytmusic-playlist.json so the portfolio
 #    reflects whatever step 1 just added (~20 units). Runs last for that reason.
 run "add_site_categories" "$PY" add_site_categories.py
 

@@ -1,5 +1,5 @@
 ---
-import { CURRENT_MONTH_TOKEN, timelineData } from '../data/timeline';
+import { CURRENT_MONTH_TOKEN, timelineData } from '../../data/timeline';
 
 const { lang } = Astro.props;
 const events = timelineData[lang] || timelineData['en'];
@@ -82,26 +82,10 @@ const toneByColor = {
     })}
 </div>
 
-<script is:inline>
-    const formatCurrentMonth = () => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
-    };
+<script>
+    import { initTimeline } from './timeline-client';
 
-    const refreshCurrentMonth = () => {
-        const formatted = formatCurrentMonth();
-        document.querySelectorAll('[data-current-month]').forEach((node) => {
-            node.textContent = formatted;
-        });
-    };
-
-    refreshCurrentMonth();
-    if (!window.__timelineMonthListenerAttached) {
-        document.addEventListener('astro:page-load', refreshCurrentMonth);
-        window.__timelineMonthListenerAttached = true;
-    }
+    initTimeline();
 </script>
 
 <style>
@@ -162,4 +146,3 @@ const toneByColor = {
         }
     }
 </style>
-

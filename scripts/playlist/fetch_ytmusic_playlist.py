@@ -17,8 +17,8 @@ import requests
 from ytmusicapi import OAuthCredentials, YTMusic
 
 
-ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT = ROOT / "src" / "data" / "ytmusic-playlist.json"
+ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_OUTPUT = ROOT / "src" / "data" / "generated" / "ytmusic-playlist.json"
 YOUTUBE_DATA_API = "https://www.googleapis.com/youtube/v3"
 OAUTH_TOKEN_KEYS = {"access_token", "refresh_token", "scope", "token_type", "expires_at", "expires_in"}
 
