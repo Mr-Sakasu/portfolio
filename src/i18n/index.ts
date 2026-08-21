@@ -4,7 +4,7 @@ export { languages, ui };
 
 export type Locale = keyof typeof languages;
 
-export const localeStaticPaths = Object.keys(languages).map((lang) => ({
+export const localeStaticPaths = () => Object.keys(languages).map((lang) => ({
   params: { lang },
 }));
 

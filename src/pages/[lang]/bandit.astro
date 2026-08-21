@@ -3,7 +3,7 @@ import BanditPage from '../../features/bandit/BanditPage.astro';
 import { getLocale, localeStaticPaths } from '../../i18n';
 
 export function getStaticPaths() {
-  return localeStaticPaths;
+  return localeStaticPaths();
 }
 
 const lang = getLocale(Astro.params.lang);
