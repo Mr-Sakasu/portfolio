@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-# Resume the liked-video categorization after the YouTube Data API quota resets.
+# Drain the remaining liked-video categorization backlog, then refresh the site JSON.
 #
 # Credentials come from the gitignored .env at the repo root, which the Python
 # scripts load themselves. Nothing secret belongs in this file.
 #
-# Ordered cheapest-first: the site JSON and the privacy flip must land before the
-# bulk inserts, which will exhaust the day's quota on their own. Every step is
-# idempotent, so re-running on later days simply drains what is left.
+# QUOTA: the YouTube Data API allows 10,000 units/day, resetting at 00:00 Pacific
+# (16:00 JST). Inserts cost 50 units each, reads cost 1. --max-adds 150 therefore
+# caps a run at ~7,500 units and cannot overrun the daily budget on its own.
+# Run this AT MOST ONCE PER DAY. It is idempotent: already-present videos are
+# skipped, so a later run simply picks up wherever the previous one stopped.
+#
+# The privacy flip (Liked: Jpop/Zn/En/Kpop -> unlisted) is already done and is
+# deliberately not repeated here; it cost 200 units per run for no further gain.
 
 set -uo pipefail
 
@@ -26,18 +31,13 @@ run() {
   echo "    exit=$?" >>"$LOG"
 }
 
-# 1. Render the new categories on the portfolio (~20 units).
-run "add_site_categories" "$PY" add_site_categories.py
-
-# 2. Make them readable by the site's unauthenticated fetcher (200 units).
-run "set_playlist_privacy" "$PY" set_playlist_privacy.py \
-  "Liked: Jpop" "Liked: Zn" "Liked: En" "Liked: Kpop" \
-  --privacy unlisted --apply
-
-# 3. Drain the Jpop backlog (50 units per add; this is what runs out).
+# 1. Add the videos still missing from their categories (50 units per add).
 run "categorize_liked_videos" "$PY" categorize_liked_videos.py \
-  \
   --report artifacts/liked-video-categories-v6.json \
   --create --max-adds 150
+
+# 2. Re-read the playlists into src/data/ytmusic-playlist.json so the portfolio
+#    reflects whatever step 1 just added (~20 units). Runs last for that reason.
+run "add_site_categories" "$PY" add_site_categories.py
 
 echo "=== $(date -Is) finished ===" >>"$LOG"
