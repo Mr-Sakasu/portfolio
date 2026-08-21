@@ -3,6 +3,7 @@ import { ClientRouter } from 'astro:transitions';
 import LanguagePicker from '../components/LanguagePicker.astro';
 import Background from '../components/Background.astro';
 import Bgm from '../components/Bgm.astro';
+import Intro from '../components/Intro.astro';
 import { ui } from '../i18n/ui';
 
 const { title, lang, description } = Astro.props;
@@ -46,12 +47,24 @@ const currentYear = new Date().getFullYear();
                     document.documentElement.dataset.theme = theme;
                     document.documentElement.style.colorScheme = theme;
                     document.documentElement.classList.add('js');
+
+                    let introPlayed = true;
+                    try {
+                        introPlayed = window.sessionStorage.getItem('portfolio-intro-played') === '1';
+                    } catch (error) {
+                        introPlayed = false;
+                    }
+                    const stillMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                    if (!introPlayed && !stillMotion) {
+                        document.documentElement.classList.add('intro-active');
+                    }
                 })();
             </script>
 			<ClientRouter />
 		</head>
 	<body class="text-white font-sans antialiased min-h-screen flex flex-col relative">
 		
+        <Intro />
         <Background />
         <Bgm />
 
