@@ -12,7 +12,9 @@ import Background from '../components/Background.astro';
 </head>
 <body class="h-full m-0 flex flex-col items-center justify-center text-white relative">
 
-    <Background />
+    <!-- Still sky: the one shell below is the whole show, so the background
+         keeps its colour but launches nothing of its own. -->
+    <Background scene="none" />
 
     <canvas id="entry-firework" class="pointer-events-none fixed inset-0 z-10 h-full w-full"></canvas>
 
