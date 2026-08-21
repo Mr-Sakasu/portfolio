@@ -32,12 +32,14 @@ from fetch_ytmusic_playlist import (
 )
 
 
+# "Liked: En" was merged into "English Songs"; the two overlapped by 47% and
+# only one English list belongs on the site.
 # "Liked: Jpop" and "Liked: Kpop" still exist on the channel but are kept off
 # the site on purpose: Jpop duplicated all nine artist playlists at 351 tracks,
 # and Kpop is a stub. Do not re-add them here without asking.
 NEW_CATEGORIES = {
     "Liked: Zn": "PLiz-kupUIzB5Wl6V7K-nHcq0OUOafpUDn",
-    "Liked: En": "PLiz-kupUIzB6AgBtn-rl0VEtX_wiyZiEY",
+    "English Songs": "PLiz-kupUIzB78ViYoU-wQ6iaJ3_1G_ezI",
 }
 
 # The umbrella lists go to the locale whose music they hold. Kpop has no locale
@@ -45,7 +47,7 @@ NEW_CATEGORIES = {
 PLACEMENT = {
     "ja": [],
     "zh": ["Liked: Zn"],
-    "en": ["Liked: En"],
+    "en": ["English Songs"],
 }
 
 # Artist playlists are created by categorize_liked_videos.py, which knows their
