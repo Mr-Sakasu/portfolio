@@ -11,6 +11,7 @@ const { lang, contentWidth } = Astro.props;
 const t = getUi(lang);
 const isHomePage = Astro.url.pathname === `/${lang}/`;
 const isStarsPage = Astro.url.pathname.includes('/stars');
+const isGlobePage = Astro.url.pathname.includes('/globe');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
 const isHanoiPage = Astro.url.pathname.includes('/hanoi');
 const isPlaylistPage = Astro.url.pathname.includes('/playlist');
@@ -50,6 +51,9 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
           </a>
           <a href={`/${lang}/stars/`} class={`${navBaseClass} ${isStarsPage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.stars']}
+          </a>
+          <a href={`/${lang}/globe/`} class={`${navBaseClass} ${isGlobePage ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+            {t['nav.globe']}
           </a>
           <a href={`/${lang}/bandit/`} class={`${navBaseClass} ${isBanditPage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.bandit']}
