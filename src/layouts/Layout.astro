@@ -12,10 +12,11 @@ const pageDescription = typeof description === 'string' && description.trim().le
   ? description.trim()
   : 'Sakasu portfolio with interactive star watching and bandit optimization demos.';
 const contentWidth = wide ? 'max-w-6xl' : 'max-w-3xl';
+const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
 ---
 
 <!DOCTYPE html>
-<html lang={lang} class="scroll-smooth bg-[#0a0e17]">
+<html lang={lang} class="scroll-smooth bg-[#0a0e17]" data-intro-eligible={introEligible ? 'true' : undefined}>
 		<head>
 			<meta charset="UTF-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -50,7 +51,8 @@ const contentWidth = wide ? 'max-w-6xl' : 'max-w-3xl';
                         introPlayed = false;
                     }
                     const stillMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-                    if (!introPlayed && !stillMotion) {
+                    const introEligible = document.documentElement.dataset.introEligible === 'true';
+                    if (introEligible && !introPlayed && !stillMotion) {
                         document.documentElement.classList.add('intro-active');
                     }
                 })();

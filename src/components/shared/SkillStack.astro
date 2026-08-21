@@ -17,6 +17,7 @@ const locale = (lang in ui ? lang : 'en') as SkillLocale;
 const maxSkillLevel = 5;
 const skillLevelSlots = Array.from({ length: maxSkillLevel }, (_, index) => index + 1);
 const childGroupOrder: SkillChildGroup[] = ['frontend', 'backend'];
+const sortedSkillStack = [...skillStack].sort((first, second) => second.level - first.level);
 
 const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
     if (!skill.children) {
@@ -54,7 +55,7 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
     </div>
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {skillStack.map((skill, skillIndex) => (
+        {sortedSkillStack.map((skill, skillIndex) => (
             <article class="site-card min-h-36 p-4" data-reveal style={`--reveal-delay: ${(skillIndex % 3) * 80}ms;`}>
                 <div class="flex items-center gap-3">
                     <span class="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-white/95 p-2">

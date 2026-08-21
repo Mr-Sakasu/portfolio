@@ -33,182 +33,155 @@ const labels = {
 };
 ---
 
-<Layout title={`${t['bandit.title']} | Sakasu Portfolio`} lang={lang} description={t['bandit.subtitle']}>
-  <section class="py-10 md:py-14 relative overflow-hidden">
-    <div class="relative rounded-xl border border-blue-500/20 bg-[#101722]/80 backdrop-blur-sm p-6 md:p-8 shadow-[0_14px_40px_-34px_rgba(15,23,42,0.95)]">
-      <h1 class="text-3xl md:text-5xl font-extrabold text-white">
-        {t['bandit.title']}
-      </h1>
-      <p class="mt-4 text-gray-200 max-w-2xl leading-relaxed">
-        {t['bandit.subtitle']}
-      </p>
-      <p class="mt-2 text-sm text-gray-400 max-w-2xl">{t['bandit.instructions']}</p>
-    </div>
+<Layout title={`${t['bandit.title']} | Sakasu Portfolio`} lang={lang} description={t['bandit.subtitle']} wide>
+  <section class="bandit-page">
+    <header class="bandit-intro">
+      <h1>{t['bandit.title']}</h1>
+      <p class="bandit-intro__summary">{t['bandit.subtitle']}</p>
+      <p class="bandit-intro__instruction">{t['bandit.instructions']}</p>
+    </header>
 
-    <section id="bandit-lab" class="bandit-lab-shell mt-8 space-y-6 rounded-xl border border-slate-800/80 bg-[#10131d]/85 p-4 md:p-6">
-      <div class="grid grid-cols-3 gap-2 md:gap-4">
-        <article class="bandit-metric rounded-xl border border-blue-500/20 bg-[#0e1422]/90 p-2 sm:p-3 md:p-4">
-          <p class="text-[10px] sm:text-xs uppercase tracking-[0.08em] sm:tracking-widest text-blue-200/70">{t['bandit.round']}</p>
-          <p id="bandit-round" class="mt-1 sm:mt-2 text-lg sm:text-2xl md:text-3xl font-bold text-white">0/20</p>
-        </article>
-        <article class="bandit-metric rounded-xl border border-cyan-500/20 bg-[#0e1422]/90 p-2 sm:p-3 md:p-4">
-          <p class="text-[10px] sm:text-xs uppercase tracking-[0.08em] sm:tracking-widest text-cyan-200/70">{t['bandit.roundsLeft']}</p>
-          <p id="bandit-rounds-left" class="mt-1 sm:mt-2 text-lg sm:text-2xl md:text-3xl font-bold text-white">20</p>
-        </article>
-        <article class="bandit-metric rounded-xl border border-blue-500/20 bg-[#0e1422]/90 p-2 sm:p-3 md:p-4">
-          <p class="text-[10px] sm:text-xs uppercase tracking-[0.08em] sm:tracking-widest text-blue-200/70">{t['bandit.totalReward']}</p>
-          <p id="bandit-total-reward" class="mt-1 sm:mt-2 text-lg sm:text-2xl md:text-3xl font-bold text-white">0</p>
-        </article>
-      </div>
+    <section id="bandit-lab" class="bandit-workspace" aria-label={t['bandit.title']}>
+      <div class="bandit-session">
+        <div class="bandit-stats">
+          <article class="bandit-stat">
+            <p>{t['bandit.round']}</p>
+            <strong id="bandit-round">0/20</strong>
+          </article>
+          <article class="bandit-stat">
+            <p>{t['bandit.roundsLeft']}</p>
+            <strong id="bandit-rounds-left">20</strong>
+          </article>
+          <article class="bandit-stat">
+            <p>{t['bandit.totalReward']}</p>
+            <strong id="bandit-total-reward">0</strong>
+          </article>
+        </div>
 
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div class="flex flex-wrap gap-2">
-          <button
-            id="bandit-new-lab"
-            type="button"
-            class="bandit-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-blue-600/40 bg-blue-600/10 text-blue-100 hover:text-white hover:border-blue-400 transition-colors"
-          >
-            {t['bandit.newLab']}
-          </button>
-          <button
-            id="bandit-toggle-rates"
-            type="button"
-            class="bandit-action-btn px-3 py-2 text-xs md:text-sm rounded-md border border-cyan-600/40 bg-cyan-600/10 text-cyan-100 hover:text-white hover:border-cyan-400 transition-colors"
-          >
+        <div class="bandit-session__actions">
+          <span id="bandit-status" class="bandit-status-pill">{t['bandit.status.playing']}</span>
+          <span class="bandit-seed">{t['bandit.seed']}: <span id="bandit-seed">--</span></span>
+          <button id="bandit-toggle-rates" type="button" class="bandit-text-button">
             {t['bandit.revealRates']}
           </button>
-        </div>
-
-        <div class="flex items-center gap-3 text-xs md:text-sm">
-          <span
-            id="bandit-status"
-            class="bandit-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold"
-          >
-            {t['bandit.status.playing']}
-          </span>
-          <span class="text-gray-400">{t['bandit.seed']}: <span id="bandit-seed" class="text-gray-200">--</span></span>
+          <button id="bandit-new-lab" type="button" class="bandit-reset-button">
+            {t['bandit.newLab']}
+          </button>
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-2 md:gap-4">
-        {Array.from({ length: 3 }).map((_, index) => (
-          <article class={`bandit-arm-card bandit-arm-${index} rounded-xl border border-gray-700/80 bg-[#0f131d]/95 p-2 sm:p-3 md:p-4 flex flex-col`}>
-            <div class="slot-machine-shell" data-slot-cabinet={index}>
-              <div class="slot-marquee">
-                <div class="slot-marquee-lights" aria-hidden="true">
-                  {Array.from({ length: 12 }).map(() => (
-                    <span class="slot-bulb"></span>
-                  ))}
+      <div class="bandit-main-grid">
+        <section class="bandit-play-area">
+          <div class="bandit-choice-grid">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <article class="bandit-choice">
+                <div class="bandit-choice__topline">
+                  <span class="bandit-choice__number">0{index + 1}</span>
+                  <h2>{t['bandit.arm']} {String.fromCharCode(65 + index)}</h2>
                 </div>
-                <p class="slot-marquee-title">{t['bandit.arm']} {String.fromCharCode(65 + index)}</p>
-              </div>
-              <div class="slot-body">
-                <div class="slot-reels">
+
+                <div class="bandit-signal" data-slot-cabinet={index} aria-hidden="true">
                   {Array.from({ length: 3 }).map((__, reelIndex) => (
-                    <div class="slot-reel-cell">
-                      <span class="slot-symbol" data-slot-symbol-arm={index} data-slot-symbol-reel={reelIndex}>7</span>
-                    </div>
+                    <span class="bandit-signal__cell" data-slot-symbol-arm={index} data-slot-symbol-reel={reelIndex}>—</span>
                   ))}
                 </div>
-                <div class="slot-lever" aria-hidden="true">
-                  <span class="slot-lever-stick"></span>
-                  <span class="slot-lever-knob"></span>
-                </div>
-              </div>
+
+                <dl class="bandit-choice__data">
+                  <div>
+                    <dt>{t['bandit.pulls']}</dt>
+                    <dd data-arm-pulls={index}>0</dd>
+                  </div>
+                  <div>
+                    <dt>{t['bandit.avgReward']}</dt>
+                    <dd data-arm-avg={index}>0.00</dd>
+                  </div>
+                  <div>
+                    <dt>{t['bandit.rate']}</dt>
+                    <dd data-arm-rate={index}>{t['bandit.rateHidden']}</dd>
+                  </div>
+                </dl>
+
+                <button type="button" data-arm-pull={index} class="bandit-choice__button">
+                  {t['bandit.pull']} {String.fromCharCode(65 + index)}
+                </button>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <aside class="bandit-results">
+          <div class="bandit-results__heading">
+            <h2>{t['bandit.results']}</h2>
+            <p id="bandit-outcome">{t['bandit.outcome.pending']}</p>
+          </div>
+
+          <dl class="bandit-score-list">
+            <div>
+              <dt>{t['bandit.you']}</dt>
+              <dd id="bandit-score-you">0</dd>
             </div>
-            <dl class="mt-2 sm:mt-3 md:mt-4 space-y-1 sm:space-y-2 text-[10px] sm:text-xs">
-              <div class="flex items-center justify-between">
-                <dt class="text-gray-400">{t['bandit.pulls']}</dt>
-                <dd data-arm-pulls={index} class="font-semibold text-gray-100">0</dd>
-              </div>
-              <div class="flex items-center justify-between">
-                <dt class="text-gray-400">{t['bandit.avgReward']}</dt>
-                <dd data-arm-avg={index} class="font-semibold text-gray-100">0.00</dd>
-              </div>
-              <div class="flex items-center justify-between">
-                <dt class="text-gray-400">{t['bandit.rate']}</dt>
-                <dd data-arm-rate={index} class="font-semibold text-gray-100">{t['bandit.rateHidden']}</dd>
-              </div>
-            </dl>
-            <button
-              type="button"
-              data-arm-pull={index}
-              class={`bandit-pull-btn bandit-pull-${index} mt-2 sm:mt-3 md:mt-4 w-full px-2 sm:px-3 py-1.5 sm:py-2 text-[10px] sm:text-xs md:text-sm rounded-md border transition-all disabled:opacity-50 disabled:cursor-not-allowed`}
-            >
-              {t['bandit.pull']} {String.fromCharCode(65 + index)}
-            </button>
-          </article>
-        ))}
+            <div>
+              <dt>{t['bandit.greedy']}</dt>
+              <dd id="bandit-score-greedy">0</dd>
+            </div>
+            <div>
+              <dt>{t['bandit.ucb']}</dt>
+              <dd id="bandit-score-ucb">0</dd>
+            </div>
+            <div>
+              <dt>{t['bandit.oracle']}</dt>
+              <dd id="bandit-score-oracle">0</dd>
+            </div>
+          </dl>
+
+          <p id="bandit-oracle-arm" class="bandit-oracle-arm">--</p>
+
+          <div class="bandit-history">
+            <p>{t['bandit.lastPulls']}</p>
+            <ul id="bandit-history-list"></ul>
+          </div>
+        </aside>
       </div>
 
-      <article class="rounded-xl border border-blue-500/20 bg-[#0d1321]/90 p-4">
-        <h2 class="text-xl font-bold text-white">{t['bandit.results']}</h2>
-
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-          <div class="bandit-score-card flex items-center justify-between rounded-md border border-gray-700/80 bg-[#141b2c] p-3">
-            <span class="text-gray-300">{t['bandit.you']}</span>
-            <span id="bandit-score-you" class="font-semibold text-white">0</span>
-          </div>
-          <div class="bandit-score-card flex items-center justify-between rounded-md border border-blue-500/30 bg-[#111827] p-3">
-            <span class="text-blue-100">{t['bandit.greedy']}</span>
-            <span id="bandit-score-greedy" class="font-semibold text-blue-100">0</span>
-          </div>
-          <div class="bandit-score-card flex items-center justify-between rounded-md border border-cyan-500/30 bg-[#0d1a25] p-3">
-            <span class="text-cyan-100">{t['bandit.ucb']}</span>
-            <span id="bandit-score-ucb" class="font-semibold text-cyan-100">0</span>
-          </div>
-          <div class="bandit-score-card flex items-center justify-between rounded-md border border-slate-500/30 bg-[#121826] p-3">
-            <span class="text-slate-100">{t['bandit.oracle']}</span>
-            <span id="bandit-score-oracle" class="font-semibold text-slate-100">0</span>
-          </div>
+      <section class="bandit-policies">
+        <div class="bandit-policies__heading">
+          <h2>{t['bandit.policyDefs']}</h2>
+          <p>{t['bandit.policyHint']}</p>
         </div>
-
-        <p id="bandit-outcome" class="mt-4 text-sm text-blue-200">{t['bandit.outcome.pending']}</p>
-        <p id="bandit-oracle-arm" class="mt-1 text-xs text-gray-300">--</p>
-
-        <div class="mt-4 border-t border-gray-700/80 pt-4">
-          <p class="text-xs uppercase tracking-widest text-gray-500">{t['bandit.lastPulls']}</p>
-          <ul id="bandit-history-list" class="mt-2 space-y-1 text-xs text-gray-300"></ul>
-        </div>
-      </article>
-
-      <article class="rounded-xl border border-gray-700/70 bg-[#0f1524]/85 p-4">
-        <h3 class="text-sm font-semibold text-gray-100">{t['bandit.policyDefs']}</h3>
-        <p class="mt-1 text-xs text-gray-400">{t['bandit.policyHint']}</p>
-        <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-          <details class="bandit-policy-card rounded-md border border-blue-500/25 bg-[#121a2e] p-3">
+        <div class="bandit-policy-grid">
+          <details class="bandit-policy-card">
             <summary class="bandit-policy-summary">
-              <span class="font-semibold text-blue-100">{t['bandit.greedy']}</span>
+              <span>{t['bandit.greedy']}</span>
               <span class="bandit-policy-caret" aria-hidden="true">▾</span>
             </summary>
-            <div class="bandit-policy-body mt-2">
-              <p class="text-gray-300 leading-relaxed">{t['bandit.policy.greedy']}</p>
-              <p class="mt-2 text-gray-400 leading-relaxed">{t['bandit.policy.greedyDetail']}</p>
+            <div class="bandit-policy-body">
+              <p>{t['bandit.policy.greedy']}</p>
+              <p>{t['bandit.policy.greedyDetail']}</p>
             </div>
           </details>
-          <details class="bandit-policy-card rounded-md border border-cyan-500/25 bg-[#0f1c27] p-3">
+          <details class="bandit-policy-card">
             <summary class="bandit-policy-summary">
-              <span class="font-semibold text-cyan-100">{t['bandit.ucb']}</span>
+              <span>{t['bandit.ucb']}</span>
               <span class="bandit-policy-caret" aria-hidden="true">▾</span>
             </summary>
-            <div class="bandit-policy-body mt-2">
-              <p class="text-gray-300 leading-relaxed">{t['bandit.policy.ucb']}</p>
-              <p class="bandit-policy-formula mt-2 text-cyan-200/90 leading-relaxed" set:html={ucbFormulaHtml}></p>
-              <p class="mt-2 text-gray-400 leading-relaxed">{t['bandit.policy.ucbDetail']}</p>
+            <div class="bandit-policy-body">
+              <p>{t['bandit.policy.ucb']}</p>
+              <p class="bandit-policy-formula" set:html={ucbFormulaHtml}></p>
+              <p>{t['bandit.policy.ucbDetail']}</p>
             </div>
           </details>
-          <details class="bandit-policy-card rounded-md border border-slate-500/25 bg-[#121826] p-3">
+          <details class="bandit-policy-card">
             <summary class="bandit-policy-summary">
-              <span class="font-semibold text-slate-100">{t['bandit.oracle']}</span>
+              <span>{t['bandit.oracle']}</span>
               <span class="bandit-policy-caret" aria-hidden="true">▾</span>
             </summary>
-            <div class="bandit-policy-body mt-2">
-              <p class="text-gray-300 leading-relaxed">{t['bandit.policy.oracle']}</p>
-              <p class="mt-2 text-gray-400 leading-relaxed">{t['bandit.policy.oracleDetail']}</p>
+            <div class="bandit-policy-body">
+              <p>{t['bandit.policy.oracle']}</p>
+              <p>{t['bandit.policy.oracleDetail']}</p>
             </div>
           </details>
         </div>
-      </article>
+      </section>
     </section>
   </section>
 </Layout>
@@ -216,7 +189,6 @@ const labels = {
 <script define:vars={{ labels }}>
   const ARM_COUNT = 3;
   const HORIZON = 20;
-  const SLOT_SYMBOLS = ['7', 'BAR', '$', 'STAR', 'BELL', 'CHERRY'];
 
   function mulberry32(seed) {
     let t = seed >>> 0;
@@ -393,7 +365,6 @@ const labels = {
     let userSums = Array(ARM_COUNT).fill(0);
     let userTotal = 0;
     let history = [];
-    let symbolRandoms = Array.from({ length: ARM_COUNT }, () => Math.random);
     const reelTimers = Array(ARM_COUNT).fill(null);
 
     const isFinished = () => round >= HORIZON;
@@ -402,25 +373,8 @@ const labels = {
       if (node) node.textContent = value;
     }
 
-    function randomSymbol(random) {
-      return SLOT_SYMBOLS[Math.floor(random() * SLOT_SYMBOLS.length)];
-    }
-
-    function randomSymbolRow(random) {
-      return Array.from({ length: 3 }, () => randomSymbol(random));
-    }
-
-    function buildOutcomeRow(reward, random) {
-      if (reward === 1) {
-        const symbol = randomSymbol(random);
-        return [symbol, symbol, symbol];
-      }
-      const row = randomSymbolRow(random);
-      if (row[0] === row[1] && row[1] === row[2]) {
-        const pivot = SLOT_SYMBOLS.indexOf(row[2]);
-        row[2] = SLOT_SYMBOLS[(pivot + 1) % SLOT_SYMBOLS.length];
-      }
-      return row;
+    function buildOutcomeRow(reward) {
+      return reward === 1 ? ['+', '1', '✓'] : ['—', '0', '—'];
     }
 
     function setReelRow(armIndex, row) {
@@ -445,15 +399,12 @@ const labels = {
     }
 
     function animateReel(armIndex, reward) {
-      const random = symbolRandoms[armIndex];
-      if (!random) return;
-
       clearReelTimer(armIndex);
       setCabinetState(armIndex, { spinning: true, win: false });
-      setReelRow(armIndex, randomSymbolRow(random));
+      setReelRow(armIndex, ['·', '·', '·']);
 
       reelTimers[armIndex] = setTimeout(() => {
-        const finalRow = buildOutcomeRow(reward, random);
+        const finalRow = buildOutcomeRow(reward);
         setReelRow(armIndex, finalRow);
         setCabinetState(armIndex, { spinning: false, win: reward === 1 });
 
@@ -473,7 +424,7 @@ const labels = {
       historyList.innerHTML = '';
       history.forEach((entry) => {
         const item = document.createElement('li');
-        item.className = 'text-gray-300';
+        item.className = 'bandit-history__item';
         item.textContent = entry;
         historyList.appendChild(item);
       });
@@ -527,9 +478,7 @@ const labels = {
       setText(seedEl, String(lab.seed));
       setText(statusEl, isFinished() ? labels.statusFinished : labels.statusPlaying);
       if (statusEl) {
-        statusEl.className = isFinished()
-          ? 'bandit-status-pill px-2 py-1 rounded border border-cyan-600/50 bg-cyan-500/10 text-cyan-300 font-semibold'
-          : 'bandit-status-pill px-2 py-1 rounded border border-blue-600/50 bg-blue-500/10 text-blue-300 font-semibold';
+        statusEl.classList.toggle('is-finished', isFinished());
       }
       if (toggleRatesButton) {
         toggleRatesButton.textContent = revealRates ? labels.hideRates : labels.revealRates;
@@ -567,14 +516,10 @@ const labels = {
       userTotal = 0;
       history = [];
 
-      symbolRandoms = Array.from(
-        { length: ARM_COUNT },
-        (_, index) => mulberry32((lab.seed ^ 0xa53f9c3d) + index * 2654435761)
-      );
       for (let i = 0; i < ARM_COUNT; i += 1) {
         clearReelTimer(i);
         setCabinetState(i, { spinning: false, win: false });
-        setReelRow(i, randomSymbolRow(symbolRandoms[i]));
+        setReelRow(i, ['—', '—', '—']);
       }
 
       render();
@@ -1043,6 +988,463 @@ const labels = {
     }
     50% {
       box-shadow: 0 0 0 8px rgba(96, 165, 250, 0);
+    }
+  }
+
+  /* The interactive area uses the same quiet, information-first language as
+     a product dashboard instead of a decorative casino interface. */
+  .bandit-page {
+    padding-block: clamp(2.5rem, 6vw, 4.75rem);
+  }
+
+  .bandit-intro {
+    max-width: 43rem;
+  }
+
+  .bandit-intro h1 {
+    color: var(--site-text);
+    font-size: clamp(2.15rem, 5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 0.98;
+  }
+
+  .bandit-intro__summary {
+    margin-top: 1.35rem;
+    color: var(--site-subtle);
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  .bandit-intro__instruction {
+    margin-top: 0.65rem;
+    color: var(--site-muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .bandit-workspace {
+    margin-top: clamp(2rem, 5vw, 3.5rem);
+    overflow: hidden;
+    border: 1px solid var(--site-card-border);
+    border-radius: 1rem;
+    background: var(--site-surface-strong);
+    box-shadow: var(--site-card-shadow);
+  }
+
+  .bandit-session {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem;
+    border-bottom: 1px solid var(--site-card-border);
+  }
+
+  .bandit-stats {
+    display: flex;
+    min-width: 0;
+  }
+
+  .bandit-stat {
+    min-width: 4.6rem;
+    padding-inline: 0.85rem;
+    border-right: 1px solid var(--site-card-border);
+  }
+
+  .bandit-stat:first-child {
+    padding-left: 0;
+  }
+
+  .bandit-stat:last-child {
+    border-right: 0;
+  }
+
+  .bandit-stat p,
+  .bandit-history > p {
+    color: var(--site-muted);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .bandit-stat strong {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--site-text);
+    font-size: 1.15rem;
+    line-height: 1;
+  }
+
+  .bandit-session__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .bandit-status-pill {
+    border: 1px solid rgba(56, 189, 248, 0.42);
+    border-radius: 999px;
+    background: rgba(14, 165, 233, 0.1);
+    padding: 0.35rem 0.6rem;
+    color: #7dd3fc;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1;
+    animation: none;
+  }
+
+  .bandit-status-pill.is-finished {
+    border-color: rgba(45, 212, 191, 0.5);
+    background: rgba(20, 184, 166, 0.1);
+    color: #5eead4;
+  }
+
+  .bandit-seed {
+    color: var(--site-muted);
+    font-size: 0.7rem;
+  }
+
+  .bandit-seed span {
+    color: var(--site-subtle);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bandit-text-button,
+  .bandit-reset-button {
+    min-height: 2.3rem;
+    border-radius: 0.45rem;
+    padding: 0.45rem 0.7rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+
+  .bandit-text-button {
+    border: 1px solid transparent;
+    color: var(--site-subtle);
+  }
+
+  .bandit-text-button:hover {
+    background: var(--site-chip-bg);
+    color: var(--site-text);
+  }
+
+  .bandit-reset-button {
+    border: 1px solid #0284c7;
+    background: #0369a1;
+    color: #fff;
+  }
+
+  .bandit-reset-button:hover {
+    background: #075985;
+  }
+
+  .bandit-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.5fr) minmax(15rem, 0.8fr);
+  }
+
+  .bandit-play-area {
+    padding: 1rem;
+  }
+
+  .bandit-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+
+  .bandit-choice {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    padding: 0.85rem;
+    border: 1px solid var(--site-card-border);
+    border-radius: 0.65rem;
+    background: var(--site-surface-soft);
+  }
+
+  .bandit-choice__topline {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .bandit-choice__number {
+    color: #38bdf8;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+  }
+
+  .bandit-choice h2 {
+    color: var(--site-text);
+    font-size: 0.95rem;
+    font-weight: 650;
+  }
+
+  .bandit-signal {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.3rem;
+    margin-top: 1.4rem;
+    border-block: 1px solid var(--site-card-border);
+    padding-block: 0.7rem;
+  }
+
+  .bandit-signal__cell {
+    display: grid;
+    min-height: 2.5rem;
+    place-items: center;
+    border-radius: 0.35rem;
+    background: rgba(71, 85, 105, 0.18);
+    color: var(--site-muted);
+    font-size: 0.85rem;
+    font-weight: 700;
+    transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
+  }
+
+  [data-slot-cabinet].is-spinning .bandit-signal__cell {
+    animation: banditSignalPulse 140ms linear infinite alternate;
+  }
+
+  [data-slot-cabinet].is-win .bandit-signal__cell {
+    background: rgba(20, 184, 166, 0.16);
+    color: #5eead4;
+  }
+
+  .bandit-choice__data {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .bandit-choice__data div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .bandit-choice__data dt {
+    color: var(--site-muted);
+    font-size: 0.72rem;
+  }
+
+  .bandit-choice__data dd {
+    color: var(--site-text);
+    font-size: 0.75rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bandit-choice__button {
+    width: 100%;
+    min-height: 2.45rem;
+    margin-top: 1.1rem;
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 0.45rem;
+    background: rgba(14, 165, 233, 0.12);
+    color: #bae6fd;
+    font-size: 0.8rem;
+    font-weight: 650;
+    transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+  }
+
+  .bandit-choice__button:hover:not(:disabled) {
+    border-color: #38bdf8;
+    background: rgba(14, 165, 233, 0.2);
+    color: #fff;
+  }
+
+  .bandit-choice__button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+  }
+
+  .bandit-results {
+    padding: 1.15rem;
+    border-left: 1px solid var(--site-card-border);
+    background: var(--site-surface-soft);
+  }
+
+  .bandit-results__heading h2,
+  .bandit-policies__heading h2 {
+    color: var(--site-text);
+    font-size: 1rem;
+    font-weight: 650;
+  }
+
+  .bandit-results__heading p,
+  .bandit-policies__heading p {
+    margin-top: 0.45rem;
+    color: var(--site-muted);
+    font-size: 0.75rem;
+    line-height: 1.55;
+  }
+
+  .bandit-score-list {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 1.25rem;
+  }
+
+  .bandit-score-list div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 0.55rem;
+    border-bottom: 1px solid var(--site-card-border);
+  }
+
+  .bandit-score-list dt {
+    color: var(--site-subtle);
+    font-size: 0.78rem;
+  }
+
+  .bandit-score-list dd {
+    color: var(--site-text);
+    font-size: 0.92rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .bandit-oracle-arm {
+    min-height: 1.25rem;
+    margin-top: 0.8rem;
+    color: #7dd3fc;
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .bandit-history {
+    margin-top: 1.2rem;
+  }
+
+  .bandit-history ul {
+    display: grid;
+    gap: 0.35rem;
+    min-height: 1rem;
+    margin-top: 0.55rem;
+  }
+
+  #bandit-history-list :global(.bandit-history__item) {
+    color: var(--site-muted);
+    font-size: 0.7rem;
+    line-height: 1.45;
+  }
+
+  .bandit-policies {
+    padding: 1rem;
+    border-top: 1px solid var(--site-card-border);
+  }
+
+  .bandit-policy-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+
+  .bandit-policy-card {
+    border: 1px solid var(--site-card-border);
+    border-radius: 0.55rem;
+    background: transparent;
+    padding: 0.75rem;
+    box-shadow: none;
+  }
+
+  .bandit-policy-card[open] {
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: none;
+  }
+
+  .bandit-policy-summary {
+    color: var(--site-subtle);
+    font-size: 0.78rem;
+    font-weight: 650;
+  }
+
+  .bandit-policy-caret {
+    color: var(--site-muted);
+  }
+
+  .bandit-policy-body {
+    margin-top: 0.75rem;
+    color: var(--site-muted);
+    font-size: 0.72rem;
+    line-height: 1.6;
+  }
+
+  .bandit-policy-body p + p {
+    margin-top: 0.65rem;
+  }
+
+  .bandit-policy-body p:first-child {
+    color: var(--site-subtle);
+  }
+
+  .bandit-policy-formula {
+    color: #7dd3fc;
+  }
+
+  @keyframes banditSignalPulse {
+    from { transform: translateY(-1px); }
+    to { transform: translateY(1px); }
+  }
+
+  :global(html[data-theme='light']) .bandit-signal__cell {
+    background: rgba(148, 163, 184, 0.18);
+  }
+
+  :global(html[data-theme='light']) .bandit-choice__button {
+    color: #0369a1;
+  }
+
+  @media (max-width: 760px) {
+    .bandit-session {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .bandit-session__actions {
+      justify-content: flex-start;
+    }
+
+    .bandit-main-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .bandit-results {
+      border-top: 1px solid var(--site-card-border);
+      border-left: 0;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .bandit-stat {
+      min-width: 0;
+      padding-inline: 0.6rem;
+    }
+
+    .bandit-stat strong {
+      font-size: 1rem;
+    }
+
+    .bandit-choice-grid,
+    .bandit-policy-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .bandit-choice {
+      padding: 0.8rem;
+    }
+
+    .bandit-signal {
+      margin-top: 0.9rem;
     }
   }
 </style>

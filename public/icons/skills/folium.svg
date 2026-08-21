@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Folium">
+  <rect width="128" height="128" rx="24" fill="#e9f7ef"/>
+  <path fill="#2f855a" d="M64 18c-19.9 0-36 15.5-36 34.7C28 79.4 64 110 64 110s36-30.6 36-57.3C100 33.5 83.9 18 64 18Zm0 49.5c-8.1 0-14.7-6.5-14.7-14.6S55.9 38.2 64 38.2s14.7 6.5 14.7 14.7S72.1 67.5 64 67.5Z"/>
+  <circle cx="64" cy="52.9" r="8" fill="#e9f7ef"/>
+</svg>

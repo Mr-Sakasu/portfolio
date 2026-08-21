@@ -112,16 +112,19 @@ const normalizePlaylist = (playlist: PlaylistData) => {
   };
 };
 const configuredPlaylists = displayPlaylists.map(normalizePlaylist).filter((playlist) => playlist.isConfigured);
-const visiblePlaylists = configuredPlaylists.length > 0
+const availablePlaylists = configuredPlaylists.length > 0
   ? configuredPlaylists
   : [normalizePlaylist(playlistCollection)];
+const visiblePlaylists = variant === 'home'
+  ? availablePlaylists.slice(0, 1)
+  : availablePlaylists;
 const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
 const sectionClass = variant === 'page' ? 'mt-6' : 'mt-4 md:mt-8';
 const trackListClass = variant === 'page'
   ? lang === 'ja'
     ? 'max-h-80 divide-y divide-white/10 overflow-y-auto overscroll-contain'
     : 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
-  : 'max-h-72 divide-y divide-white/10 overflow-y-auto overscroll-contain';
+  : 'divide-y divide-white/10';
 const jpopArtistChartConfig = [
   { artist: 'Yorushika', playlistTitle: 'Liked: JPOP - Yorushika' },
   { artist: 'Zutomayo', playlistTitle: 'Liked: JPOP - Zutomayo' },
@@ -255,7 +258,7 @@ const artistChartItems = lang === 'ja'
       .map((item, index) => {
         const playlist = playlistByTitle.get(item.playlistTitle);
         const count = playlistTrackCount(playlist) ?? item.auditFallbackCount ?? 0;
-        return { ...item, count, order: index };
+        return { ...item, playlistId: playlist?.playlistId ?? '', count, order: index };
       })
       .filter((item) => item.count > 0)
       .sort((first, second) => second.count - first.count || first.order - second.order)
@@ -362,7 +365,13 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
             ></div>
             <div class="max-h-96 space-y-2 overflow-y-auto overscroll-contain pr-1">
               {artistChartSlices.map((item) => (
-                <div class="grid min-w-0 grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md bg-white/[0.035] px-3 py-2">
+                <button
+                  type="button"
+                  class="grid w-full min-w-0 grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md bg-white/[0.035] px-3 py-2 text-left transition-colors hover:bg-white/[0.09] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-200"
+                  data-playlist-target={item.playlistId}
+                  aria-label={`${item.artist}: ${formatTrackCount(item.count)}`}
+                  disabled={!item.playlistId}
+                >
                   <span
                     class="h-3 w-3 rounded-full"
                     style={`background-color: ${item.color};`}
@@ -373,7 +382,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                   <span class="whitespace-nowrap text-right text-xs tabular-nums text-gray-300">
                     {formatTrackCount(item.count)} / {formatPercentage(item.percentage)}
                   </span>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -412,6 +421,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
     <div class="space-y-4">
       {visiblePlaylists.map((playlist) => (
         <div
+          id={`playlist-${playlist.playlistId}`}
           class="overflow-hidden rounded-xl border border-white/10 bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]"
           data-reveal
           style="--reveal-delay: 80ms;"
@@ -467,7 +477,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
               </div>
 
               <div class={trackListClass}>
-                {playlist.tracks.map((track, index) => (
+                {playlist.tracks.slice(0, variant === 'home' ? 3 : playlist.tracks.length).map((track, index) => (
                   <div class="group flex min-h-20 items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.04] sm:gap-4 sm:px-5">
                     {track.videoId && (
                       <button
@@ -522,6 +532,15 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                   </div>
                 ))}
               </div>
+              {variant === 'home' && (
+                <a
+                  href={`/${lang}/playlist/`}
+                  class="flex items-center justify-between border-t border-white/10 px-4 py-3 text-sm font-bold text-violet-100 transition-colors hover:bg-white/[0.04] hover:text-white sm:px-5"
+                >
+                  <span>{t['playlist.viewAll']}</span>
+                  <span aria-hidden="true">→</span>
+                </a>
+              )}
             </>
           ) : (
             <div class="p-5">
@@ -550,6 +569,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 
   [data-playlist-card] {
     position: relative;
+    scroll-margin-top: 6.5rem;
   }
 
   /* A quiet, static edge keeps the bento surface present without competing
