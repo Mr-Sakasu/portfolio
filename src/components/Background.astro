@@ -1,4 +1,14 @@
-<canvas id="network-canvas"></canvas>
+---
+interface Props {
+  // Which scene to run, when the page wants a say. Left off, the theme picks
+  // (see pickSceneName). 'none' keeps the sky still.
+  scene?: 'network' | 'fireworks' | 'none';
+}
+
+const { scene } = Astro.props;
+---
+
+<canvas id="network-canvas" data-scene={scene}></canvas>
 
 <style>
   #network-canvas {
@@ -483,19 +493,25 @@
   const SCENES = {
     network: networkScene,
     fireworks: fireworksScene,
+    // A still sky. The entry splash asks for this so the single firework it
+    // launches itself is the only one in the air.
+    none: () => () => {},
   };
 
   // The theme picks the scene: fireworks belong in a night sky, the
-  // constellation graph suits a bright one. `?bg=<name>` overrides, for
-  // checking one directly. Reduced motion does not change the choice — it
-  // calms the fireworks instead (see the scene), since the graph animates too.
-  function pickSceneName(isLight) {
+  // constellation graph suits a bright one. A page can name one instead, and
+  // `?bg=<name>` beats both, for checking one directly. Reduced motion does not
+  // change the choice — it calms the fireworks instead (see the scene), since
+  // the graph animates too.
+  function pickSceneName(isLight, requested) {
     try {
       const forced = new URLSearchParams(window.location.search).get('bg');
       if (forced && Object.prototype.hasOwnProperty.call(SCENES, forced)) return forced;
     } catch {
       // Unparseable query string is not a reason to lose the background.
     }
+
+    if (requested && Object.prototype.hasOwnProperty.call(SCENES, requested)) return requested;
 
     return isLight ? 'network' : 'fireworks';
   }
@@ -533,7 +549,7 @@
     // --- ANIMATION LOOP ---
     function animate() {
       const isLight = document.documentElement.dataset.theme === 'light';
-      const wanted = pickSceneName(isLight);
+      const wanted = pickSceneName(isLight, canvas.dataset.scene);
       if (wanted !== builtName) {
         builtName = wanted;
         frame = SCENES[wanted](canvas, ctx);   // a theme flip starts it fresh
