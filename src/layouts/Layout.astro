@@ -6,7 +6,7 @@ import Bgm from '../components/Bgm.astro';
 import Intro from '../components/Intro.astro';
 import { ui } from '../i18n/ui';
 
-const { title, lang, description } = Astro.props;
+const { title, lang, description, wide = false } = Astro.props;
 const pageDescription = typeof description === 'string' && description.trim().length
   ? description.trim()
   : 'Sakasu portfolio with interactive star watching and bandit optimization demos.';
@@ -17,6 +17,7 @@ const isPlaylistPage = Astro.url.pathname.includes('/playlist');
 const isScenesPage = Astro.url.pathname.includes('/scenes');
 const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs md:text-sm font-medium transition-colors';
 const currentYear = new Date().getFullYear();
+const contentWidth = wide ? 'max-w-6xl' : 'max-w-3xl';
 ---
 
 <!DOCTYPE html>
@@ -69,7 +70,7 @@ const currentYear = new Date().getFullYear();
         <Bgm />
 
         <header class="site-header sticky top-0 z-40 w-full">
-            <div class="box-border w-full max-w-3xl mx-auto px-4 py-3 md:px-6 md:py-3.5">
+            <div class={`box-border w-full ${contentWidth} mx-auto px-4 py-3 md:px-6 md:py-3.5`}>
                 <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div class="flex items-center justify-between gap-4">
                         <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-blue-400 transition-colors whitespace-nowrap">
@@ -174,12 +175,12 @@ const currentYear = new Date().getFullYear();
             </div>
 			</header>
 
-		<main class="box-border w-full max-w-3xl mx-auto p-6 flex-grow relative z-10">
+		<main class={`box-border w-full ${contentWidth} mx-auto p-4 md:p-6 flex-grow relative z-10`}>
 			<slot />
 		</main>
 
         <footer class="site-footer relative z-10 mt-10">
-            <div class="mx-auto flex w-full max-w-3xl items-center justify-between px-6 py-8 text-xs text-gray-500">
+            <div class={`mx-auto flex w-full ${contentWidth} items-center justify-between px-6 py-8 text-xs text-gray-500`}>
                 <p>&copy; {currentYear} Sakasu</p>
                 <a
                     href="https://github.com/Mr-Sakasu/"
@@ -670,6 +671,13 @@ const currentYear = new Date().getFullYear();
         color: #155e75 !important;
     }
 
+    html[data-theme='light'] [class*='text-violet-100'],
+    html[data-theme='light'] [class*='text-violet-200'],
+    html[data-theme='light'] [class*='text-violet-300'],
+    html[data-theme='light'] [class*='text-violet-400'] {
+        color: #5b21b6 !important;
+    }
+
     html[data-theme='light'] [class~='text-green-100'] {
         color: #15803d !important;
     }
@@ -726,6 +734,12 @@ const currentYear = new Date().getFullYear();
     html[data-theme='light'] .hover\:text-cyan-400:hover,
     html[data-theme='light'] .group:hover .group-hover\:text-cyan-400 {
         color: #155e75 !important;
+    }
+
+    html[data-theme='light'] .hover\:text-violet-100:hover,
+    html[data-theme='light'] .hover\:text-violet-300:hover,
+    html[data-theme='light'] .group:hover .group-hover\:text-violet-100 {
+        color: #5b21b6 !important;
     }
 
     html[data-theme='light'] .hover\:text-rose-100:hover,
