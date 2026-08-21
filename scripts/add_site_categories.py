@@ -3,7 +3,11 @@
 
 Reads the four category playlists through the YouTube Data API and splices them
 into src/data/ytmusic-playlist.json, preserving the existing curation. Safe to
-re-run: a playlist already present in a locale is skipped.
+re-run: a playlist already present in a locale keeps its position.
+
+By default it also re-reads the playlists already in the file, because the ja
+artist chart derives its bar heights from their track counts and would otherwise
+keep showing whatever those counts were when the entry was first written.
 """
 
 from __future__ import annotations
@@ -15,6 +19,7 @@ import sys
 import time
 from typing import Any
 
+from categorize_liked_videos import list_owned_playlists
 from fetch_ytmusic_playlist import (
     DEFAULT_OUTPUT,
     build_oauth_credentials,
@@ -42,6 +47,11 @@ PLACEMENT = {
     "en": ["Liked: En", "Liked: Kpop"],
 }
 
+# Artist playlists are created by categorize_liked_videos.py, which knows their
+# titles but not this file, so they are discovered by prefix rather than listed.
+ARTIST_PREFIX = "Liked: JPOP - "
+ARTIST_LANG = "ja"
+
 
 def fetch_with_backoff(playlist_id: str, token: dict[str, Any], limit: int) -> dict[str, Any]:
     """Paging trips the per-100-second read limit, which clears on its own."""
@@ -58,12 +68,53 @@ def fetch_with_backoff(playlist_id: str, token: dict[str, Any], limit: int) -> d
     raise RuntimeError("unreachable")
 
 
+def refresh(
+    item: dict[str, Any],
+    cache: dict[str, dict[str, Any]],
+    token: dict[str, Any],
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    """Re-read one already-present playlist, keeping its slot in the locale."""
+    playlist_id = item.get("playlistId")
+    if not playlist_id:
+        return item
+    if playlist_id in cache:
+        return cache[playlist_id]
+    if playlist_id in NEW_CATEGORIES.values():
+        return item  # already fetched above
+    try:
+        fresh = fetch_with_backoff(playlist_id, token, args.limit)
+    except RuntimeError as exc:
+        # A quota wall mid-refresh must not blank a playlist that is already
+        # rendering, so keep the stale copy and say so.
+        print(f"  kept stale {item.get('title')}: {exc}", file=sys.stderr)
+        return item
+    was = len(item.get("tracks") or [])
+    now = len(fresh.get("tracks") or [])
+    print(f"refreshed {item.get('title')}: {was} -> {now} tracks")
+    cache[playlist_id] = fresh
+    time.sleep(args.pause)
+    return fresh
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
     parser.add_argument("--auth", default=os.environ.get("YTMUSIC_AUTH_FILE", "oauth.json"))
     parser.add_argument("--limit", type=int, default=400)
     parser.add_argument("--pause", type=float, default=15.0, help="Seconds between playlists.")
+    parser.add_argument(
+        "--no-discover-artists",
+        dest="discover_artists",
+        action="store_false",
+        help=f"Skip adding owned playlists titled '{ARTIST_PREFIX}...' that the file lacks.",
+    )
+    parser.add_argument(
+        "--no-refresh-existing",
+        dest="refresh_existing",
+        action="store_false",
+        help="Leave playlists already in the file untouched (keeps their stale track counts).",
+    )
     parser.add_argument(
         "--oauth-credentials",
         default=os.environ.get("YTMUSIC_OAUTH_CREDENTIALS_JSON")
@@ -100,10 +151,32 @@ def main() -> int:
         print(f"fetched {title}: {len(fetched[title].get('tracks') or [])} tracks")
         time.sleep(args.pause)
 
+    if args.discover_artists:
+        owned = list_owned_playlists(token["access_token"])
+        collection = by_lang.get(ARTIST_LANG) or {}
+        existing = list(collection.get("playlists") or [])
+        present = {item.get("playlistId") for item in existing}
+        for title in sorted(owned):
+            if not title.startswith(ARTIST_PREFIX) or owned[title] in present:
+                continue
+            try:
+                fresh = fetch_with_backoff(owned[title], token, args.limit)
+            except RuntimeError as exc:
+                print(f"  skipped new {title}: {exc}", file=sys.stderr)
+                continue
+            print(f"discovered {title}: {len(fresh.get('tracks') or [])} tracks")
+            existing.append(fresh)
+            time.sleep(args.pause)
+        collection["playlists"] = existing
+        by_lang[ARTIST_LANG] = collection
+
     all_playlists: list[dict[str, Any]] = []
+    refreshed: dict[str, dict[str, Any]] = {}
     for lang, titles in PLACEMENT.items():
         collection = by_lang.get(lang) or {}
         existing = list(collection.get("playlists") or [])
+        if args.refresh_existing:
+            existing = [refresh(item, refreshed, token, args) for item in existing]
         present = {item.get("playlistId") for item in existing}
         additions = [fetched[title] for title in titles if NEW_CATEGORIES[title] not in present]
         merged = additions + existing

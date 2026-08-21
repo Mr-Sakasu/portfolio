@@ -36,6 +36,32 @@ ARTIST_KEYWORDS = OrderedDict(
         ("SEKAINOOWARI", ("Liked: JPOP - SEKAI NO OWARI", {"sekai no owari", "セカイノオワリ", "セカオワ", "end of the world"})),
         ("Orangestar", ("Liked: JPOP - Orangestar", {"orangestar", "オレンジスター", "アスノヨゾラ"})),
         ("Aqu3ra", ("Liked: JPOP - Aqu3ra", {"aqu3ra", "アキュラ"})),
+        # Keys below are deliberately long. artist_blob() does substring matching,
+        # so a bare "yama" would also claim yamaha, yamada, aoyama and koyama;
+        # the channel suffix or a signature song title is what makes it safe.
+        (
+            "SangatsuNoPhantasia",
+            ("Liked: JPOP - Sangatsu no Phantasia", {"三月のパンタシア", "sangatsu no phantasia"}),
+        ),
+        (
+            "MrsGREENAPPLE",
+            (
+                "Liked: JPOP - Mrs. GREEN APPLE",
+                {"mrs. green apple", "mrs.green apple", "ミセスグリーンアップル"},
+            ),
+        ),
+        ("Vaundy", ("Liked: JPOP - Vaundy", {"vaundy", "バウンディ"})),
+        ("Sakanaction", ("Liked: JPOP - Sakanaction", {"sakanaction", "サカナクション"})),
+        ("yama", ("Liked: JPOP - yama", {"yama - topic", "yama『", "春を告げる"})),
+        ("Reol", ("Liked: JPOP - Reol", {"reol - topic", "reol【", "reol『", "第六感"})),
+        ("tuki", ("Liked: JPOP - tuki.", {"tuki.", "晩餐歌", "ひゅるりらぱっぱ"})),
+        (
+            "Vocaloid",
+            (
+                "Liked: JPOP - Vocaloid",
+                {"初音ミク", "hatsune miku", "巡音", "鏡音", "重音テト", "ボカロ", "vocaloid"},
+            ),
+        ),
     ]
 )
 
