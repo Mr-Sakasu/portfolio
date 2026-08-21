@@ -137,6 +137,8 @@ const jpopArtistChartConfig = [
   { artist: 'SEKAI NO OWARI', playlistTitle: 'Liked: JPOP - SEKAI NO OWARI' },
   { artist: 'Orangestar', playlistTitle: 'Liked: JPOP - Orangestar' },
   { artist: 'Aqu3ra', playlistTitle: 'Liked: JPOP - Aqu3ra' },
+  { artist: 'Vocaloid', playlistTitle: 'Liked: JPOP - Vocaloid', auditFallbackCount: 25 },
+  { artist: 'tuki.', playlistTitle: 'Liked: JPOP - tuki.', auditFallbackCount: 4 },
   { artist: 'Sangatsu no Phantasia', playlistTitle: 'Liked: JPOP - Sangatsu no Phantasia', auditFallbackCount: 10 },
   { artist: 'Mrs. GREEN APPLE', playlistTitle: 'Liked: JPOP - Mrs. GREEN APPLE', auditFallbackCount: 4 },
   { artist: 'Vaundy', playlistTitle: 'Liked: JPOP - Vaundy', auditFallbackCount: 2 },
@@ -267,28 +269,36 @@ const artistChartItems = lang === 'ja'
     : [];
 const artistChartMaxCount = Math.max(...artistChartItems.map((item) => item.count), 1);
 const artistChartTotalCount = artistChartItems.reduce((total, item) => total + item.count, 0);
-// Muted steps of the same hues: chroma pulled to ~0.10-0.13 and lightness kept
-// inside the OKLCH band both themes share, since these hexes are inline and the
-// light theme only remaps the card behind them. Adjacent pairs (including the
-// wrap from the last slice back to the first) clear the normal-vision ΔE 15
-// floor; the legend rows carry name and count, so colour never identifies alone.
+// A single cool arc walked in order, OKLCH hue 182 -> 320 (teal, cyan, azure,
+// indigo, violet), with lightness alternating 0.76/0.55 so neighbouring slices
+// separate on lightness as well as hue. The card behind them is a fixed dark
+// #0f151f in both themes, so the light steps stay readable. Adjacent pairs
+// (including the wrap from the last slice back to the first) clear the
+// normal-vision ΔE 15 floor at ΔE 21.1 worst case for any slice count from 9
+// to 20 (the list is 20 long so a 17-artist chart cannot wrap onto its own
+// first colour); the legend rows carry name
+// and count, so colour never identifies alone.
 const artistChartPalette = [
-  '#b05b66',
-  '#0598ad',
-  '#007651',
-  '#ac8c0e',
-  '#8b7ac4',
-  '#ad5623',
-  '#4582cc',
-  '#973f6e',
-  '#009585',
-  '#7a589d',
-  '#a38f29',
-  '#07773b',
-  '#288bb7',
-  '#be7e50',
-  '#94559e',
-  '#0098af',
+  '#3fcab7',
+  '#07837d',
+  '#30c8cb',
+  '#00818b',
+  '#36c5dc',
+  '#057f98',
+  '#4ac0eb',
+  '#007ca9',
+  '#63bbf5',
+  '#0076c1',
+  '#7bb4fc',
+  '#3a6dcd',
+  '#92adfe',
+  '#5c64cd',
+  '#a7a6fb',
+  '#745bc6',
+  '#bba0f3',
+  '#8853bb',
+  '#cb9ae8',
+  '#994caa',
 ];
 let artistChartOffset = 0;
 const artistChartSlices = artistChartItems.map((item, index) => {
