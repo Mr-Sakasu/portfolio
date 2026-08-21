@@ -1,0 +1,95 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getUi, type Locale } from '../../i18n';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = getUi(lang);
+const labels = {
+  active: t['globe.active'],
+  transfers: t['globe.transfers'],
+  pause: t['globe.pause'],
+  resume: t['globe.resume'],
+};
+---
+
+<Layout title={`${t['globe.title']} | Sakasu Portfolio`} lang={lang} description={t['globe.subtitle']} wide>
+  <section class="globe-page py-8 md:py-12" data-globe-page data-labels={JSON.stringify(labels)}>
+    <header class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end" data-reveal>
+      <div>
+        <p class="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">{t['globe.eyebrow']}</p>
+        <h1 class="mt-3 max-w-3xl text-4xl font-black leading-[0.95] text-white sm:text-5xl md:text-6xl">
+          {t['globe.title']}
+        </h1>
+        <p class="mt-5 max-w-2xl text-base leading-relaxed text-gray-300 md:text-lg">{t['globe.subtitle']}</p>
+      </div>
+      <div class="flex items-center gap-2 rounded-full border border-emerald-400/25 bg-emerald-400/[0.08] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-emerald-200">
+        <span class="relative flex h-2.5 w-2.5" aria-hidden="true">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-60"></span>
+          <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-300"></span>
+        </span>
+        {t['globe.live']}
+      </div>
+    </header>
+
+    <div class="globe-stage mt-8 overflow-hidden rounded-2xl border border-blue-400/15 bg-[#020711] shadow-[0_30px_90px_-45px_rgba(37,99,235,0.75)]" data-reveal>
+      <div class="globe-toolbar pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap items-start justify-between gap-3 p-4 sm:p-5">
+        <p class="max-w-md rounded-full border border-white/10 bg-[#07101d]/80 px-3 py-2 text-[11px] text-slate-300 backdrop-blur-md sm:text-xs">
+          {t['globe.instructions']}
+        </p>
+        <button type="button" class="pointer-events-auto rounded-full border border-white/15 bg-[#07101d]/80 px-4 py-2 text-xs font-bold text-white backdrop-blur-md transition hover:border-blue-300/60 hover:bg-blue-400/10" data-rotation-toggle>
+          {t['globe.pause']}
+        </button>
+      </div>
+      <div class="h-[32rem] w-full sm:h-[38rem] lg:h-[44rem]" data-globe-canvas aria-label={t['globe.title']}></div>
+      <div class="pointer-events-none absolute inset-x-0 bottom-0 z-10 grid grid-cols-3 border-t border-white/10 bg-[#050b15]/80 backdrop-blur-md">
+        <div class="p-3 text-center sm:p-4">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 sm:text-xs">{t['globe.active']}</p>
+          <p class="mt-1 text-xl font-black tabular-nums text-blue-200 sm:text-2xl" data-active-count>0</p>
+        </div>
+        <div class="border-x border-white/10 p-3 text-center sm:p-4">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 sm:text-xs">{t['globe.transfers']}</p>
+          <p class="mt-1 text-xl font-black tabular-nums text-violet-200 sm:text-2xl" data-transfer-count>0</p>
+        </div>
+        <div class="p-3 text-center sm:p-4">
+          <p class="text-[10px] uppercase tracking-wider text-slate-400 sm:text-xs">{t['globe.regions']}</p>
+          <p class="mt-1 text-xl font-black tabular-nums text-emerald-200 sm:text-2xl" data-region-count>0</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="mx-auto mt-4 max-w-3xl text-center text-xs leading-relaxed text-gray-500">{t['globe.note']}</p>
+  </section>
+</Layout>
+
+<script>
+  import './globe-client';
+</script>
+
+<style>
+  .globe-stage {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .globe-stage::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    content: '';
+    background-image:
+      radial-gradient(circle at 18% 24%, rgba(96, 165, 250, 0.16), transparent 26%),
+      radial-gradient(circle at 82% 72%, rgba(52, 211, 153, 0.12), transparent 28%);
+  }
+
+  :global(html[data-theme='light']) .globe-page > header h1 {
+    color: #101828;
+  }
+
+  :global(html[data-theme='light']) .globe-page > header p:not(:first-child) {
+    color: #344054;
+  }
+</style>

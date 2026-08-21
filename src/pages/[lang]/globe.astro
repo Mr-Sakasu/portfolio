@@ -1,0 +1,12 @@
+---
+import GlobePage from '../../features/globe/GlobePage.astro';
+import { getLocale, localeStaticPaths } from '../../i18n';
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const lang = getLocale(Astro.params.lang);
+---
+
+<GlobePage lang={lang} />
