@@ -66,13 +66,18 @@ npm run playlist:update
 
 ```text
 src/
-  components/   再利用する Astro コンポーネント
-  data/         Timeline、projects、skills、生成済みプレイリストデータ
-  i18n/         各言語の UI テキスト
-  layouts/      共通レイアウト
-  pages/        多言語ルーティングと個別ページ
+  components/
+    chrome/      共通ヘッダー、フッター、背景、イントロ、BGM、言語切替
+    shared/      Timeline と Skill Stack のような再利用表示コンポーネント
+  features/      home / stars / scenes / bandit / playlist の機能単位の実装
+  data/
+    generated/   スクリプトが生成するプレイリスト JSON
+  i18n/         各言語の UI テキスト、Locale 型、ルート用ヘルパー
+  layouts/      ドキュメントシェルと共通テーマ
+  pages/         薄い多言語ルートラッパー
 public/         静的画像とアイコン
-scripts/        YouTube Music データ更新用スクリプト
+scripts/
+  playlist/      YouTube Music データ更新用スクリプト
 ```
 
 ## 関連リンク
