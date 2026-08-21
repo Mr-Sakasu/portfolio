@@ -14,16 +14,14 @@ import Background from '../components/Background.astro';
 
     <Background />
 
+    <canvas id="entry-firework" class="pointer-events-none fixed inset-0 z-10 h-full w-full"></canvas>
+
     <div class="z-10 flex flex-col items-center gap-4 animate-fade-in">
-        
-        <div class="text-2xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-white animate-pulse">
-            LOADING...
-        </div>
 
         <div class="w-48 h-1 bg-gray-800 rounded-full overflow-hidden relative">
             <div class="absolute top-0 left-0 h-full bg-blue-500 w-0 animate-progress"></div>
         </div>
-        
+
     </div>
 
     <script>
@@ -49,13 +47,138 @@ import Background from '../components/Background.astro';
         }
 
         const targetUrl = `/${detectPreferredLang()}/`;
+        const stillMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        // Wait 1.2 seconds for the animation to play, then switch
-        setTimeout(() => {
-            // .replace() is better than .href because it prevents 
-            // the user from clicking "Back" and getting stuck on the loading screen.
-            window.location.replace(targetUrl);
-        }, 1200);
+        // This splash is the first thing a visitor sees, so the burst belongs
+        // here. Claiming the flag stops the landing page from firing its own
+        // intro a moment later and showing two firework displays in a row.
+        if (!stillMotion) {
+            try {
+                window.sessionStorage.setItem('portfolio-intro-played', '1');
+            } catch (error) {
+                /* private mode: the landing page plays its intro instead */
+            }
+        }
+
+        // .replace() rather than .href so Back does not strand the visitor here.
+        const leave = () => window.location.replace(targetUrl);
+
+        const canvas = document.getElementById('entry-firework');
+        const context = !stillMotion && canvas ? canvas.getContext('2d') : null;
+
+        if (!context) {
+            setTimeout(leave, stillMotion ? 300 : 1200);
+        } else {
+            let width = 0;
+            let height = 0;
+            const resize = () => {
+                const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = Math.floor(width * ratio);
+                canvas.height = Math.floor(height * ratio);
+                context.setTransform(ratio, 0, 0, ratio, 0, 0);
+            };
+            resize();
+            window.addEventListener('resize', resize, { passive: true });
+
+            // Purple, blue, green: the palette the artist chart uses, so the
+            // entry and the site read as one piece.
+            const palette = ['#d695e4', '#a5a6ff', '#61b9fd', '#38c2ef', '#47cba2'];
+            const sparks = [];
+            const trail = [];
+            const targetY = height * 0.34;
+            const startY = height + 10;
+            // Solve the launch for a fixed climb instead of a fixed gravity, so
+            // the burst lands on time on a phone and on a tall desktop alike:
+            // d = g t^2 / 2 at the peak, where v = g t.
+            const RISE_MS = 620;
+            const gravity = (2 * (startY - targetY)) / (RISE_MS * RISE_MS);
+            const shell = {
+                x: width / 2,
+                y: startY,
+                vy: -gravity * RISE_MS,
+                done: false,
+            };
+
+            // Whatever the animation does, the visitor must still get through.
+            const bailout = setTimeout(leave, 3600);
+            const depart = () => {
+                clearTimeout(bailout);
+                leave();
+            };
+
+            const burst = () => {
+                // One big shell: a dense ring plus a slower inner cloud.
+                for (let index = 0; index < 260; index += 1) {
+                    const angle = (Math.PI * 2 * index) / 260 + Math.random() * 0.06;
+                    const speed = 0.5 * (0.55 + Math.random() * Math.random() * 0.75);
+                    sparks.push({
+                        x: shell.x,
+                        y: shell.y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        life: 1,
+                        decay: 0.00042 + Math.random() * 0.0005,
+                        color: Math.random() < 0.3 ? '#ffffff' : palette[index % palette.length],
+                    });
+                }
+                // The page swaps in while the burst is still falling.
+                setTimeout(depart, 780);
+            };
+
+            let previous = performance.now();
+            const frame = (now) => {
+                const delta = Math.min(now - previous, 48);
+                previous = now;
+
+                context.clearRect(0, 0, width, height);
+                context.globalCompositeOperation = 'lighter';
+
+                if (!shell.done) {
+                    shell.vy += gravity * delta;
+                    shell.y += shell.vy * delta;
+                    trail.push({ x: shell.x, y: shell.y });
+                    if (trail.length > 12) trail.shift();
+                    trail.forEach((point, order) => {
+                        context.globalAlpha = (order / trail.length) * 0.6;
+                        context.fillStyle = '#ffffff';
+                        context.beginPath();
+                        context.arc(point.x, point.y, 2, 0, Math.PI * 2);
+                        context.fill();
+                    });
+                    if (shell.y <= targetY || shell.vy >= 0) {
+                        shell.done = true;
+                        burst();
+                    }
+                }
+
+                for (let index = sparks.length - 1; index >= 0; index -= 1) {
+                    const spark = sparks[index];
+                    spark.vy += 0.00019 * delta;
+                    spark.vx *= 0.995;
+                    spark.vy *= 0.995;
+                    spark.x += spark.vx * delta;
+                    spark.y += spark.vy * delta;
+                    spark.life -= spark.decay * delta;
+                    if (spark.life <= 0) {
+                        sparks.splice(index, 1);
+                        continue;
+                    }
+                    context.globalAlpha = Math.max(spark.life, 0);
+                    context.fillStyle = spark.color;
+                    context.beginPath();
+                    context.arc(spark.x, spark.y, 2, 0, Math.PI * 2);
+                    context.fill();
+                }
+
+                context.globalAlpha = 1;
+                context.globalCompositeOperation = 'source-over';
+                requestAnimationFrame(frame);
+            };
+
+            requestAnimationFrame(frame);
+        }
     </script>
 
     <style>
@@ -71,13 +194,24 @@ import Background from '../components/Background.astro';
 
         /* The Progress Bar Animation */
         .animate-progress {
-            animation: loadBar 1.2s ease-in-out forwards;
+            animation: loadBar 1.4s ease-in-out forwards;
         }
 
         @keyframes loadBar {
             0% { width: 0%; }
             50% { width: 70%; }
             100% { width: 100%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animate-fade-in,
+            .animate-progress {
+                animation: none;
+            }
+
+            .animate-fade-in {
+                opacity: 1;
+            }
         }
     </style>
 
