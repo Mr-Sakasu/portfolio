@@ -16,14 +16,6 @@ import Background from '../components/Background.astro';
 
     <canvas id="entry-firework" class="pointer-events-none fixed inset-0 z-10 h-full w-full"></canvas>
 
-    <div class="z-10 flex flex-col items-center gap-4 animate-fade-in">
-
-        <div class="w-48 h-1 bg-gray-800 rounded-full overflow-hidden relative">
-            <div class="absolute top-0 left-0 h-full bg-blue-500 w-0 animate-progress"></div>
-        </div>
-
-    </div>
-
     <script>
         function toRouteLang(langTag) {
             const tag = String(langTag || '').toLowerCase();
@@ -102,7 +94,7 @@ import Background from '../components/Background.astro';
             };
 
             // Whatever the animation does, the visitor must still get through.
-            const bailout = setTimeout(leave, 3600);
+            const bailout = setTimeout(leave, 4400);
             const depart = () => {
                 clearTimeout(bailout);
                 leave();
@@ -112,19 +104,22 @@ import Background from '../components/Background.astro';
                 // One big shell: a dense ring plus a slower inner cloud.
                 for (let index = 0; index < 260; index += 1) {
                     const angle = (Math.PI * 2 * index) / 260 + Math.random() * 0.06;
-                    const speed = 0.5 * (0.55 + Math.random() * Math.random() * 0.75);
+                    // A slow bloom: the sparks drift outward rather than
+                    // snapping to the rim, so the shape stays readable.
+                    const speed = 0.17 * (0.55 + Math.random() * Math.random() * 0.75);
                     sparks.push({
                         x: shell.x,
                         y: shell.y,
                         vx: Math.cos(angle) * speed,
                         vy: Math.sin(angle) * speed,
                         life: 1,
-                        decay: 0.00042 + Math.random() * 0.0005,
+                        // Long enough that they are still lit when the page arrives.
+                        decay: 0.00026 + Math.random() * 0.0003,
                         color: Math.random() < 0.3 ? '#ffffff' : palette[index % palette.length],
                     });
                 }
-                // The page swaps in while the burst is still falling.
-                setTimeout(depart, 780);
+                // The page swaps in while the burst is still spreading.
+                setTimeout(depart, 1500);
             };
 
             let previous = performance.now();
@@ -155,9 +150,9 @@ import Background from '../components/Background.astro';
 
                 for (let index = sparks.length - 1; index >= 0; index -= 1) {
                     const spark = sparks[index];
-                    spark.vy += 0.00019 * delta;
-                    spark.vx *= 0.995;
-                    spark.vy *= 0.995;
+                    spark.vy += 0.00007 * delta;
+                    spark.vx *= 0.9975;
+                    spark.vy *= 0.9975;
                     spark.x += spark.vx * delta;
                     spark.y += spark.vy * delta;
                     spark.life -= spark.decay * delta;
@@ -180,40 +175,6 @@ import Background from '../components/Background.astro';
             requestAnimationFrame(frame);
         }
     </script>
-
-    <style>
-        /* Simple Fade In */
-        .animate-fade-in {
-            animation: fadeIn 0.5s ease-out forwards;
-            opacity: 0;
-        }
-
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
-        /* The Progress Bar Animation */
-        .animate-progress {
-            animation: loadBar 1.4s ease-in-out forwards;
-        }
-
-        @keyframes loadBar {
-            0% { width: 0%; }
-            50% { width: 70%; }
-            100% { width: 100%; }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .animate-fade-in,
-            .animate-progress {
-                animation: none;
-            }
-
-            .animate-fade-in {
-                opacity: 1;
-            }
-        }
-    </style>
 
 </body>
 </html>
