@@ -603,4 +603,76 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
     background: rgb(254 205 211 / 0.22);
     color: rgb(255 241 242);
   }
+
+  /* Registered so the angle can be animated; a bare custom property is a
+     string to the interpolator and would jump rather than sweep. */
+  @property --playlist-beam-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+  }
+
+  [data-playlist-card] {
+    position: relative;
+  }
+
+  /* A conic gradient rotating behind a ring-shaped mask: the two mask layers
+     cancel everywhere except the 1px padding box, leaving just the frame lit.
+     The card's own border stays put underneath, so the beam adds light rather
+     than replacing the outline. */
+  [data-playlist-card]::after {
+    --playlist-beam-angle: 0deg;
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from var(--playlist-beam-angle),
+      transparent 0deg 280deg,
+      rgb(71 203 162 / 0.7) 300deg,
+      rgb(97 185 253 / 1) 330deg,
+      rgb(214 149 228 / 1) 348deg,
+      rgb(255 255 255 / 1) 356deg,
+      transparent 360deg
+    );
+    /* Bloom off the lit arc, so it reads as a light travelling the frame
+       rather than a coloured hairline. Applied after the mask, so only the
+       ring glows. */
+    filter: drop-shadow(0 0 5px rgb(97 185 253 / 0.65))
+      drop-shadow(0 0 12px rgb(214 149 228 / 0.4));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    /* The ring sits above the card content, so it must never eat a click. */
+    pointer-events: none;
+    animation: playlist-beam 5.5s linear infinite;
+  }
+
+  /* Offset per card so the lights travel independently instead of in lockstep. */
+  [data-playlist-card]:nth-child(2n)::after {
+    animation-delay: -1.8s;
+  }
+
+  [data-playlist-card]:nth-child(3n)::after {
+    animation-delay: -3.4s;
+  }
+
+  @keyframes playlist-beam {
+    to {
+      --playlist-beam-angle: 360deg;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-playlist-card]::after {
+      animation: none;
+    }
+  }
 </style>
