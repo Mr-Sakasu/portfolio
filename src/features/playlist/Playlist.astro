@@ -251,7 +251,13 @@ if (lang === 'en') {
   });
 }
 const englishArtistChartItems = [...englishArtistCounts.entries()]
-  .map(([artist, count], index) => ({ artist, count, order: index }))
+  .map(([artist, count], index) => ({
+    artist,
+    count,
+    order: index,
+    playlistId: sourcePlaylists[0]?.playlistId ?? '',
+  }))
+  .filter((item) => item.count > 1)
   .sort((first, second) => second.count - first.count || first.artist.localeCompare(second.artist));
 const artistChartItems = lang === 'ja'
   ? jpopArtistChartConfig
@@ -355,7 +361,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
           </div>
         </div>
 
-        {lang === 'ja' ? (
+        {lang === 'ja' || lang === 'en' ? (
           <div class="mt-5 grid gap-5 lg:grid-cols-[minmax(14rem,19rem)_minmax(0,1fr)] lg:items-center">
             <div
               class="mx-auto aspect-square w-full max-w-72 rounded-full border border-white/10 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.95)]"
