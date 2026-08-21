@@ -29,7 +29,7 @@ const heroTitle = t['hero.title'];
                         <span class="home-eyebrow">Sakasu / Portfolio</span>
                         <span class="home-online-status">
                             <span aria-hidden="true"></span>
-                            Tokyo, JP
+                            {t['home.location']}
                         </span>
                     </div>
 
@@ -37,7 +37,7 @@ const heroTitle = t['hero.title'];
                         <span class="home-avatar-ring self-start shrink-0">
                             <Image
                                 src={profileImage}
-                                alt="Profile Picture"
+                                alt={t['home.profile.alt']}
                                 format="webp"
                                 sizes="(max-width: 768px) 104px, 136px"
                                 widths={[104, 136, 208]}
@@ -64,10 +64,10 @@ const heroTitle = t['hero.title'];
                     </div>
 
                     <div class="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
-                        <div class="flex flex-wrap gap-2" aria-label="Focus areas">
-                            <span class="home-tag">Optimization</span>
-                            <span class="home-tag">Affective computing</span>
-                            <span class="home-tag">Creative code</span>
+                        <div class="flex flex-wrap gap-2" aria-label={t['home.focus.label']}>
+                            <span class="home-tag">{t['home.focus.optimization']}</span>
+                            <span class="home-tag">{t['home.focus.affective']}</span>
+                            <span class="home-tag">{t['home.focus.creative']}</span>
                         </div>
                         <a href="https://github.com/Mr-Sakasu/" target="_blank" rel="noopener" class="home-text-link">
                             <svg aria-hidden="true" viewBox="0 0 16 16" class="h-4 w-4" fill="currentColor">
@@ -211,10 +211,10 @@ const heroTitle = t['hero.title'];
     <section id="work" class="home-projects-section">
         <div class="home-section-heading" data-reveal>
             <div>
-                <span class="home-eyebrow">Selected work</span>
+                <span class="home-eyebrow">{t['home.projects.eyebrow']}</span>
                 <h2>{t['nav.work']}</h2>
             </div>
-            <span>{projects.length} projects</span>
+            <span>{t['home.projects.count'].replace('{count}', String(projects.length))}</span>
         </div>
 
         <div class="home-project-grid">
@@ -240,7 +240,7 @@ const heroTitle = t['hero.title'];
                                     class="h-full w-full object-cover"
                                 ></video>
                                 <span class="home-project-card__demo">
-                                    <span aria-hidden="true"></span> Demo
+                                    <span aria-hidden="true"></span> {t['home.project.demo']}
                                 </span>
                             </>
                         ) : project.image === '/er.png' ? (

@@ -30,6 +30,7 @@ const towers = [t['hanoi.towerA'], t['hanoi.towerB'], t['hanoi.towerC']];
       <h1>{t['hanoi.title']}</h1>
       <p class="hanoi-intro__summary">{t['hanoi.subtitle']}</p>
       <p class="hanoi-intro__instruction">{t['hanoi.instructions']}</p>
+      <p class="hanoi-intro__rule">{t['hanoi.rule']}</p>
     </header>
 
     <section class="hanoi-game" aria-label={t['hanoi.title']}>
@@ -260,6 +261,14 @@ const towers = [t['hanoi.towerA'], t['hanoi.towerB'], t['hanoi.towerC']];
     margin-top: 0.65rem;
     color: var(--site-muted);
     font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .hanoi-intro__rule {
+    margin-top: 0.35rem;
+    color: var(--site-text);
+    font-size: 0.875rem;
+    font-weight: 650;
     line-height: 1.6;
   }
 
