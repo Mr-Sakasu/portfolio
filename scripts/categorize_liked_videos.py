@@ -250,6 +250,19 @@ NON_LATIN_RE = re.compile(r"[^\W\d_]", re.UNICODE)
 ASCII_LETTER_RE = re.compile(r"[A-Za-z]")
 
 
+# Sped-up and nightcore bootleg channels. They re-upload other people's songs,
+# mostly Japanese, and declare whatever audio language they please, so neither
+# the language field nor the romanised title says anything about the vocal.
+# Kept out of English regardless of what the metadata claims.
+EN_EXCLUDED_CHANNELS = {
+    "crnvv567",
+    "halves",
+    "mtnox3",
+    "souichi",
+    "rzorblade",
+}
+
+
 def has_music_evidence(video: dict[str, Any]) -> bool:
     snippet = video.get("snippet") if isinstance(video.get("snippet"), dict) else {}
     if str(snippet.get("channelTitle") or "").strip().endswith("- Topic"):
@@ -274,6 +287,8 @@ def looks_english(video: dict[str, Any]) -> bool:
         return False
 
     channel = str(snippet.get("channelTitle") or "").strip()
+    if channel.lower() in EN_EXCLUDED_CHANNELS:
+        return False
     is_topic = channel.endswith("- Topic")
     language = declared_language(video)
 
