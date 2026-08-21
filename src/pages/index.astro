@@ -76,28 +76,54 @@ import Background from '../components/Background.astro';
             resize();
             window.addEventListener('resize', resize, { passive: true });
 
-            // Purple, blue, green: the palette the artist chart uses, so the
-            // entry and the site read as one piece.
-            const palette = ['#d695e4', '#a5a6ff', '#61b9fd', '#38c2ef', '#47cba2'];
-            const sparks = [];
-            const trail = [];
+            // A 八重芯冠菊: a chrysanthemum with a second core inside it, under
+            // a gold crown that keeps falling after the rest has gone out. What
+            // makes a shell read as Japanese is its geometry more than its
+            // colour — every star leaves the burst at the same speed, so it
+            // opens as a sphere rather than a spray; a layer holds one colour
+            // instead of confetti; and the stars go out together, the 消え口 a
+            // shell is judged on.
+            const SKY_RGB = '10, 14, 23'; // the sky the rest of the site sits on
+            canvas.style.background = `rgb(${SKY_RGB})`;
+
+            const RISE_MS = 1300;   // the climb
+            const HANG_MS = 3700;   // and the flower: five seconds of sky
+            const DRAG_TAU = 820;   // ms for the air to take a star's speed away
+            const TRAIL_TAU = 190;  // and to rub its streak off the sky
+            const FLASH_MS = 220;
+            // Sized off the shorter edge, so a phone gets a shell that fits
+            // rather than one that flies past the corners.
+            const REACH = Math.min(width, height) * 0.34;
+            const SINK = REACH * 1.05e-4; // the speed the air lets a star fall at
+            const PACE = REACH / DRAG_TAU; // opening speed of the outer petals
+            const GOLDEN = Math.PI * (3 - Math.sqrt(5));
+
+            // `turn` is the point in a star's burn where its colour changes:
+            // the flash leaves everything white-hot, and it settles from there.
+            const CORE = { count: 80, pace: 0.42, life: 2500, vary: 60, size: 1.7,
+                turn: 0.88, from: '#eaf2ff', to: '#47cba2' };   // 芯
+            const PETAL = { count: 210, pace: 1, life: 2500, vary: 60, size: 1.9,
+                turn: 0.88, from: '#eaf2ff', to: '#8fa8ff' };   // 花弁
+            const CROWN = { count: 70, pace: 0.72, life: 3350, vary: 130, size: 1.8,
+                turn: 0.55, from: '#ffe9b0', to: '#f0a63c' };   // 冠
+            // 昇り曲導 — what the shell sheds on the way up.
+            const RISER = { life: 420, vary: 140, size: 1.3,
+                turn: 0.5, from: '#fff4d6', to: '#e0912f' };
+
+            const stars = [];
             const targetY = height * 0.34;
             const startY = height + 10;
             // Solve the launch for a fixed climb instead of a fixed gravity, so
             // the burst lands on time on a phone and on a tall desktop alike:
             // d = g t^2 / 2 at the peak, where v = g t.
-            // The climb and the bloom below share the whole show out between
-            // them: 1200 up, 2100 hanging, so the splash runs past three
-            // seconds and the shell can be watched rather than caught.
-            const RISE_MS = 1200;
-            const HANG_MS = 2100;
-            const gravity = (2 * (startY - targetY)) / (RISE_MS * RISE_MS);
+            const climb = (2 * (startY - targetY)) / (RISE_MS * RISE_MS);
             const shell = {
                 x: width / 2,
                 y: startY,
-                vy: -gravity * RISE_MS,
+                vy: -climb * RISE_MS,
                 done: false,
             };
+            let burstAt = 0;
 
             // Whatever the animation does, the visitor must still get through.
             const bailout = setTimeout(leave, RISE_MS + HANG_MS + 1600);
@@ -107,26 +133,31 @@ import Background from '../components/Background.astro';
             };
 
             const burst = () => {
-                // One big shell: a dense ring plus a slower inner cloud.
-                for (let index = 0; index < 260; index += 1) {
-                    const angle = (Math.PI * 2 * index) / 260 + Math.random() * 0.06;
-                    // A slow bloom: the sparks drift outward rather than
-                    // snapping to the rim, so the shape stays readable for the
-                    // whole hang.
-                    const speed = 0.13 * (0.55 + Math.random() * Math.random() * 0.75);
-                    sparks.push({
-                        x: shell.x,
-                        y: shell.y,
-                        vx: Math.cos(angle) * speed,
-                        vy: Math.sin(angle) * speed,
-                        life: 1,
-                        // Long enough that they are still lit when the page
-                        // arrives: the shortest-lived star outlasts the hang.
-                        decay: 0.00017 + Math.random() * 0.0002,
-                        color: Math.random() < 0.3 ? '#ffffff' : palette[index % palette.length],
-                    });
-                }
-                // The page swaps in while the burst is still spreading.
+                burstAt = performance.now();
+                [CORE, PETAL, CROWN].forEach((layer) => {
+                    for (let index = 0; index < layer.count; index += 1) {
+                        // Fibonacci points over a sphere, flattened to the
+                        // screen. Stars aimed at or away from us barely move
+                        // sideways, so the rim comes out denser than the middle
+                        // — which is how a real burst reads.
+                        const depth = 1 - (2 * index + 1) / layer.count;
+                        const ring = Math.sqrt(Math.max(1 - depth * depth, 0));
+                        const angle = index * GOLDEN;
+                        // Near-identical speeds: a sphere stays a sphere.
+                        const speed = PACE * layer.pace * (0.97 + Math.random() * 0.06);
+                        stars.push({
+                            x: shell.x,
+                            y: shell.y,
+                            vx: Math.cos(angle) * ring * speed,
+                            vy: Math.sin(angle) * ring * speed,
+                            age: 0,
+                            span: layer.life + (Math.random() * 2 - 1) * layer.vary,
+                            depth,
+                            layer,
+                        });
+                    }
+                });
+                // The page swaps in on the dark sky the shell leaves behind.
                 setTimeout(depart, HANG_MS);
             };
 
@@ -135,43 +166,84 @@ import Background from '../components/Background.astro';
                 const delta = Math.min(now - previous, 48);
                 previous = now;
 
-                context.clearRect(0, 0, width, height);
+                // Trails come from fading the sky rather than wiping it: a star
+                // leaves the streak it does in a photograph, for one rectangle
+                // a frame. Both fades are written against the clock, not the
+                // frame, so a 120Hz screen shows the same firework as a 60Hz one.
+                context.globalCompositeOperation = 'source-over';
+                context.globalAlpha = 1;
+                context.fillStyle = `rgba(${SKY_RGB}, ${1 - Math.exp(-delta / TRAIL_TAU)})`;
+                context.fillRect(0, 0, width, height);
                 context.globalCompositeOperation = 'lighter';
 
                 if (!shell.done) {
-                    shell.vy += gravity * delta;
+                    shell.vy += climb * delta;
                     shell.y += shell.vy * delta;
-                    trail.push({ x: shell.x, y: shell.y });
-                    if (trail.length > 12) trail.shift();
-                    trail.forEach((point, order) => {
-                        context.globalAlpha = (order / trail.length) * 0.6;
-                        context.fillStyle = '#ffffff';
-                        context.beginPath();
-                        context.arc(point.x, point.y, 2, 0, Math.PI * 2);
-                        context.fill();
-                    });
+                    if (Math.random() < 0.55) {
+                        stars.push({
+                            x: shell.x + (Math.random() - 0.5) * 3,
+                            y: shell.y,
+                            vx: (Math.random() - 0.5) * 0.012,
+                            vy: 0.008 + Math.random() * 0.018,
+                            age: 0,
+                            span: RISER.life + (Math.random() * 2 - 1) * RISER.vary,
+                            depth: 0,
+                            layer: RISER,
+                        });
+                    }
+                    // A lifted shell burns unevenly on the way up.
+                    context.globalAlpha = 0.6 + Math.random() * 0.4;
+                    context.fillStyle = '#fff6e0';
+                    context.beginPath();
+                    context.arc(shell.x, shell.y, 2.2, 0, Math.PI * 2);
+                    context.fill();
                     if (shell.y <= targetY || shell.vy >= 0) {
                         shell.done = true;
                         burst();
                     }
                 }
 
-                for (let index = sparks.length - 1; index >= 0; index -= 1) {
-                    const spark = sparks[index];
-                    spark.vy += 0.00007 * delta;
-                    spark.vx *= 0.9975;
-                    spark.vy *= 0.9975;
-                    spark.x += spark.vx * delta;
-                    spark.y += spark.vy * delta;
-                    spark.life -= spark.decay * delta;
-                    if (spark.life <= 0) {
-                        sparks.splice(index, 1);
+                if (burstAt) {
+                    // 割火薬 — the flash that opens the shell.
+                    const spent = (now - burstAt) / FLASH_MS;
+                    if (spent < 1) {
+                        const radius = REACH * (0.12 + 0.5 * spent);
+                        const glow = context.createRadialGradient(
+                            shell.x, shell.y, 0, shell.x, shell.y, radius);
+                        glow.addColorStop(0, `rgba(255, 252, 240, ${0.85 * (1 - spent)})`);
+                        glow.addColorStop(1, 'rgba(255, 252, 240, 0)');
+                        context.globalAlpha = 1;
+                        context.fillStyle = glow;
+                        context.beginPath();
+                        context.arc(shell.x, shell.y, radius, 0, Math.PI * 2);
+                        context.fill();
+                    }
+                }
+
+                const drag = Math.exp(-delta / DRAG_TAU);
+                for (let index = stars.length - 1; index >= 0; index -= 1) {
+                    const star = stars[index];
+                    star.age += delta;
+                    const left = 1 - star.age / star.span;
+                    if (left <= 0) {
+                        stars.splice(index, 1);
                         continue;
                     }
-                    context.globalAlpha = Math.max(spark.life, 0);
-                    context.fillStyle = spark.color;
+
+                    star.vx *= drag;
+                    // Damped fall: the air caps how fast a star can sink, which
+                    // is why a crown drifts down instead of dropping.
+                    star.vy = star.vy * drag + SINK * (1 - drag);
+                    star.x += star.vx * delta;
+                    star.y += star.vy * delta;
+
+                    // Held at full brightness and then dropped, so a layer whose
+                    // stars share a lifetime goes dark all at once.
+                    const near = 0.72 + 0.28 * (star.depth + 1) / 2;
+                    context.globalAlpha = (left > 0.14 ? 1 : left / 0.14) * near;
+                    context.fillStyle = left > star.layer.turn ? star.layer.from : star.layer.to;
                     context.beginPath();
-                    context.arc(spark.x, spark.y, 2, 0, Math.PI * 2);
+                    context.arc(star.x, star.y, star.layer.size * near, 0, Math.PI * 2);
                     context.fill();
                 }
 
