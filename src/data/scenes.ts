@@ -22,7 +22,8 @@ export interface SceneLandmark {
         | 'skytree' | 'tokyotower' | 'fuji'
         | 'canopy' | 'statue' | 'hall' | 'wall' | 'sakura'
         | 'junk' | 'ferry' | 'promenade' | 'billboard'
-        | 'sail' | 'jinwan' | 'jiefang' | 'clock';
+        | 'sail' | 'jinwan' | 'jiefang' | 'clock'
+        | 'peak' | 'ifc' | 'center' | 'convention';
     /** Centre position, 0 (left) to 1 (right). */
     x: number;
     /** Ground row, 0 (top) to 1 (bottom). */
@@ -40,6 +41,9 @@ export interface SceneLandmark {
     onWater?: boolean;
     /** Drawn before the skyline, so the city stands in front of it. */
     behind?: boolean;
+    /** Takes part in the light show: a searchlight off the roof and a band of
+     *  colour running up the facade. Traced as it is drawn, whatever it is. */
+    show?: boolean;
 }
 
 export interface ScenePixels {
@@ -258,24 +262,62 @@ export const scenePixels: Record<string, ScenePixels> = {
         seed: 24,
     },
     victoria: {
-        sky: ['#04081a', '#0b1430', '#16204a', '#2a2a5e', '#4a3568'],
-        haze: { color: '#c88a6a', y: 0.62, strength: 0.3 },
-        celestial: { kind: 'moon', x: 0.14, y: 0.14, r: 5, color: '#fff2d8', glow: '#ffe0b0' },
-        stars: 60,
+        // Composed after the harbour from the Tsim Sha Tsui promenade: the
+        // island's towers standing against the black bulk of the Peak, the
+        // mid-levels climbing it, and the Symphony throwing its searchlights
+        // out over the water the way it does every night at eight.
+        sky: ['#03060f', '#080f26', '#12193c', '#221f52', '#3d2a5e'],
+        haze: { color: '#b8704e', y: 0.63, strength: 0.32 },
+        celestial: { kind: 'moon', x: 0.12, y: 0.13, r: 5, color: '#fff2d8', glow: '#ffe0b0' },
+        stars: 54,
         layers: [
-            { kind: 'peaks', y: 0.6, amp: 0.26, color: '#161f3e', haze: 0.24 },
-            { kind: 'city', y: 0.66, amp: 0.16, color: '#141d40', accent: '#ffcf6b', haze: 0.14 },
-            { kind: 'city', y: 0.7, amp: 0.22, color: '#0d1430', accent: '#ffd98a', haze: 0.04 },
+            { kind: 'city', y: 0.655, amp: 0.13, color: '#1b2450', accent: '#ffcf6b', haze: 0.22 },
+            { kind: 'city', y: 0.685, amp: 0.2, color: '#121b42', accent: '#ffd98a', haze: 0.07 },
+            { kind: 'city', y: 0.71, amp: 0.12, color: '#0a1030', accent: '#fff0c0', haze: 0 },
         ],
         landmarks: [
-            { kind: 'crown', x: 0.22, base: 0.72, h: 0.46, body: '#1c2b52', light: '#ffe0a0' },
-            { kind: 'boc', x: 0.4, base: 0.72, h: 0.56, body: '#24375f', light: '#a8e0ff' },
-            { kind: 'pyramid', x: 0.56, base: 0.72, h: 0.46, body: '#1c2b52', light: '#ffcf6b' },
-            { kind: 'slab', x: 0.8, base: 0.72, h: 0.42, body: '#182549', light: '#ffd98a' },
-            { kind: 'junk', x: 0.66, base: 0.88, h: 0.09, body: '#2a1d22', light: '#d4633a', onWater: true },
-            { kind: 'ferry', x: 0.32, base: 0.83, h: 0.045, body: '#0a1024', light: '#ffe0a0', onWater: true },
+            {
+                kind: 'peak',
+                x: 0.4,
+                base: 0.72,
+                h: 0.6,
+                w: 2.3,
+                body: '#121a3c',
+                light: '#7e8ec4',
+                accent: '#ffcf6b',
+                behind: true,
+            },
+            {
+                kind: 'center',
+                x: 0.18,
+                base: 0.72,
+                h: 0.42,
+                body: '#1b2554',
+                light: '#ff8ad0',
+                // The Symphony's palette: it runs jade and gold through rose,
+                // ice blue and violet, and every tower takes its turn.
+                colors: ['#6ee7c0', '#ffd24a', '#ff6a90', '#63b0ff', '#c98cff'],
+                show: true,
+            },
+            { kind: 'ifc', x: 0.31, base: 0.72, h: 0.52, body: '#243063', light: '#ffe0a0', show: true },
+            { kind: 'boc', x: 0.45, base: 0.72, h: 0.5, body: '#24375f', light: '#a8e0ff', show: true },
+            { kind: 'slab', x: 0.55, base: 0.72, h: 0.44, body: '#182549', light: '#ffd98a' },
+            { kind: 'pyramid', x: 0.67, base: 0.72, h: 0.46, body: '#1c2b52', light: '#ffcf6b', show: true },
+            { kind: 'crown', x: 0.83, base: 0.72, h: 0.36, body: '#1c2b52', light: '#ffe0a0' },
+            {
+                kind: 'convention',
+                x: 0.73,
+                base: 0.745,
+                h: 0.08,
+                w: 0.3,
+                body: '#0e1738',
+                light: '#a8bcd8',
+                onWater: true,
+            },
+            { kind: 'junk', x: 0.41, base: 0.88, h: 0.095, body: '#2a1d22', light: '#c85434', onWater: true },
+            { kind: 'ferry', x: 0.2, base: 0.82, h: 0.05, body: '#0a1024', light: '#ffe0a0', onWater: true },
         ],
-        water: { y: 0.72, colors: ['#122045', '#0d1836', '#091026'], shimmer: '#ffcf6b', reflect: 0.6 },
+        water: { y: 0.72, colors: ['#0f1c44', '#0b1636', '#070e26'], shimmer: '#ffcf6b', reflect: 0.75 },
         seed: 47,
     },
 };
