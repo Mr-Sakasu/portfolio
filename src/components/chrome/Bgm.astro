@@ -1,11 +1,11 @@
 ---
 // Background music, played through an embedded YouTube player rather than a
 // self-hosted file: the platform holds the licence for the upload, nothing
-// copyrighted is served from this domain.
-const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
+// copyrighted is served from this domain. Which track plays where lives in
+// src/data/bgm.ts; this is only the player that plays it.
 ---
 
-<div id="bgm-root" data-video-id={BGM_VIDEO_ID} aria-hidden="true" transition:persist>
+<div id="bgm-root" aria-hidden="true" transition:persist>
   <div id="bgm-player"></div>
 </div>
 
@@ -27,6 +27,8 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
 </style>
 
 <script>
+  import { trackForPath, trackForScene } from '../../data/bgm';
+
   // The visitor starts the music and nothing else does. Until the ♪ button is
   // pressed there is no player, no request to YouTube and no sound. This used
   // to autoplay muted and unmute on the first gesture of any kind, so a stray
@@ -34,9 +36,19 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
   // hands the browser the gesture it demands before it will allow sound, so the
   // track is audible from the first note. One player per page, one tab at a
   // time.
+  //
+  // Once it is running, moving between pages and between the scenes in the reel
+  // changes the track under it. That needs no further gesture — but nothing can
+  // start the music from silence, so a visitor who never presses ♪ hears none
+  // of it.
   const BGM_CLAIM_KEY = 'portfolio-bgm-claim';
   const BGM_CHANNEL = 'portfolio-bgm-channel';
   const BGM_VOLUME = 35; // background, not a performance
+  const FADE_MS = 400;
+  // One flick of the reel crosses every scene in it, and loadVideoById has to
+  // rebuffer each time. Letting a scene settle first keeps the player from
+  // being handed seven tracks in two seconds.
+  const SETTLE_MS = 600;
 
   function paintButtons(playing) {
     document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
@@ -58,6 +70,13 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
       player: null,
       playing: false,  // the track is coming out of the speakers right now
       starting: false, // pressed, but the player is still loading
+      // What should be playing, and what the player actually holds. They part
+      // company between choosing a track and the player catching up with it.
+      track: null,
+      loaded: null,
+      swapping: false, // mid-handover: faded out, waiting on the new track
+      scene: null,     // the reel's current scene, while there is one
+      level: BGM_VOLUME,
       id: Math.random().toString(36).slice(2),
     });
 
@@ -74,6 +93,62 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
       button.addEventListener('click', () => (audible() ? stop() : start()));
     });
 
+    // --- which track ---------------------------------------------------------
+    // A scene showing in the reel wins over the page it sits on.
+    function resolveTrack() {
+      const path = window.location.pathname;
+      return bgm.scene ? trackForScene(bgm.scene, path) : trackForPath(path);
+    }
+
+    // Navigation and scene changes both land here, so a scene reported just
+    // after a page load replaces the target before any swap has run — arriving
+    // on the reel is one handover, not two.
+    function wantTrack(next) {
+      window.clearTimeout(bgm.swapTimer);
+      if (!next) return;
+      bgm.track = next;
+      // Silent: the press picks the right track up on its own.
+      if (!audible() || bgm.loaded === next) return;
+      bgm.swapTimer = window.setTimeout(swapTrack, SETTLE_MS);
+    }
+
+    function swapTrack() {
+      const next = bgm.track;
+      if (!bgm.player?.loadVideoById || bgm.loaded === next || !audible()) return;
+      fade(0, FADE_MS, () => {
+        bgm.loaded = next;
+        bgm.swapping = true;
+        bgm.player.loadVideoById(next); // this starts playing on its own
+        // The volume comes back up from onStateChange, once the new track is
+        // really running: fading up into a buffering player is just silence.
+      });
+    }
+
+    function clearFade() {
+      window.clearInterval(bgm.fadeTimer);
+      bgm.fadeTimer = 0;
+    }
+
+    function fade(to, ms, done) {
+      clearFade();
+      const from = bgm.level;
+      const started = performance.now();
+      const step = () => {
+        const k = ms > 0 ? Math.min(1, (performance.now() - started) / ms) : 1;
+        bgm.level = from + (to - from) * k;
+        bgm.player?.setVolume?.(Math.round(bgm.level));
+        if (k < 1) return;
+        clearFade();
+        done?.();
+      };
+      bgm.fadeTimer = window.setInterval(step, 25);
+      step();
+    }
+
+    // Held on the shared state rather than closed over, so the listeners wired
+    // once below always run against the current page's copy of this function.
+    bgm.applyContext = () => wantTrack(resolveTrack());
+
     // --- one tab at a time ---------------------------------------------------
     // Two tabs of the site would otherwise sing over each other.
     function claimAudio() {
@@ -89,8 +164,12 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
       // Another tab took over, which is not the visitor switching this one off:
       // silence it, and let a press here take the music back.
       window.clearTimeout(bgm.startTimer);
+      window.clearTimeout(bgm.swapTimer);
+      clearFade();
       bgm.playing = false;
       bgm.starting = false;
+      bgm.swapping = false;
+      bgm.level = BGM_VOLUME;
       paintButtons(false);
       bgm.player?.pauseVideo?.();
     }
@@ -108,6 +187,11 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
       window.addEventListener('storage', (event) => {
         if (event.key !== BGM_CLAIM_KEY || !event.newValue) return;
         if (!event.newValue.startsWith(`${bgm.id}:`)) yieldAudio();
+      });
+      // The scenes reel reports whichever scene the visitor has settled on.
+      window.addEventListener('portfolio-scene-change', (event) => {
+        bgm.scene = event.detail?.scene ?? null;
+        bgm.applyContext();
       });
     }
 
@@ -135,23 +219,36 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
 
     function stop() {
       window.clearTimeout(bgm.startTimer);
+      window.clearTimeout(bgm.swapTimer);
+      clearFade();
       bgm.playing = false;
       bgm.starting = false;
+      bgm.swapping = false;
+      bgm.level = BGM_VOLUME;
       paintButtons(false);
       bgm.player?.pauseVideo?.();
     }
 
     function play() {
       bgm.player.unMute?.(); // YouTube hands some embeds back muted
+      clearFade();
+      bgm.level = BGM_VOLUME;
       bgm.player.setVolume?.(BGM_VOLUME);
+      // Moved pages while the music was off: come back on the track for
+      // wherever the visitor is now, not the one they left.
+      if (bgm.loaded !== bgm.track) {
+        bgm.loaded = bgm.track;
+        bgm.player.loadVideoById(bgm.track); // this starts playing on its own
+        return;
+      }
       bgm.player.playVideo();
     }
-
-    const videoId = root.dataset.videoId;
 
     function createPlayer() {
       if (root.dataset.bgmInit === '1') return; // never a second player
       root.dataset.bgmInit = '1';
+      const videoId = bgm.track;
+      bgm.loaded = videoId;
       bgm.player = new window.YT.Player('bgm-player', {
         videoId,
         host: 'https://www.youtube-nocookie.com',
@@ -177,18 +274,27 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
             if (bgm.playing) {
               window.clearTimeout(bgm.startTimer);
               bgm.starting = false;
+              if (bgm.swapping) {
+                // The track swapped into the player is running: bring it up.
+                bgm.swapping = false;
+                fade(BGM_VOLUME, FADE_MS);
+              }
             }
             paintButtons(audible());
-            // loop:1 normally handles this. If a browser ends the video anyway,
-            // pick it back up — but only a track that was actually running, so
-            // this can never restart one the visitor paused.
+            // loop:1 normally handles this, though a track swapped in with
+            // loadVideoById leaves that playlist behind and does end. Either
+            // way, pick it back up — but only a track that was actually
+            // running, so this can never restart one the visitor paused.
             if (event.data === YT.PlayerState.ENDED && wasPlaying) play();
           },
           onError: () => {
             // Video removed, private, or blocked from embedding.
             window.clearTimeout(bgm.startTimer);
+            clearFade();
             bgm.playing = false;
             bgm.starting = false;
+            bgm.swapping = false;
+            bgm.level = BGM_VOLUME;
             paintButtons(false);
           },
         },
@@ -196,7 +302,7 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
     }
 
     function loadPlayer() {
-      if (!videoId) return; // no track configured: stay silent and show nothing
+      if (!bgm.track) return; // no track configured: stay silent and show nothing
       if (window.YT?.Player) {
         createPlayer();
         return;
@@ -215,6 +321,10 @@ const BGM_VIDEO_ID = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cover)
         document.head.appendChild(tag);
       }
     }
+
+    // A new page: whatever scene the reel was showing is behind us now.
+    bgm.scene = null;
+    bgm.applyContext();
   }
 
   document.addEventListener('astro:page-load', setupBgm);
