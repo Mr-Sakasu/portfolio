@@ -151,6 +151,15 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       return (255 << 24) | (b << 16) | (g << 8) | r;
     };
 
+    const WHITE = [255, 255, 255];
+    /** What a facade falls back to where the projection cuts it away. */
+    const NIGHT = [12, 14, 34];
+    const shift = (c, to, f) => [
+      Math.round(c[0] + (to[0] - c[0]) * f),
+      Math.round(c[1] + (to[1] - c[1]) * f),
+      Math.round(c[2] + (to[2] - c[2]) * f),
+    ];
+
     /** Terrain height per column, as a row index. Lower value = taller. */
     const surface = (kind, spec, layer, width, geom) => {
       const rows = geom.rows;
@@ -222,6 +231,9 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       // is mirrored onto a second, transparent layer that is laid back over
       // the top each frame — so a cloud passes behind the towers, not across.
       let front = null;
+      // While this is set, everything drawn is also marked as covering the far
+      // bank — the light show has to stop where the bridge crosses it.
+      let occl = null;
       const put = (px, py, c) => {
         // Coordinates must be whole numbers: a fractional index silently
         // wraps into the wrong row and leaves ghost pixels elsewhere.
@@ -230,6 +242,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         if (x < 0 || y < 0 || x >= width || y >= rows) return;
         buf[y * width + x] = c;
         if (front) front[y * width + x] = c;
+        if (occl) occl[y * width + x] = 1;
       };
       const at = (x, y) => buf[Math.max(0, Math.min(rows - 1, y)) * width + Math.max(0, Math.min(width - 1, x))];
       const box = (x0, y0, w, h, c) => {
@@ -249,6 +262,14 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
       const blinkers = [];
       const beacons = [];
+      // Facades the projection show is thrown onto, and the bridge's outline
+      // lighting. Neither is coloured into the buffer: both are repainted every
+      // frame, so the drawing code only records where they are.
+      const mapped = [];
+      const ribbon = [];
+      let showPalette = null;
+      const projects = !!(spec.landmarks && spec.landmarks.some((l) => l.kind === 'jinwan' || l.kind === 'jiefang'));
+      const cover = projects ? new Uint8Array(width * rows) : null;
       const horizon = spec.sky[Math.max(0, spec.sky.length - 2)];
 
       // Sky: ordered dithering between the band colors.
@@ -869,6 +890,33 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           line(cx, top - nose, cx, top - nose - Math.round(h * 0.08), body);
           windows(5);
           beacon(top - nose - Math.round(h * 0.08), 2.4);
+        } else if (lm.kind === 'sail') {
+          // Tianjin World Financial Center: a blade standing over the bend,
+          // both faces curving in to a rounded point, the crease up the middle
+          // picked out in light the way the tower carries it.
+          const wB = Math.max(4, Math.round(h * 0.16));
+          let crest = base;
+          for (let i = 0; i < h; i += 1) {
+            const f = i / h;
+            const w2 = Math.max(1, Math.round(wB * Math.sqrt(Math.max(0, 1 - f ** 3 * 0.985))));
+            const y = base - i;
+            const x0 = cx - Math.floor(w2 / 2);
+            for (let x = x0; x < x0 + w2; x += 1) {
+              put(x, y, x === x0 ? lit : x === x0 + w2 - 1 ? edge : body);
+            }
+            span(y, x0, x0 + w2 - 1);
+            crest = y;
+          }
+          // Floor bands, then the lit seam running the full height.
+          const band = word(mix(bodyHex, lm.light, 0.24));
+          for (let y = base - 3; y > crest; y -= 4) {
+            const s = spans.get(y);
+            if (s) for (let x = s[0]; x <= s[1]; x += 1) put(x, y, band);
+          }
+          const seam = word(mix(lm.accent ?? lm.light, '#ffffff', 0.3));
+          for (let y = base; y > crest + 1; y -= 1) put(cx, y, seam);
+          windows(4, 0.32);
+          beacon(crest, 3.4);
         } else if (lm.kind === 'fuji') {
           // Fuji on the horizon, backlit at dusk: a flat cone with a lit rim,
           // flanks that flare as they fall, the Hoei crater shouldering out of
@@ -1458,6 +1506,255 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           for (let y = base - h + Math.round(h * 0.72); y < base - 2; y += 3) {
             for (let x = sx; x < sx + sw; x += 2) if (lr() < 0.5) put(x, y, word('#ffe0a0'));
           }
+        } else if (lm.kind === 'jinwan') {
+          // Jinwan Plaza: the crescent of revival-style blocks on the far bank,
+          // domes and mansards and arcaded fronts under floodlight — and the
+          // wall the river's light show is thrown against. Every mark made here
+          // is recorded as it goes down, because the show has to be able to
+          // repaint the facade each frame and still respect its shape.
+          const w = Math.round(width * (lm.w ?? 0.56));
+          const x0 = cx - Math.floor(w / 2);
+          const first = mapped.length;
+          showPalette = lm.colors ?? showPalette;
+          const stone = body;
+          const wall = word(mix(bodyHex, lm.light, 0.26));
+          const shade = word(mix(bodyHex, '#000000', 0.45));
+          const trim = word(mix(bodyHex, lm.light, 0.6));
+          const glass = light;
+          const arch = word(mix(lm.light, bodyHex, 0.45));
+          const roofHex = lm.accent ?? mix(bodyHex, '#000000', 0.35);
+          const roof = word(roofHex);
+          const roofLit = word(mix(roofHex, lm.light, 0.26));
+
+          // One entry per pixel of the facade, with the architecture flagged:
+          // cornices, pilasters, dome ribs. A later mark can promote a pixel to
+          // architecture but never demote it, so the outline stays whole.
+          const seen = new Map();
+          const face = (px, py, c, isEdge) => {
+            const x = Math.round(px);
+            const y = Math.round(py);
+            put(x, y, c);
+            if (x < 0 || y < 0 || x >= width || y >= rows) return;
+            const k = y * width + x;
+            const known = seen.get(k);
+            if (known === undefined) seen.set(k, mapped.push({ x, y, edge: isEdge ? 1 : 0, u: 0, v: 0 }) - 1);
+            else if (isEdge) mapped[known].edge = 1;
+          };
+
+          let x = x0;
+          let block = 0;
+          while (x < x0 + w) {
+            const bw = Math.max(9, Math.round(h * (0.62 + lr() * 0.7)));
+            // The crescent stands tallest where it turns to face the bridge.
+            const mid = Math.min(1, Math.max(0, (x + bw / 2 - x0) / w));
+            const arc = 0.7 + 0.3 * Math.sin(Math.PI * mid);
+            const bh = Math.max(7, Math.round(h * arc * (0.7 + lr() * 0.45)));
+            const bx1 = Math.min(x0 + w - 1, x + bw - 1);
+            const topY = base - bh;
+            // Each block went up under a different hand: the stone runs a
+            // little warmer or greyer along the row.
+            const tone = lr();
+            const bStone = word(mix(bodyHex, lm.light, 0.03 + tone * 0.13));
+            const bWall = word(mix(bodyHex, lm.light, 0.2 + tone * 0.16));
+            const bTrim = word(mix(bodyHex, lm.light, 0.5 + tone * 0.2));
+
+            for (let px = x; px <= bx1; px += 1) {
+              const jamb = px === x || px === bx1;
+              for (let py = topY; py < base; py += 1) {
+                face(px, py, jamb ? (px === x ? bTrim : shade) : py < topY + 2 ? bWall : bStone, jamb);
+              }
+            }
+            // Pilasters and the string course: the lines the show hangs on.
+            for (let px = x + 4; px < bx1; px += 5) {
+              for (let py = topY + 2; py < base; py += 1) face(px, py, bTrim, true);
+            }
+            const course = base - Math.round(bh * 0.6);
+            for (let px = x; px <= bx1; px += 1) {
+              face(px, topY, bTrim, true);
+              face(px, course, bTrim, true);
+            }
+            // Tall arched windows, set between the pilasters.
+            for (let py = base - 4; py > topY + 4; py -= 5) {
+              for (let px = x + 2; px < bx1 - 1; px += 5) {
+                if (lr() > 0.84) continue;
+                face(px, py, glass, false);
+                face(px + 1, py, glass, false);
+                face(px, py - 1, glass, false);
+                face(px + 1, py - 1, glass, false);
+                face(px, py - 2, arch, true);
+                face(px + 1, py - 2, arch, true);
+              }
+            }
+
+            // Domes on a rhythm rather than by chance: the crescent carries
+            // them at intervals, and left to the dice they clump or vanish.
+            const pick = lr();
+            block += 1;
+            if (block % 3 === 2) {
+              // Dome on a drum, ribbed, with a lantern and a finial over it.
+              const dcx = Math.round((x + bx1) / 2);
+              const dr = Math.max(3, Math.round(bw * 0.32));
+              const drum = Math.max(2, Math.round(dr * 0.55));
+              for (let py = topY - drum; py < topY; py += 1) {
+                for (let px = dcx - dr; px <= dcx + dr; px += 1) {
+                  const rim = px === dcx - dr || px === dcx + dr;
+                  face(px, py, rim ? bTrim : bWall, rim);
+                }
+              }
+              const springing = topY - drum;
+              for (let k = 0; k <= dr; k += 1) {
+                const half = Math.round(Math.sqrt(Math.max(0, dr * dr - k * k)));
+                for (let px = dcx - half; px <= dcx + half; px += 1) {
+                  const ribbed = px === dcx - half || px === dcx + half || (px - dcx) % 3 === 0;
+                  face(px, springing - k, ribbed ? roofLit : roof, ribbed);
+                }
+              }
+              const lan = Math.max(1, Math.round(dr * 0.3));
+              for (let py = springing - dr - lan; py < springing - dr; py += 1) {
+                for (let px = dcx - lan; px <= dcx + lan; px += 1) face(px, py, bTrim, true);
+              }
+              const finial = Math.max(2, Math.round(dr * 0.55));
+              for (let k = 0; k < finial; k += 1) face(dcx, springing - dr - lan - 1 - k, bTrim, true);
+            } else if (pick < 0.55) {
+              // Mansard, with dormers punched through the slope.
+              const rh = Math.max(2, Math.round(bh * 0.2));
+              for (let k = 0; k < rh; k += 1) {
+                const inset = Math.round((k / rh) * bw * 0.16);
+                for (let px = x + inset; px <= bx1 - inset; px += 1) {
+                  const rim = k === rh - 1 || px === x + inset || px === bx1 - inset;
+                  face(px, topY - 1 - k, rim ? roofLit : roof, rim);
+                }
+              }
+              for (let px = x + 3; px < bx1 - 2; px += 6) {
+                face(px, topY - 2, glass, false);
+                face(px, topY - 3, roofLit, true);
+              }
+            } else {
+              // Balustraded parapet, urns standing along it.
+              for (let px = x; px <= bx1; px += 1) face(px, topY - 1, px % 3 === 0 ? bTrim : bWall, px % 3 === 0);
+              for (let px = x + 2; px < bx1; px += Math.max(4, Math.round(bw * 0.42))) {
+                face(px, topY - 2, bTrim, true);
+                face(px, topY - 3, bTrim, true);
+              }
+            }
+            x += bw;
+          }
+          // The quay the crescent stands on, coping lit along the waterline.
+          for (let px = x0; px < x0 + w; px += 1) face(px, base, trim, true);
+
+          // Show coordinates, quantised to two-pixel cells so a projected
+          // pattern carries the same grain as the artwork under it.
+          let my0 = Infinity;
+          let my1 = -Infinity;
+          for (let i = first; i < mapped.length; i += 1) {
+            my0 = Math.min(my0, mapped[i].y);
+            my1 = Math.max(my1, mapped[i].y);
+          }
+          const mh = Math.max(1, my1 - my0);
+          for (let i = first; i < mapped.length; i += 1) {
+            const q = mapped[i];
+            q.u = (Math.floor((q.x - x0) / 2) * 2) / w;
+            q.v = (Math.floor((q.y - my0) / 2) * 2) / mh;
+          }
+        } else if (lm.kind === 'jiefang') {
+          // Jiefang Bridge: the 1927 steel bascule over the Haihe, lying low
+          // and broadside across the river. A humped truss over each side span,
+          // the pair of leaves that still lift between them, and the piers they
+          // turn on. The chords carry the outline lighting, so they are
+          // recorded here rather than coloured in.
+          const w = Math.round(width * (lm.w ?? 1.05));
+          const x0 = cx - Math.floor(w / 2);
+          const x1 = x0 + w - 1;
+          const t0 = x0 + Math.round(w * 0.08);
+          const t1 = x1 - Math.round(w * 0.08);
+          const sideW = Math.max(6, Math.round((t1 - t0) * 0.33));
+          const pierA = t0 + sideW;
+          const pierB = t1 - sideW;
+          const deckH = Math.max(2, Math.round(h * 0.16));
+          const deckTop = base - deckH;
+          const glow = (px, py) => {
+            put(px, py, light);
+            if (px >= 0 && px < width && py >= 0 && py < rows) ribbon.push({ x: px, y: py, u: (px - x0) / w });
+          };
+          // Panel points of one camelback, rising off the abutment and coming
+          // down onto the turning pier at half height, where the leaves start.
+          const HUMP = [0.24, 0.58, 0.85, 1, 0.94, 0.72, 0.5];
+          /** Top chord: a hump over each side span, the leaves flat between,
+           *  and nothing at all over the approaches at either end. */
+          const chord = (px) => {
+            if (px <= t0 || px >= t1) return deckTop;
+            if (px <= pierA || px >= pierB) {
+              const f = px <= pierA ? (px - t0) / sideW : (t1 - px) / sideW;
+              const at = Math.min(0.999, Math.max(0, f)) * (HUMP.length - 1);
+              const i = Math.floor(at);
+              return base - Math.round(h * (HUMP[i] + (HUMP[i + 1] - HUMP[i]) * (at - i)));
+            }
+            const f = Math.abs(px - (pierA + pierB) / 2) / Math.max(1, (pierB - pierA) / 2);
+            return base - Math.round(h * (0.5 - 0.05 * f));
+          };
+
+          // Piers first: masonry standing in the river, the rest lands on them.
+          const pierW = Math.max(4, Math.round(h * 0.4));
+          const masonry = word(mix(bodyHex, '#ffffff', 0.12));
+          for (const px of [pierA, pierB]) {
+            const px0 = px - Math.floor(pierW / 2);
+            box(px0, deckTop, pierW, Math.round(h * 1.5), masonry);
+            for (let y = deckTop; y < deckTop + h * 1.5; y += 1) put(px0, y, lit);
+          }
+
+          // Web: posts every bay, crossed diagonals between them.
+          const bay = Math.max(4, Math.round(h * 0.22));
+          for (let px = t0; px <= t1; px += bay) {
+            for (let y = chord(px); y < deckTop; y += 1) put(px, y, lit);
+          }
+          for (let px = t0; px + bay <= t1; px += bay) {
+            line(px, chord(px) + 2, px + bay, deckTop - 1, body);
+            line(px + bay, chord(px + bay) + 2, px, deckTop - 1, body);
+          }
+          // End posts, where the truss lands on its abutments.
+          for (const px of [t0, t1]) for (let y = chord(px); y < deckTop; y += 1) put(px, y, lit);
+          // Chords, two courses deep so they read as members rather than hairs.
+          for (let px = t0; px <= t1; px += 1) {
+            const t = chord(px);
+            put(px, t + 1, body);
+            glow(px, t);
+          }
+
+          // Deck and the girder under it.
+          box(x0, deckTop, w, deckH, body);
+          for (let px = x0; px <= x1; px += 1) put(px, base - 1, edge);
+          for (let px = x0; px <= x1; px += 1) glow(px, deckTop);
+          for (let px = x0; px <= x1; px += 4) put(px, base - 1, word(lm.accent ?? '#ffd98a'));
+
+          // The counterweight houses on the turning piers, lit from inside.
+          for (const px of [pierA, pierB]) {
+            const tw = Math.max(3, Math.round(h * 0.26));
+            const th = Math.round(h * 0.66);
+            const tx = px - Math.floor(tw / 2);
+            box(tx, deckTop - th, tw, th, body);
+            for (let y = deckTop - th; y < deckTop; y += 1) put(tx, y, lit);
+            for (let sx = tx; sx < tx + tw; sx += 1) glow(sx, deckTop - th);
+            put(px, deckTop - Math.round(th * 0.55), word(lm.accent ?? lm.light));
+          }
+        } else if (lm.kind === 'clock') {
+          // The Century Clock on the station plaza at the bridge's foot: a ring
+          // of zodiac plates on splayed legs, the works hung open in the middle.
+          const r = Math.max(4, Math.round(h * 0.4));
+          const cy = base - h + r;
+          const ring = word(mix(bodyHex, lm.light, 0.55));
+          const tick = Math.max(2, Math.round(r * 0.35));
+          line(cx - Math.round(r * 0.85), base, cx - Math.round(r * 0.25), cy, body);
+          line(cx + Math.round(r * 0.85), base, cx + Math.round(r * 0.25), cy, body);
+          for (let a = 0; a < 720; a += 1) {
+            const th = (a / 720) * Math.PI * 2;
+            const dx = Math.cos(th);
+            const dy = Math.sin(th);
+            put(cx + dx * r, cy + dy * r, ring);
+            if (a % 60 === 0) line(cx + dx * r, cy + dy * r, cx + dx * (r + tick), cy + dy * (r + tick), light);
+          }
+          disc(cx, cy, Math.max(1, Math.round(r * 0.42)), body);
+          line(cx, cy, cx, cy - Math.round(r * 0.34), ring);
+          line(cx, cy, cx + Math.round(r * 0.26), cy, ring);
         } else if (lm.kind === 'ferry') {
           const s = Math.max(5, h);
           const hull = Math.max(2, Math.round(s * 0.5));
@@ -1496,13 +1793,19 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       }
 
       if (spec.landmarks) {
+        occl = cover;
         for (const lm of spec.landmarks) if (lm.onWater) drawLandmark(lm);
+        occl = null;
       }
 
       if (!spec.landmarks || !spec.landmarks.some((l) => l.kind === 'promenade')) spec._waterBottom = rows;
       spec._blinkers = blinkers;
       spec._beacons = beacons.filter((b) => b.period > 0);
       spec._front = front;
+      spec._show =
+        cover && (mapped.length || ribbon.length)
+          ? { mapped, ribbon, cover, pal: (showPalette ?? ['#ff3d86', '#2ad0ff', '#ffd24a']).map(rgb) }
+          : null;
       return buf;
     };
 
@@ -1520,6 +1823,11 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       let particles = [];
       let clouds = [];
       let front = null;
+      let show = null;
+      let showBuf = null;
+      let showImage = null;
+      let showCv = null;
+      let showCtx = null;
       let visible = true;
       let raf = 0;
       let lastDraw = 0;
@@ -1554,6 +1862,22 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         clouds = spec._clouds.map((c) => ({ ...c, cv: sprite(c.px, c.w, c.h) }));
         front = spec._front ? sprite(spec._front, width, rows) : null;
 
+        // The light show is painted whole every frame onto its own layer, so
+        // the colour can carry alpha and let the stone underneath show through.
+        show = spec._show;
+        showBuf = null;
+        showImage = null;
+        showCv = null;
+        showCtx = null;
+        if (show) {
+          showBuf = new Uint32Array(width * rows);
+          showImage = new ImageData(new Uint8ClampedArray(showBuf.buffer), width, rows);
+          showCv = document.createElement('canvas');
+          showCv.width = width;
+          showCv.height = rows;
+          showCtx = showCv.getContext('2d');
+        }
+
         particles = [];
         if (spec.weather) {
           const pr = rng(spec.seed * 3 + 1);
@@ -1582,6 +1906,121 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           ctx.drawImage(c.cv, Math.round((((x % span) + span) % span) - c.w), c.y);
         }
         if (front) ctx.drawImage(front, 0, 0);
+      };
+
+      /** The Haihe show: what the projectors throw onto Jinwan Plaza and run
+       *  along the bridge this frame, and what the river makes of both. */
+      const lightShow = (clock) => {
+        if (!show || !showBuf) return;
+        showBuf.fill(0);
+        const pal = show.pal;
+        const n = pal.length;
+        const cover = show.cover;
+        const top = spec._waterTop ?? rows;
+        const shore = spec._waterBottom ?? rows;
+        const depth = Math.max(1, shore - top);
+
+        /** Lay a colour on the river where the pixel above it falls, down the
+         *  same stretched, wobbled mirror the still water was built with. */
+        const echo = (x, y, c, strength) => {
+          const ry = top + Math.round((top - y) / 0.9);
+          // Two rows per source row: the mirror stretches, and one row apiece
+          // would comb the reflection with gaps.
+          for (let k = 0; k < 2; k += 1) {
+            const wy = ry + k;
+            if (wy <= top || wy >= shore) continue;
+            const d = (wy - top) / depth;
+            const wx = x + Math.round(Math.sin(wy * 0.5 + x * 0.06) * (1 + d * 3));
+            if (wx < 0 || wx >= width) continue;
+            const i = wy * width + wx;
+            if (cover[i]) continue;
+            const a = Math.round(strength * (1 - d) ** 1.4);
+            if (a < 10) continue;
+            showBuf[i] = (a << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+          }
+        };
+
+        // Six acts, each opening and closing on plain floodlit stone, so the
+        // show breathes rather than cutting one pattern straight into the next.
+        const turn = clock / 7.4;
+        const act = Math.floor(turn) % 6;
+        const p = turn - Math.floor(turn);
+        const gate = Math.min(1, Math.min(p, 1 - p) * 8);
+        const sweep = p * 1.3 - 0.15;
+        const flood = 1 - Math.abs(p - 0.55) * 3.4;
+
+        for (const q of show.mapped) {
+          const i = q.y * width + q.x;
+          if (cover[i]) continue; // the bridge is standing in the way
+          let c;
+          let a;
+          if (act === 0) {
+            // Wireframe: the stone drops away and only the architecture is
+            // drawn, a bar of light running along it to pick the lines out.
+            const near = 1 - Math.min(1, Math.abs(q.u - sweep) * 9);
+            if (q.edge) {
+              c = q.u < sweep ? shift(pal[1 % n], WHITE, near * 0.9) : pal[1 % n];
+              a = q.u < sweep ? 235 : Math.round(50 + near * 160);
+            } else {
+              c = NIGHT;
+              a = 195;
+            }
+          } else if (act === 1) {
+            // Bands dragged diagonally across the whole crescent at once.
+            const k = Math.floor((q.u * 1.1 + q.v * 0.45 - p * 1.4) * n);
+            c = pal[((k % n) + n) % n];
+            // Cornices and pilasters keep a lighter edge of the same colour, so
+            // the buildings stay drawn instead of flattening into one poster.
+            if (q.edge) c = shift(c, WHITE, 0.42);
+            a = q.edge ? 250 : 215;
+          } else if (act === 2) {
+            const d = Math.hypot((q.u - 0.5) * 2.1, q.v - 0.62);
+            const rip = Math.sin(d * 20 - p * 22);
+            c = rip > 0.4 ? shift(pal[0], WHITE, 0.35) : rip < -0.4 ? NIGHT : pal[3 % n];
+            if (q.edge) c = shift(c, WHITE, rip < -0.4 ? 0.3 : 0.4);
+            a = rip > 0.4 ? 240 : rip < -0.4 ? 195 : 225;
+          } else if (act === 3) {
+            // A tide of light climbing the facades out of the water.
+            const dv = q.v - (1 - p * 1.2);
+            if (dv < -0.05) {
+              c = NIGHT;
+              a = 200;
+            } else if (dv < 0.05) {
+              c = WHITE;
+              a = 250;
+            } else {
+              c = shift(pal[2 % n], pal[4 % n], Math.min(1, dv * 2));
+              a = q.edge ? 245 : 205;
+            }
+          } else if (act === 4) {
+            const g = Math.sin(q.u * 24 + p * 5) * Math.sin(q.v * 13 - p * 4);
+            c = g > 0.42 ? pal[3 % n] : g < -0.42 ? pal[1 % n] : NIGHT;
+            if (q.edge) c = shift(c, WHITE, 0.4);
+            a = Math.abs(g) > 0.42 ? 235 : 190;
+          } else if (flood <= 0) {
+            c = NIGHT;
+            a = 210;
+          } else {
+            // Blackout, then the whole crescent floods white and cools off.
+            c = shift(WHITE, pal[2 % n], 1 - Math.min(1, flood));
+            a = Math.round(140 + 110 * Math.min(1, flood));
+          }
+          a = Math.round(a * gate);
+          if (a < 8) continue;
+          showBuf[i] = (a << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+          echo(q.x, q.y, c, a * 0.6);
+        }
+
+        // The bridge keeps its own slow run of colour along the chords.
+        for (const q of show.ribbon) {
+          const k = Math.floor((q.u * 2.6 - clock * 0.16) * n);
+          const c = pal[((k % n) + n) % n];
+          showBuf[q.y * width + q.x] = (235 << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+          echo(q.x, q.y, c, 120);
+        }
+
+        showCtx.putImageData(showImage, 0, 0);
+        ctx.drawImage(showCv, 0, 0);
       };
 
       const frame = (time) => {
@@ -1614,6 +2053,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             }
           }
         }
+
+        // Thrown over the windows and the steel, not mixed into them: a
+        // still frame of it stands in when motion is turned down.
+        lightShow(reduced ? 12.4 : clock);
 
         if (spec._stars && !reduced) {
           for (let i = 0; i < spec._stars.length; i += 1) {

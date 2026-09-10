@@ -21,7 +21,8 @@ export interface SceneLandmark {
         | 'boc' | 'crown' | 'pyramid' | 'slab' | 'spire'
         | 'skytree' | 'tokyotower' | 'fuji'
         | 'canopy' | 'statue' | 'hall' | 'wall' | 'sakura'
-        | 'junk' | 'ferry' | 'promenade' | 'billboard';
+        | 'junk' | 'ferry' | 'promenade' | 'billboard'
+        | 'sail' | 'jinwan' | 'jiefang' | 'clock';
     /** Centre position, 0 (left) to 1 (right). */
     x: number;
     /** Ground row, 0 (top) to 1 (bottom). */
@@ -33,7 +34,7 @@ export interface SceneLandmark {
     body: string;
     light: string;
     accent?: string;
-    /** Colour bands along a canopy roof. */
+    /** Colour bands along a canopy roof, or the light show's palette. */
     colors?: string[];
     /** Drawn after the water, so it floats instead of being submerged. */
     onWater?: boolean;
@@ -117,6 +118,57 @@ export const scenePixels: Record<string, ScenePixels> = {
             { kind: 'wall', x: 0.5, base: 1.0, h: 0.16, w: 1.02, body: '#a83c2c', light: '#e0aa42' },
         ],
         seed: 71,
+    },
+    tianjin: {
+        // Composed after the night view up the Haihe from the Dagu bridge: the
+        // 1927 bascule lying across the frame, the lit crescent of Jinwan Plaza
+        // on the far bank wearing the river's projection show, and Jin Tower
+        // standing over the whole of it.
+        sky: ['#050716', '#090e26', '#12173a', '#1d2052', '#33265e'],
+        haze: { color: '#57306e', y: 0.66, strength: 0.55 },
+        celestial: { kind: 'moon', x: 0.85, y: 0.12, r: 4, color: '#fff2d8', glow: '#dcbcf0' },
+        stars: 22,
+        layers: [
+            { kind: 'city', y: 0.6, amp: 0.12, color: '#262a56', accent: '#ffd98a', haze: 0.32 },
+            { kind: 'city', y: 0.645, amp: 0.18, color: '#191c46', accent: '#ffe0a0', haze: 0.14 },
+            { kind: 'city', y: 0.685, amp: 0.1, color: '#0f1130', accent: '#ffe6b0', haze: 0.02 },
+        ],
+        landmarks: [
+            { kind: 'crown', x: 0.08, base: 0.7, h: 0.27, body: '#1d2450', light: '#ffd98a' },
+            { kind: 'sail', x: 0.315, base: 0.7, h: 0.5, body: '#232a5e', light: '#bfe4ff', accent: '#7ab4ff' },
+            { kind: 'slab', x: 0.45, base: 0.7, h: 0.33, body: '#1b2150', light: '#ffe0a0' },
+            { kind: 'slab', x: 0.61, base: 0.7, h: 0.24, body: '#161c44', light: '#ffd98a' },
+            { kind: 'crown', x: 0.74, base: 0.7, h: 0.3, body: '#1e2452', light: '#ffe0a0' },
+            { kind: 'billboard', x: 0.89, base: 0.7, h: 0.22, body: '#171d46', light: '#e0364e' },
+            {
+                kind: 'jinwan',
+                x: 0.29,
+                base: 0.7,
+                h: 0.17,
+                w: 0.56,
+                body: '#4a3a34',
+                light: '#ffdcab',
+                accent: '#2b2130',
+                // The Haihe show's palette: hot pink and cyan through gold and
+                // violet, the whole crescent turning colour at once.
+                colors: ['#ff3d86', '#2ad0ff', '#ffd24a', '#8f5cff', '#ff7a3c'],
+            },
+            {
+                kind: 'jiefang',
+                x: 0.5,
+                base: 0.79,
+                h: 0.16,
+                w: 1.06,
+                body: '#3a4570',
+                light: '#cfe6ff',
+                accent: '#ffd98a',
+                onWater: true,
+            },
+            { kind: 'promenade', x: 0.5, base: 1, h: 0.09, w: 1, body: '#080b20', light: '#f0c98a', onWater: true },
+            { kind: 'clock', x: 0.87, base: 0.95, h: 0.12, body: '#0a0d24', light: '#ffc46a', onWater: true },
+        ],
+        water: { y: 0.7, colors: ['#101a40', '#0c1432', '#070c22'], shimmer: '#a8d0ff', reflect: 0.85 },
+        seed: 27,
     },
     shenzhen: {
         // Composed after the view from Lianhua Hill Park: blue sky over the
@@ -229,12 +281,13 @@ export const scenePixels: Record<string, ScenePixels> = {
 };
 
 /** Display order; nothing is labelled on the page itself. */
-export const sceneOrder = ['bund', 'gugong', 'shenzhen', 'victoria', 'tokyo', 'fuji'];
+export const sceneOrder = ['bund', 'gugong', 'tianjin', 'shenzhen', 'victoria', 'tokyo', 'fuji'];
 
 export const sceneNames: Record<string, Record<string, { name: string; place: string }>> = {
     en: {
         bund: { name: 'The Bund', place: 'Shanghai' },
         gugong: { name: 'The Forbidden City', place: 'Beijing' },
+        tianjin: { name: 'Jiefang Bridge', place: 'Tianjin' },
         shenzhen: { name: 'Lianhua Hill Park', place: 'Shenzhen' },
         victoria: { name: 'Victoria Harbour', place: 'Hong Kong' },
         tokyo: { name: 'The Skyline', place: 'Tokyo' },
@@ -243,6 +296,7 @@ export const sceneNames: Record<string, Record<string, { name: string; place: st
     zh: {
         bund: { name: '外滩', place: '上海' },
         gugong: { name: '故宫', place: '北京' },
+        tianjin: { name: '解放桥', place: '天津' },
         shenzhen: { name: '莲花山公园', place: '深圳' },
         victoria: { name: '维多利亚港', place: '香港' },
         tokyo: { name: '东京天际线', place: '东京' },
@@ -251,6 +305,7 @@ export const sceneNames: Record<string, Record<string, { name: string; place: st
     ja: {
         bund: { name: '外灘', place: '上海' },
         gugong: { name: '故宮', place: '北京' },
+        tianjin: { name: '解放橋', place: '天津' },
         shenzhen: { name: '蓮花山公園', place: '深圳' },
         victoria: { name: 'ビクトリア・ハーバー', place: '香港' },
         tokyo: { name: '東京の街並み', place: '東京' },
