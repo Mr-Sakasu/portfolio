@@ -234,6 +234,9 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       // While this is set, everything drawn is also marked as covering the far
       // bank — the light show has to stop where the bridge crosses it.
       let occl = null;
+      // While this is set, every pixel laid down is recorded, so a landmark can
+      // join the light show without its own drawing code knowing anything.
+      let trace = null;
       const put = (px, py, c) => {
         // Coordinates must be whole numbers: a fractional index silently
         // wraps into the wrong row and leaves ghost pixels elsewhere.
@@ -243,6 +246,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         buf[y * width + x] = c;
         if (front) front[y * width + x] = c;
         if (occl) occl[y * width + x] = 1;
+        if (trace) trace.push(x, y);
       };
       const at = (x, y) => buf[Math.max(0, Math.min(rows - 1, y)) * width + Math.max(0, Math.min(width - 1, x))];
       const box = (x0, y0, w, h, c) => {
@@ -267,8 +271,13 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       // frame, so the drawing code only records where they are.
       const mapped = [];
       const ribbon = [];
+      // Towers that take part in a searchlight show: their facades, and the
+      // roof each beam is thrown from.
+      const chase = [];
+      const beams = [];
       let showPalette = null;
-      const projects = !!(spec.landmarks && spec.landmarks.some((l) => l.kind === 'jinwan' || l.kind === 'jiefang'));
+      const projects = !!(spec.landmarks
+        && spec.landmarks.some((l) => l.kind === 'jinwan' || l.kind === 'jiefang' || l.show));
       const cover = projects ? new Uint8Array(width * rows) : null;
       const horizon = spec.sky[Math.max(0, spec.sky.length - 2)];
 
@@ -420,6 +429,35 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       // From here down everything is solid ground, hills, towers and water:
       // the part that has to sit in front of a passing cloud.
       if (clouds.length) front = new Uint32Array(width * rows);
+
+      /** Draw a landmark, recording it if it is one the show plays on. */
+      function show(lm) {
+        if (!lm.show || !cover) {
+          drawLandmark(lm);
+          return;
+        }
+        trace = [];
+        drawLandmark(lm);
+        const marks = trace;
+        trace = null;
+        let bx0 = Infinity;
+        let by0 = Infinity;
+        let bx1 = -Infinity;
+        let by1 = -Infinity;
+        for (let i = 0; i < marks.length; i += 2) {
+          bx0 = Math.min(bx0, marks[i]);
+          bx1 = Math.max(bx1, marks[i]);
+          by0 = Math.min(by0, marks[i + 1]);
+          by1 = Math.max(by1, marks[i + 1]);
+        }
+        const t = beams.length;
+        const span2 = Math.max(1, by1 - by0);
+        for (let i = 0; i < marks.length; i += 2) {
+          chase.push({ x: marks[i], y: marks[i + 1], v: (by1 - marks[i + 1]) / span2, t });
+        }
+        beams.push({ x: Math.round((bx0 + bx1) / 2), y: by0, t });
+        showPalette = lm.colors ?? showPalette;
+      }
 
       // A mountain on the horizon: drawn first, so the skyline overlaps its
       // flanks the way the city does from any window in town.
@@ -917,6 +955,121 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           for (let y = base; y > crest + 1; y -= 1) put(cx, y, seam);
           windows(4, 0.32);
           beacon(crest, 3.4);
+        } else if (lm.kind === 'peak') {
+          // Victoria Peak: the black mass the island stands against. A rounded
+          // summit west of centre, a long shoulder falling east, the mid-levels
+          // climbing the lower slope in scattered light, and the Peak Tower's
+          // wok up on the ridge.
+          const reach = Math.max(1, Math.round(h * (lm.w ?? 2.4)));
+          const rockHex = bodyHex;
+          const rock = word(rockHex);
+          const ridge = word(mix(rockHex, lm.light, 0.3));
+          const gully = word(mix(rockHex, '#000000', 0.4));
+          const bell = (f, at, s) => Math.exp(-(((f - at) / s) ** 2));
+          const skyline = new Int32Array(width);
+          for (let x = 0; x < width; x += 1) {
+            const f = (x - cx) / reach;
+            // A low ridge the whole way across, the summit standing out of it.
+            const rise = 0.15 + 0.85 * bell(f, 0, 0.44) + 0.34 * bell(f, 0.62, 0.42) + 0.16 * bell(f, -0.74, 0.3);
+            // Roughness at two scales, so the ridge is crags and not a curve.
+            const jag = Math.sin(x * 0.31) * 0.022 + Math.sin(x * 0.09 + 2) * 0.045;
+            const top = base - Math.round(h * Math.max(0.05, rise + jag));
+            skyline[x] = top;
+            for (let y = top; y < base; y += 1) put(x, y, y === top ? ridge : rock);
+          }
+          // Gullies raking down the flanks.
+          for (let g = 0; g < 7; g += 1) {
+            const gx = Math.round(lr() * width);
+            const len = Math.round(h * (0.3 + lr() * 0.5));
+            for (let k = 0; k < len; k += 1) {
+              put(gx + Math.round(Math.sin(k * 0.2) * 1.5), skyline[gx] + k, gully);
+            }
+          }
+          // The mid-levels: flats stacked up the lower slope, their lit windows
+          // the only thing that reads from across the water.
+          const glow = word(lm.accent ?? lm.light);
+          const pale = word(mix(lm.accent ?? lm.light, '#ffffff', 0.4));
+          for (let i = 0; i < Math.round(width * 0.55); i += 1) {
+            const x = Math.round(lr() * width);
+            const top = skyline[x];
+            const drop = base - top;
+            if (drop < 6) continue;
+            // Kept to the lower slope, thinning out as it climbs.
+            const y = top + Math.round((0.44 + lr() ** 1.6 * 0.5) * drop);
+            if (y >= base - 1) continue;
+            // Two or three windows together, so a block reads as a building
+            // rather than as a star that has fallen on the hill.
+            const c = lr() < 0.25 ? pale : glow;
+            put(x, y, c);
+            put(x + 1, y, c);
+            if (lr() < 0.45) {
+              put(x, y - 1, c);
+              put(x + 1, y - 1, c);
+            }
+          }
+          // The Peak Tower, standing on the summit.
+          const px = cx - Math.round(reach * 0.05);
+          const ty = skyline[Math.max(0, Math.min(width - 1, px))];
+          const tw = Math.max(4, Math.round(h * 0.15));
+          const stem = Math.max(2, Math.round(h * 0.055));
+          box(px - Math.round(tw * 0.17), ty - stem, Math.max(2, Math.round(tw * 0.34)), stem, rock);
+          for (let dx = -Math.floor(tw / 2); dx <= tw / 2; dx += 1) {
+            // The wok: a bowl that lifts at both rims.
+            const f = Math.abs(dx) / Math.max(1, tw / 2);
+            const lift = Math.round(f ** 2 * tw * 0.3);
+            const yy = ty - stem - 1 - lift;
+            put(px + dx, yy, glow);
+            put(px + dx, yy + 1, ridge);
+            put(px + dx, yy + 2, rock);
+          }
+        } else if (lm.kind === 'ifc') {
+          // Two IFC: a tapered shaft stepping back as it climbs, under a crown
+          // of fins that stand tallest at the rim, the spire out of the middle.
+          const shaftH = Math.round(h * 0.83);
+          const top = taper(shaftH, Math.round(h * 0.175), Math.round(h * 0.105), 0);
+          // Setbacks: the shaft is notched where each section steps in.
+          for (let k = 1; k <= 5; k += 1) {
+            const y = base - Math.round((shaftH * k) / 6);
+            const s = spans.get(y);
+            if (!s) continue;
+            for (let x = s[0]; x <= s[1]; x += 1) put(x, y, lit);
+            put(s[0] - 1, y, edge);
+            put(s[1] + 1, y, edge);
+          }
+          const cw = Math.max(3, Math.round(h * 0.11));
+          const fin = Math.max(2, Math.round(h * 0.085));
+          for (let x = cx - Math.floor(cw / 2); x <= cx + cw / 2; x += 1) {
+            const t = Math.abs(x - cx) / Math.max(1, cw / 2);
+            const fh = Math.max(1, Math.round(fin * (0.35 + 0.65 * t)));
+            for (let k = 0; k < fh; k += 1) put(x, top - k, (x - cx) % 2 === 0 ? light : body);
+          }
+          const spire = Math.round(h * 0.09);
+          for (let k = 0; k < spire; k += 1) put(cx, top - Math.round(fin * 0.35) - k, body);
+          windows(4, 0.42);
+          beacon(top - Math.round(fin * 0.35) - spire, 3.6);
+        } else if (lm.kind === 'center') {
+          // The Center: a slim shaft of stepped corners, banded the whole way
+          // up in neon that runs its colours rather than holding one.
+          const shaftH = Math.round(h * 0.88);
+          const top = taper(shaftH, Math.round(h * 0.16), Math.round(h * 0.115), 0);
+          // Corners stepped back, so the shaft reads faceted rather than flat.
+          for (let y = base; y > top; y -= 1) {
+            const s = spans.get(y);
+            if (!s) continue;
+            const step = ((base - y) % 9 < 5) ? 1 : 0;
+            put(s[0] + step, y, lit);
+            put(s[1] - step, y, edge);
+          }
+          // The neon bands the tower is known for.
+          for (let y = base - 3; y > top; y -= 3) {
+            const s = spans.get(y);
+            if (!s) continue;
+            for (let x = s[0] + 1; x < s[1]; x += 1) put(x, y, light);
+          }
+          const cap = Math.max(2, Math.round(h * 0.05));
+          box(cx - Math.round(h * 0.05), top - cap, Math.max(2, Math.round(h * 0.1)), cap, body);
+          for (let k = 0; k < Math.round(h * 0.1); k += 1) put(cx, top - cap - k, body);
+          beacon(top - cap - Math.round(h * 0.1), 2.9);
         } else if (lm.kind === 'fuji') {
           // Fuji on the horizon, backlit at dusk: a flat cone with a lit rim,
           // flanks that flare as they fall, the Hoei crater shouldering out of
@@ -1475,16 +1628,67 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             box(px - 1, y0 - ph, 3, ph, word(mix(lm.body, '#000000', 0.5)));
             disc(px, y0 - ph - 1, 1, word(mix(lm.body, '#000000', 0.5)));
           }
-        } else if (lm.kind === 'junk') {
-          const s = Math.max(6, h);
-          for (let i = 0; i < Math.round(s * 0.9); i += 1) {
-            const w = Math.round(s * 1.1 * (1 - i / (s * 1.4)));
-            for (let x = cx - Math.floor(w / 2); x <= cx + w / 2; x += 1) {
-              put(x, base - Math.round(s * 0.25) - i, (x - cx) % 4 === 0 ? word(mix(lm.light, '#000000', 0.3)) : light);
+        } else if (lm.kind === 'convention') {
+          // The Convention Centre out on its reclamation: the roof going over
+          // the water in three curved sweeps, wings folded down to the harbour.
+          const w = Math.max(14, Math.round(width * (lm.w ?? 0.3)));
+          const x0 = cx - Math.floor(w / 2);
+          const shellHex = lm.light;
+          const shell = word(mix(shellHex, bodyHex, 0.55));
+          const shellLit = word(shellHex);
+          const glass = word(mix(shellHex, '#ffd98a', 0.5));
+          // Back to front, so each sweep tucks under the one before it.
+          for (const s of [[0.36, 1, 1], [0.0, 0.52, 0.66], [0.62, 1, 0.44]]) {
+            const sx0 = x0 + Math.round(w * s[0]);
+            const sx1 = x0 + Math.round(w * s[1]);
+            const sw = Math.max(2, sx1 - sx0);
+            for (let x = sx0; x <= sx1; x += 1) {
+              const f = (x - sx0) / sw;
+              const rise = Math.sin(Math.PI * f) ** 0.55 * h * s[2];
+              const top = base - Math.round(Math.max(1, rise));
+              for (let y = top; y < base; y += 1) {
+                put(x, y, y === top ? shellLit : y < top + 2 ? shell : body);
+              }
             }
           }
-          box(cx - Math.round(s * 0.7), base - Math.round(s * 0.25), Math.round(s * 1.4), Math.round(s * 0.22), body);
-          line(cx, base - Math.round(s * 0.25), cx, base - Math.round(s * 1.15), body);
+          // The lit hall behind the glass, along the waterfront.
+          for (let y = base - 2; y > base - Math.max(3, Math.round(h * 0.45)); y -= 2) {
+            for (let x = x0 + 2; x < x0 + w - 1; x += 2) if (lr() < 0.55) put(x, y, glass);
+          }
+        } else if (lm.kind === 'junk') {
+          // A junk under full sail: three battened lugsails, rust red, over a
+          // hull that rides high at the stern.
+          const s = Math.max(6, h);
+          const hullH = Math.max(2, Math.round(s * 0.3));
+          const deck = base - hullH;
+          const sailHex = lm.light;
+          const sail = word(sailHex);
+          const batten = word(mix(sailHex, '#000000', 0.42));
+          const lee = word(mix(sailHex, '#ffd8a0', 0.3));
+          for (const sl of [[-0.62, 0.5, 0.8], [0.06, 0.8, 1.2], [0.78, 0.44, 0.66]]) {
+            const mx = cx + Math.round(s * sl[0]);
+            const sw = Math.max(2, Math.round(s * sl[1]));
+            const sh = Math.max(3, Math.round(s * sl[2]));
+            for (let k = 0; k < sh; k += 1) {
+              const f = k / sh;
+              // Narrowing to the head, and canted forward as it rises.
+              const half = Math.max(1, Math.round((sw * (1 - f * 0.5)) / 2));
+              const lean = Math.round(f * s * 0.14);
+              const y = deck - 1 - k;
+              for (let x = mx - half + lean; x <= mx + half + lean; x += 1) {
+                put(x, y, k % 3 === 0 ? batten : x < mx - half + lean + 2 ? lee : sail);
+              }
+            }
+            line(mx, deck - 1, mx + Math.round(sh * 0.14), deck - sh, batten);
+          }
+          // Hull: a long low waist with the stern lifted clear of the water.
+          for (let x = cx - Math.round(s * 1.5); x <= cx + s * 1.5; x += 1) {
+            const f = (x - (cx - s * 1.5)) / (s * 3);
+            const lift = Math.round(hullH * (f > 0.78 ? (f - 0.78) * 3.4 : 0));
+            for (let y = deck - lift; y < base - Math.round(lift * 0.35); y += 1) {
+              put(x, y, y === deck - lift ? word(mix(bodyHex, lm.light, 0.35)) : body);
+            }
+          }
         } else if (lm.kind === 'billboard') {
           // Riverfront tower wearing a huge lit screen.
           const w = Math.max(6, Math.round(h * 0.42));
@@ -1766,7 +1970,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       }
 
       if (spec.landmarks) {
-        for (const lm of spec.landmarks) if (!lm.onWater && !lm.behind) drawLandmark(lm);
+        for (const lm of spec.landmarks) if (!lm.onWater && !lm.behind) show(lm);
       }
 
       // Water: bands, then a wobbled mirror of everything standing above it.
@@ -1803,8 +2007,15 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       spec._beacons = beacons.filter((b) => b.period > 0);
       spec._front = front;
       spec._show =
-        cover && (mapped.length || ribbon.length)
-          ? { mapped, ribbon, cover, pal: (showPalette ?? ['#ff3d86', '#2ad0ff', '#ffd24a']).map(rgb) }
+        cover && (mapped.length || ribbon.length || chase.length)
+          ? {
+              mapped,
+              ribbon,
+              chase,
+              beams,
+              cover,
+              pal: (showPalette ?? ['#ff3d86', '#2ad0ff', '#ffd24a']).map(rgb),
+            }
           : null;
       return buf;
     };
@@ -2011,6 +2222,48 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           echo(q.x, q.y, c, a * 0.6);
         }
 
+        // The Symphony: a band of light climbing each tower in turn, and the
+        // searchlights swinging out of the roofs over the harbour.
+        for (const q of show.chase) {
+          const head = ((clock * 0.17 + q.t * 0.29) % 1.7) - 0.35;
+          const d = q.v - head;
+          if (d < -0.17 || d > 0.05) continue;
+          const near = 1 - Math.min(1, Math.abs(d) / 0.17);
+          const c = shift(pal[q.t % n], WHITE, near * near * 0.5);
+          const a = Math.round(220 * near);
+          if (a < 10) continue;
+          showBuf[q.y * width + q.x] = (a << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+          echo(q.x, q.y, c, a * 0.5);
+        }
+        for (const b of show.beams) {
+          // The towers take the harbour in turn rather than all firing at once.
+          const cue = (clock * 0.075 + b.t * 0.41) % 1;
+          const on = Math.min(1, Math.min(cue, 0.34 - cue) * 9);
+          if (on <= 0.02) continue;
+          const c = pal[(b.t + Math.floor(clock / 6.5)) % n];
+          const swing = Math.sin(clock * (0.15 + (b.t % 3) * 0.045) + b.t * 1.9);
+          // Faded out by the time it leaves the frame, or it reads as wire
+          // strung from the sky rather than light going into it.
+          const reach = Math.max(30, b.y + rows * 0.22);
+          // A fan, not a mirrored pair: the rig is off to one side of the roof.
+          for (const off of b.t % 2 ? [-0.36, 0.1] : [-0.08, 0.38]) {
+            const ang = -Math.PI / 2 + off + swing * 0.26;
+            const dx = Math.cos(ang);
+            const dy = Math.sin(ang);
+            for (let k = 3; k < reach; k += 1) {
+              const bx = Math.round(b.x + dx * k);
+              const by = Math.round(b.y + dy * k);
+              if (by < 0 || bx < 0 || bx >= width) break;
+              // Thinning as it goes, the way a beam does in the haze.
+              const a = Math.round(132 * on * (1 - k / reach) ** 1.7);
+              if (a < 8) continue;
+              const packed = (a << 24) | (c[2] << 16) | (c[1] << 8) | c[0];
+              showBuf[by * width + bx] = packed;
+              if (bx + 1 < width && k < reach * 0.45) showBuf[by * width + bx + 1] = packed;
+            }
+          }
+        }
+
         // The bridge keeps its own slow run of colour along the chords.
         for (const q of show.ribbon) {
           const k = Math.floor((q.u * 2.6 - clock * 0.16) * n);
@@ -2138,6 +2391,38 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       };
     };
 
+    // Which scene the visitor has actually landed on. The reel snaps, so the
+    // answer is whichever stage covers most of it — and only once past half,
+    // which skips the pair that share the viewport mid-scroll. The BGM player
+    // listens for this; nothing else does, and nothing here makes a sound.
+    const watchScenes = (reel) => {
+      const ratios = new Map();
+      let announced = null;
+
+      const io = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          ratios.set(entry.target.dataset.scene, entry.intersectionRatio);
+        }
+
+        let best = null;
+        let bestRatio = 0;
+        for (const [id, ratio] of ratios) {
+          if (ratio <= bestRatio) continue;
+          bestRatio = ratio;
+          best = id;
+        }
+
+        if (!best || bestRatio < 0.5 || best === announced) return;
+        announced = best;
+        window.dispatchEvent(new CustomEvent('portfolio-scene-change', {
+          detail: { scene: best },
+        }));
+      }, { root: reel, threshold: [0, 0.25, 0.5, 0.75, 1] });
+
+      reel.querySelectorAll('[data-scene]').forEach((stage) => io.observe(stage));
+      return () => io.disconnect();
+    };
+
     let teardown = [];
 
     const init = () => {
@@ -2157,6 +2442,8 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       document.querySelectorAll('[data-scene-canvas]').forEach((canvas) => {
         teardown.push(startScene(canvas));
       });
+
+      teardown.push(watchScenes(reel));
     };
 
     document.addEventListener('astro:page-load', init);
