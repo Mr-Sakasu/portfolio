@@ -20,6 +20,10 @@ export interface Track {
      * here: a scene may only hold the screen for a few seconds, so the music
      * has to arrive already at the good part.
      *
+     * Set these by ear. A video's replay heatmap gets close on some songs and
+     * is badly wrong on others — it marks whatever people rewind to, which on
+     * 帶我去找夜生活 is a hook a full minute before the サビ.
+     *
      * Omit it for anything with no サビ to find. Game music is written to
      * loop and is best from the top.
      */
@@ -45,7 +49,7 @@ export const sceneTracks: Record<string, Track | null> = {
     // 清华二校門 arrived after the tracks were picked and has none of its own,
     // so it keeps the site default until one is chosen.
     tsinghua: null,
-    tianjin: { id: 'W9Fq1HC_5hg', start: 49 }, // 告五人 - 帶我去找夜生活
+    tianjin: { id: 'W9Fq1HC_5hg', start: 105 }, // 告五人 - 帶我去找夜生活
     // Game music, both of them: written as loops, with no サビ to skip to.
     shenzhen: { id: 'Bw7ggOj9CVs' }, // ポケモン HGSS - しぜんこうえん
     victoria: { id: 'KQ3PzgYN8BI' }, // Pokémon Black/White - Black City
@@ -53,7 +57,7 @@ export const sceneTracks: Record<string, Track | null> = {
     // anywhere, so there is no サビ to drop into. It plays from the top.
     // The album cut has no official upload; this is the one on her own channel.
     tokyo: { id: 'Ej1fyNdnuFI' }, // 椎名林檎 - 丸ノ内サディスティック (Miso Remix)
-    fuji: { id: 'Sw1Flgub9s8', start: 48 }, // ヨルシカ - 春泥棒
+    fuji: { id: 'Sw1Flgub9s8', start: 44 }, // ヨルシカ - 春泥棒
 };
 
 /**
