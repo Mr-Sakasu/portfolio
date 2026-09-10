@@ -80,4 +80,14 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
   .site-nav-scroll::-webkit-scrollbar {
     display: none;
   }
+
+  /* Below md the strip scrolls, and the scrollbar is hidden. Fade its trailing
+     edge so it reads as something to swipe rather than as a row that happens to
+     have been cut off. */
+  @media (max-width: 767px) {
+    .site-nav-scroll {
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+      mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
+    }
+  }
 </style>

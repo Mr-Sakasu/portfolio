@@ -65,7 +65,7 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
         <Background />
         <Bgm />
 
-        <SiteHeader lang={lang} contentWidth={contentWidth} />
+        <SiteHeader lang={lang} />
 
 		<main class={`box-border w-full ${contentWidth} mx-auto p-4 md:p-6 flex-grow relative z-10`}>
 			<slot />
