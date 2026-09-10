@@ -4,14 +4,12 @@ import LanguagePicker from './LanguagePicker.astro';
 
 interface Props {
   lang: Locale;
-  contentWidth: string;
 }
 
-const { lang, contentWidth } = Astro.props;
+const { lang } = Astro.props;
 const t = getUi(lang);
 const isHomePage = Astro.url.pathname === `/${lang}/`;
 const isStarsPage = Astro.url.pathname.includes('/stars');
-const isGlobePage = Astro.url.pathname.includes('/globe');
 const isBanditPage = Astro.url.pathname.includes('/bandit');
 const isHanoiPage = Astro.url.pathname.includes('/hanoi');
 const isPlaylistPage = Astro.url.pathname.includes('/playlist');
@@ -20,13 +18,16 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
 ---
 
 <header class="site-header sticky top-0 z-40 w-full">
-  <div class={`box-border w-full ${contentWidth} mx-auto px-4 py-3 md:px-6 md:py-3.5`}>
-    <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+  {/* The bar keeps its own width rather than borrowing the article's. The
+      links, the brand and the controls do not fit inside a reading column, and
+      sharing one pushed the controls clean off the side of the screen. */}
+  <div class="box-border w-full max-w-6xl mx-auto px-4 py-3 md:px-6 md:py-3.5">
+    <div class="flex flex-col gap-3">
       <div class="flex items-center justify-between gap-4">
         <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-blue-400 transition-colors whitespace-nowrap">
           Sakasu's note<span class="site-brand__dot" aria-hidden="true">.</span>
         </a>
-        <div class="flex items-center gap-2 md:hidden shrink-0">
+        <div class="flex items-center gap-2 shrink-0">
           <LanguagePicker />
           <button type="button" data-theme-toggle class="theme-toggle" aria-label={t['theme.toggle']} title={t['theme.toggle']}>
             <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
@@ -38,8 +39,11 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
         </div>
       </div>
 
-      <nav aria-label="Top navigation" class="w-full md:flex-1 md:flex md:justify-center">
-        <div class="site-nav-scroll flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+      {/* On its own row, so the links never compete with the brand for space.
+          A narrow screen swipes through them in one line; from md they wrap
+          onto a second rather than being clipped with the scrollbar hidden. */}
+      <nav aria-label="Top navigation" class="w-full min-w-0">
+        <div class="site-nav-scroll flex items-center gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
           <a href={`/${lang}/#work`} class={`${navBaseClass} ${isHomePage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.work']}
           </a>
@@ -55,9 +59,6 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
           <a href={`/${lang}/stars/`} class={`${navBaseClass} ${isStarsPage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.stars']}
           </a>
-          <a href={`/${lang}/globe/`} class={`${navBaseClass} ${isGlobePage ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
-            {t['nav.globe']}
-          </a>
           <a href={`/${lang}/bandit/`} class={`${navBaseClass} ${isBanditPage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.bandit']}
           </a>
@@ -66,17 +67,6 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
           </a>
         </div>
       </nav>
-
-      <div class="hidden md:flex md:items-center md:gap-2 shrink-0">
-        <LanguagePicker />
-        <button type="button" data-theme-toggle class="theme-toggle" aria-label={t['theme.toggle']} title={t['theme.toggle']}>
-          <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
-          <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀</span>
-        </button>
-        <button type="button" data-bgm-toggle data-bgm-state="off" class="theme-toggle bgm-toggle" aria-pressed="false" aria-label={t['bgm.toggle']} title={t['bgm.toggle']}>
-          <span class="bgm-toggle__icon" aria-hidden="true">♪</span>
-        </button>
-      </div>
     </div>
   </div>
 </header>
