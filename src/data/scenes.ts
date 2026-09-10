@@ -23,7 +23,8 @@ export interface SceneLandmark {
         | 'canopy' | 'statue' | 'hall' | 'wall' | 'sakura'
         | 'junk' | 'ferry' | 'promenade' | 'billboard'
         | 'sail' | 'jinwan' | 'jiefang' | 'clock'
-        | 'peak' | 'ifc' | 'center' | 'convention';
+        | 'peak' | 'ifc' | 'center' | 'convention'
+        | 'erxiaomen' | 'avenue';
     /** Centre position, 0 (left) to 1 (right). */
     x: number;
     /** Ground row, 0 (top) to 1 (bottom). */
@@ -122,6 +123,33 @@ export const scenePixels: Record<string, ScenePixels> = {
             { kind: 'wall', x: 0.5, base: 1.0, h: 0.16, w: 1.02, body: '#a83c2c', light: '#e0aa42' },
         ],
         seed: 71,
+    },
+    tsinghua: {
+        // Composed after the walk up the avenue to 二校門 on a clear afternoon
+        // in October: the marble gate at the end of it, the campus trees
+        // standing close on either side, and the paving running down to where
+        // the photograph is always taken from.
+        sky: ['#3f86cc', '#68a4dc', '#9ac4ea', '#c2dbf2', '#e2edf8'],
+        haze: { color: '#e2edf8', y: 0.55, strength: 0.42 },
+        clouds: { count: 7, color: '#ffffff', shade: '#9fbcd8', y: 0.19, spread: 0.2 },
+        layers: [
+            { kind: 'trees', y: 0.6, amp: 0.085, color: '#4e6742', accent: '#88a455', haze: 0.32 },
+            { kind: 'trees', y: 0.73, amp: 0.17, color: '#31502d', accent: '#5f8038' },
+        ],
+        landmarks: [
+            { kind: 'avenue', x: 0.5, base: 1, h: 0.19, w: 1, body: '#5d7c3c', light: '#cdc3ac' },
+            {
+                kind: 'erxiaomen',
+                x: 0.5,
+                base: 0.87,
+                h: 0.46,
+                w: 0.44,
+                body: '#a8a89e',
+                light: '#fffaf0',
+                accent: '#2b3552',
+            },
+        ],
+        seed: 88,
     },
     tianjin: {
         // Composed after the night view up the Haihe from the Dagu bridge: the
@@ -323,12 +351,13 @@ export const scenePixels: Record<string, ScenePixels> = {
 };
 
 /** Display order; nothing is labelled on the page itself. */
-export const sceneOrder = ['bund', 'gugong', 'tianjin', 'shenzhen', 'victoria', 'tokyo', 'fuji'];
+export const sceneOrder = ['bund', 'gugong', 'tsinghua', 'tianjin', 'shenzhen', 'victoria', 'tokyo', 'fuji'];
 
 export const sceneNames: Record<string, Record<string, { name: string; place: string }>> = {
     en: {
         bund: { name: 'The Bund', place: 'Shanghai' },
         gugong: { name: 'The Forbidden City', place: 'Beijing' },
+        tsinghua: { name: 'Tsinghua Second Gate', place: 'Beijing' },
         tianjin: { name: 'Jiefang Bridge', place: 'Tianjin' },
         shenzhen: { name: 'Lianhua Hill Park', place: 'Shenzhen' },
         victoria: { name: 'Victoria Harbour', place: 'Hong Kong' },
@@ -338,6 +367,7 @@ export const sceneNames: Record<string, Record<string, { name: string; place: st
     zh: {
         bund: { name: '外滩', place: '上海' },
         gugong: { name: '故宫', place: '北京' },
+        tsinghua: { name: '清华二校门', place: '北京' },
         tianjin: { name: '解放桥', place: '天津' },
         shenzhen: { name: '莲花山公园', place: '深圳' },
         victoria: { name: '维多利亚港', place: '香港' },
@@ -347,6 +377,7 @@ export const sceneNames: Record<string, Record<string, { name: string; place: st
     ja: {
         bund: { name: '外灘', place: '上海' },
         gugong: { name: '故宮', place: '北京' },
+        tsinghua: { name: '清華大学二校門', place: '北京' },
         tianjin: { name: '解放橋', place: '天津' },
         shenzhen: { name: '蓮花山公園', place: '深圳' },
         victoria: { name: 'ビクトリア・ハーバー', place: '香港' },

@@ -955,6 +955,179 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           for (let y = base; y > crest + 1; y -= 1) put(cx, y, seam);
           windows(4, 0.32);
           beacon(crest, 3.4);
+        } else if (lm.kind === 'erxiaomen') {
+          // 二校門: the marble gate at the head of the avenue. Three bays under
+          // a cornice that runs the full width, the middle arch standing taller
+          // than its neighbours, and over it the scrolled crown with the name
+          // board set into the face of it.
+          // Composed for a landscape frame. On a narrow one a width taken
+          // straight from the canvas comes out taller than it is broad, and the
+          // gate reads as a tower — so it is held against its own height too.
+          const w = Math.max(
+            26,
+            Math.min(Math.round(width * 0.92), Math.max(Math.round(width * (lm.w ?? 0.44)), Math.round(h * 2.1))),
+          );
+          const pierW = Math.max(2, Math.round(w * 0.11));
+          const centreW = Math.max(5, Math.round(w * 0.25));
+          const sideW = Math.max(4, Math.round(w * 0.145));
+          const sun = word(mix(bodyHex, lm.light, 0.8));
+          const face = word(mix(bodyHex, lm.light, 0.45));
+          const shade = word(mix(bodyHex, '#000000', 0.22));
+          const deep = word(mix(bodyHex, '#000000', 0.45));
+
+          // Lay the bays out left to right, then take the real width from where
+          // the last pier lands rather than from the fractions.
+          const piers = [];
+          const bays = [];
+          let px = cx - Math.floor((pierW * 4 + centreW + sideW * 2) / 2);
+          for (const seg of [
+            ['pier', pierW, 0], ['bay', sideW, 0.28], ['pier', pierW, 0],
+            ['bay', centreW, 0.34], ['pier', pierW, 0], ['bay', sideW, 0.28], ['pier', pierW, 0],
+          ]) {
+            if (seg[0] === 'pier') piers.push([px, px + seg[1] - 1]);
+            else bays.push({ a: px, b: px + seg[1] - 1, spring: seg[2] });
+            px += seg[1];
+          }
+          const x0 = piers[0][0];
+          const right = px - 1;
+          const bodyTop = base - Math.round(h * 0.7);
+
+          for (const [a, b] of piers) {
+            for (let x = a; x <= b; x += 1) {
+              for (let y = bodyTop; y < base; y += 1) put(x, y, x === a ? sun : x === b ? shade : face);
+            }
+            // A moulded capital at the head, a plinth at the foot, each
+            // standing a pixel proud of the shaft between them.
+            for (let k = 0; k < 2; k += 1) {
+              for (let x = a - 1; x <= b + 1; x += 1) put(x, bodyTop + k, k === 0 ? sun : face);
+            }
+            const plinth = Math.max(2, Math.round(h * 0.055));
+            for (let k = 0; k < plinth; k += 1) {
+              for (let x = a - 1; x <= b + 1; x += 1) {
+                put(x, base - 1 - k, k === plinth - 1 ? sun : x === b + 1 ? shade : face);
+              }
+            }
+          }
+          // Spandrels, and the ring of voussoirs turning each arch.
+          for (const bay of bays) {
+            const r = (bay.b - bay.a + 1) / 2;
+            const bcx = (bay.a + bay.b) / 2;
+            const spring = base - Math.round(h * bay.spring);
+            for (let x = bay.a; x <= bay.b; x += 1) {
+              const dx = x - bcx;
+              const arch = Math.round(spring - Math.sqrt(Math.max(0, r * r - dx * dx)));
+              for (let y = bodyTop; y < arch; y += 1) put(x, y, face);
+              put(x, arch - 1, sun);
+              put(x, arch - 2, face);
+              // The soffit, so the opening reads as depth and not as a hole.
+              put(x, arch, deep);
+            }
+          }
+          // The cornice, its lip standing proud of the piers.
+          const corniceH = Math.max(2, Math.round(h * 0.08));
+          const corn = bodyTop - corniceH;
+          for (let k = 0; k < corniceH; k += 1) {
+            const over = k < Math.max(1, Math.round(corniceH * 0.5)) ? Math.max(1, Math.round(w * 0.015)) : 0;
+            for (let x = x0 - over; x <= right + over; x += 1) {
+              put(x, corn + k, k === 0 ? sun : k === corniceH - 1 ? shade : face);
+            }
+          }
+          // The crown: shoulders rolling out as they fall, the way the volutes
+          // on the real one do.
+          const cw = centreW + Math.round(pierW * 0.9);
+          const ccx = Math.round((x0 + right) / 2);
+          const ch = Math.max(4, Math.round(h * 0.26));
+          const ctop = corn - ch;
+          for (let y = ctop; y < corn; y += 1) {
+            const f = (y - ctop) / Math.max(1, ch - 1);
+            // A shallow arc over the top, straight sides under it, and the
+            // volutes rolling outward where it meets the cornice.
+            let half;
+            if (f < 0.2) half = Math.round((cw / 2) * (0.58 + 0.42 * Math.sqrt(f / 0.2)));
+            else if (f < 0.76) half = Math.round(cw / 2);
+            else half = Math.round((cw / 2) * (1 + 0.46 * ((f - 0.76) / 0.24) ** 2));
+            for (let x = ccx - half; x <= ccx + half; x += 1) {
+              put(x, y, y === ctop || x === ccx - half ? sun : x === ccx + half ? shade : face);
+            }
+          }
+          // The name board, and three characters cut into it.
+          const bw = Math.max(6, Math.round(cw * 0.46));
+          const bh = Math.max(3, Math.round(ch * 0.4));
+          const by = ctop + Math.round(ch * 0.3);
+          const boardHex = lm.accent ?? '#2f3a58';
+          box(ccx - Math.floor(bw / 2), by, bw, bh, word(boardHex));
+          for (let x = ccx - Math.floor(bw / 2) - 1; x <= ccx + bw / 2; x += 1) {
+            put(x, by - 1, sun);
+            put(x, by + bh, shade);
+          }
+          const ink = word(mix(lm.light, boardHex, 0.2));
+          const gw = Math.max(1, Math.round(bw * 0.18));
+          const gh = Math.max(2, Math.round(bh * 0.6));
+          for (let i = 0; i < 3; i += 1) {
+            const gx = ccx + Math.round((i - 1) * bw * 0.3);
+            const gy = by + Math.floor(bh / 2);
+            const top2 = gy - Math.floor(gh / 2);
+            // Bars crossed by a stem, a different count each: enough to read as
+            // writing without pretending to be legible at eight pixels.
+            const bars = [3, 2, 3][i];
+            for (let k = 0; k < bars; k += 1) {
+              const yy = top2 + Math.round((k * gh) / Math.max(1, bars - 1));
+              for (let x = gx - Math.floor(gw / 2); x <= gx + gw / 2; x += 1) put(x, yy, ink);
+            }
+            if (i === 1) {
+              // The middle one closes into a box, the way 華 and 園 do not.
+              for (let y = top2; y <= top2 + gh; y += 1) {
+                put(gx - Math.floor(gw / 2), y, ink);
+                put(gx + Math.ceil(gw / 2), y, ink);
+              }
+            } else {
+              for (let y = top2; y <= top2 + gh; y += 1) put(gx, y, ink);
+            }
+          }
+          // Urns on the outer piers, standing on the cornice.
+          for (const [a, b] of [piers[0], piers[piers.length - 1]]) {
+            const ux = Math.round((a + b) / 2);
+            const uh = Math.max(2, Math.round(h * 0.07));
+            for (let k = 0; k < uh; k += 1) {
+              const uw = Math.max(0, Math.round((pierW * 0.34) * (1 - (k / uh) ** 1.6)));
+              for (let x = ux - uw; x <= ux + uw; x += 1) put(x, corn - 1 - k, x === ux - uw ? sun : face);
+            }
+          }
+          // The step it stands on.
+          const stepH = Math.max(2, Math.round(h * 0.05));
+          for (let k = 0; k < stepH; k += 1) {
+            const over = Math.max(1, Math.round(w * 0.014)) * (k + 1);
+            for (let x = x0 - over; x <= right + over; x += 1) put(x, base + k, k === 0 ? sun : face);
+          }
+        } else if (lm.kind === 'avenue') {
+          // The lawn the gate stands on, with the paving running down out of
+          // the frame — widening as it comes, so the eye is walked up it.
+          const y0 = base - h;
+          const grassHex = bodyHex;
+          const grass = word(grassHex);
+          const blade = word(mix(grassHex, '#c4dc78', 0.35));
+          const dark = word(mix(grassHex, '#000000', 0.28));
+          box(0, y0, width, rows - y0, grass);
+          for (let y = y0; y < rows; y += 1) {
+            for (let x = 0; x < width; x += 1) {
+              // Scattered, not stepped: a modulo pattern lays it out in rows
+              // and the lawn reads as a ploughed field.
+              const r = lr();
+              if (r < 0.07) put(x, y, blade);
+              else if (r < 0.13) put(x, y, dark);
+            }
+          }
+          const paveHex = lm.light;
+          const pave = word(paveHex);
+          const seam = word(mix(paveHex, '#6a5c48', 0.35));
+          for (let y = y0; y < rows; y += 1) {
+            const f = (y - y0) / Math.max(1, rows - y0);
+            const half = Math.round(width * (0.05 + 0.17 * f * f));
+            for (let x = cx - half; x <= cx + half; x += 1) {
+              const edge2 = x === cx - half || x === cx + half;
+              put(x, y, edge2 || (y - y0) % 5 === 0 ? seam : pave);
+            }
+          }
         } else if (lm.kind === 'peak') {
           // Victoria Peak: the black mass the island stands against. A rounded
           // summit west of centre, a long shoulder falling east, the mid-levels
