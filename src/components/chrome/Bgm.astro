@@ -27,7 +27,7 @@
 </style>
 
 <script>
-  import { trackForPath, trackForScene } from '../../data/bgm';
+  import { sameTrack, trackForPath, trackForScene } from '../../data/bgm';
 
   // The visitor starts the music and nothing else does. Until the ♪ button is
   // pressed there is no player, no request to YouTube and no sound. This used
@@ -108,17 +108,17 @@
       if (!next) return;
       bgm.track = next;
       // Silent: the press picks the right track up on its own.
-      if (!audible() || bgm.loaded === next) return;
+      if (!audible() || sameTrack(bgm.loaded, next)) return;
       bgm.swapTimer = window.setTimeout(swapTrack, SETTLE_MS);
     }
 
     function swapTrack() {
       const next = bgm.track;
-      if (!bgm.player?.loadVideoById || bgm.loaded === next || !audible()) return;
+      if (!bgm.player?.loadVideoById || sameTrack(bgm.loaded, next) || !audible()) return;
       fade(0, FADE_MS, () => {
         bgm.loaded = next;
         bgm.swapping = true;
-        bgm.player.loadVideoById(next); // this starts playing on its own
+        loadTrack(next); // this starts playing on its own
         // The volume comes back up from onStateChange, once the new track is
         // really running: fading up into a buffering player is just silence.
       });
@@ -229,6 +229,12 @@
       bgm.player?.pauseVideo?.();
     }
 
+    // Dropping straight in at the サビ, rather than making a scene wait out
+    // an intro nobody stays for.
+    function loadTrack(track) {
+      bgm.player.loadVideoById({ videoId: track.id, startSeconds: track.start ?? 0 });
+    }
+
     function play() {
       bgm.player.unMute?.(); // YouTube hands some embeds back muted
       clearFade();
@@ -236,21 +242,29 @@
       bgm.player.setVolume?.(BGM_VOLUME);
       // Moved pages while the music was off: come back on the track for
       // wherever the visitor is now, not the one they left.
-      if (bgm.loaded !== bgm.track) {
+      if (!sameTrack(bgm.loaded, bgm.track)) {
         bgm.loaded = bgm.track;
-        bgm.player.loadVideoById(bgm.track); // this starts playing on its own
+        loadTrack(bgm.track); // this starts playing on its own
         return;
       }
+      // Same track, paused: pick it up where it was left rather than throwing
+      // the visitor back to the サビ.
+      bgm.player.playVideo();
+    }
+
+    // The track ran out. Back to the サビ, not to the intro.
+    function restart() {
+      bgm.player.seekTo?.(bgm.track?.start ?? 0, true);
       bgm.player.playVideo();
     }
 
     function createPlayer() {
       if (root.dataset.bgmInit === '1') return; // never a second player
       root.dataset.bgmInit = '1';
-      const videoId = bgm.track;
-      bgm.loaded = videoId;
+      const track = bgm.track;
+      bgm.loaded = track;
       bgm.player = new window.YT.Player('bgm-player', {
-        videoId,
+        videoId: track.id,
         host: 'https://www.youtube-nocookie.com',
         playerVars: {
           autoplay: 0,
@@ -259,8 +273,10 @@
           modestbranding: 1,
           playsinline: 1,
           rel: 0,
-          loop: 1,
-          playlist: videoId, // a single-video loop needs itself as the playlist
+          start: Math.round(track.start ?? 0),
+          // No loop/playlist pair here on purpose: YouTube's own loop comes
+          // back at 0:00 and throws away the offset. The ENDED handler below
+          // does the repeat instead, and lands on the サビ every time.
         },
         events: {
           onReady: () => {
@@ -281,11 +297,10 @@
               }
             }
             paintButtons(audible());
-            // loop:1 normally handles this, though a track swapped in with
-            // loadVideoById leaves that playlist behind and does end. Either
-            // way, pick it back up — but only a track that was actually
-            // running, so this can never restart one the visitor paused.
-            if (event.data === YT.PlayerState.ENDED && wasPlaying) play();
+            // Every track ends, now that nothing loops natively. Pick it
+            // back up — but only one that was actually running, so this can
+            // never restart a track the visitor paused.
+            if (event.data === YT.PlayerState.ENDED && wasPlaying) restart();
           },
           onError: () => {
             // Video removed, private, or blocked from embedding.
