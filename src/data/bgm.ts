@@ -22,13 +22,17 @@ export const defaultTrack = '3ML2nYnCO0E'; // Fire◎Flower - halyosy (Piano Cov
  * actually been made. Drop a video id in to give a scene its own track.
  */
 export const sceneTracks: Record<string, string | null> = {
-    bund: null,
-    gugong: null,
-    tianjin: null,
-    shenzhen: null,
-    victoria: null,
-    tokyo: null,
-    fuji: null,
+    // Perrey & Kingsley, 1967. The Moog record the Electrical Parade was built
+    // on — the neon over the Huangpu, forty years early.
+    bund: '7lXFjnw5h34', // Baroque Hoedown
+    gugong: 'bq-zpXAiyKQ', // Classical Chinese Music: Guqin, Erhu, Guzheng
+    tianjin: 'W9Fq1HC_5hg', // 告五人 - 帶我去找夜生活
+    shenzhen: 'Bw7ggOj9CVs', // ポケモン HGSS - しぜんこうえん
+    victoria: 'KQ3PzgYN8BI', // Pokémon Black/White - Black City
+    // The album cut has no official upload; this is the one on Shiina Ringo's
+    // own channel.
+    tokyo: 'Ej1fyNdnuFI', // 椎名林檎 - 丸ノ内サディスティック (Miso Remix)
+    fuji: 'Sw1Flgub9s8', // ヨルシカ - 春泥棒
 };
 
 /**
