@@ -956,149 +956,272 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           windows(4, 0.32);
           beacon(crest, 3.4);
         } else if (lm.kind === 'erxiaomen') {
-          // 二校門: the marble gate at the head of the avenue. Three bays under
-          // a cornice that runs the full width, the middle arch standing taller
-          // than its neighbours, and over it the scrolled crown with the name
-          // board set into the face of it.
-          // Composed for a landscape frame. On a narrow one a width taken
-          // straight from the canvas comes out taller than it is broad, and the
-          // gate reads as a tower — so it is held against its own height too.
-          const w = Math.max(
-            26,
-            Math.min(Math.round(width * 0.92), Math.max(Math.round(width * (lm.w ?? 0.44)), Math.round(h * 2.1))),
-          );
-          const pierW = Math.max(2, Math.round(w * 0.11));
-          const centreW = Math.max(5, Math.round(w * 0.25));
-          const sideW = Math.max(4, Math.round(w * 0.145));
-          const sun = word(mix(bodyHex, lm.light, 0.8));
-          const face = word(mix(bodyHex, lm.light, 0.45));
-          const shade = word(mix(bodyHex, '#000000', 0.22));
-          const deep = word(mix(bodyHex, '#000000', 0.45));
+          // 二校門, drawn from the photograph. A tall middle bay between paired
+          // columns, its arch pressed up under the frieze that carries 清華園,
+          // and the stepped attic over that. Either side a lower wing with a
+          // small arch let into it, the top of the wing sweeping down as one
+          // long scroll to the round medallion over the outer pier. White
+          // marble throughout, against the grey stone of the panels behind it.
+          // Composed for a landscape frame: the width comes off the height, so
+          // the gate keeps its proportions on a narrow one instead of becoming
+          // a tower.
+          const w = Math.min(Math.round(width * 0.96), Math.round(h * 2.5));
+          const x0 = cx - Math.floor(w / 2);
+          const F = (f) => x0 + Math.round(f * w);
+          const V = (f) => base - Math.round(f * h);
+          const marble = word(mix(bodyHex, lm.light, 0.82));
+          const sun = word(lm.light);
+          const shade = word(mix(bodyHex, lm.light, 0.48));
+          const grey = word(bodyHex);
+          const greyLit = word(mix(bodyHex, lm.light, 0.22));
+          const deep = word(mix(bodyHex, '#000000', 0.55));
+          const ink = word(lm.accent ?? '#2f2a26');
 
-          // Lay the bays out left to right, then take the real width from where
-          // the last pier lands rather than from the fractions.
-          const piers = [];
-          const bays = [];
-          let px = cx - Math.floor((pierW * 4 + centreW + sideW * 2) / 2);
-          for (const seg of [
-            ['pier', pierW, 0], ['bay', sideW, 0.28], ['pier', pierW, 0],
-            ['bay', centreW, 0.34], ['pier', pierW, 0], ['bay', sideW, 0.28], ['pier', pierW, 0],
-          ]) {
-            if (seg[0] === 'pier') piers.push([px, px + seg[1] - 1]);
-            else bays.push({ a: px, b: px + seg[1] - 1, spring: seg[2] });
-            px += seg[1];
+          // The stone changes partway up: marble above, grey rusticated
+          // courses below, on the piers and the wings alike.
+          const rustic = V(0.36);
+          const stone = (x, y, a, b) =>
+            y < rustic
+              ? x <= a + 1
+                ? sun
+                : x >= b - 1
+                  ? shade
+                  : marble
+              : x <= a + 1
+                ? marble
+                : x >= b - 1
+                  ? shade
+                  : y % 4 === 0
+                    ? greyLit
+                    : grey;
+          const panel = (a, b, top, bottom) => {
+            for (let x = a; x <= b; x += 1) for (let y = top; y < bottom; y += 1) put(x, y, stone(x, y, a, b));
+          };
+
+          const ca = F(0.4);
+          const cb = F(0.6);
+          const cr = (cb - ca) / 2;
+          const mid = (ca + cb) / 2;
+          const pierTop = V(0.72);
+
+          // What shows through the middle bay before anything is built over it:
+          // the avenue going on, and one of the white halls at the end of it.
+          const far = word(mix('#93ab82', lm.light, 0.4));
+          const farTree = word('#5f7c50');
+          const hall = word(mix(lm.light, '#b8ae9c', 0.45));
+          for (let x = ca; x <= cb; x += 1) for (let y = V(0.7); y < V(0.12); y += 1) put(x, y, far);
+          const hw = Math.round((cb - ca) * 0.4);
+          const hh = Math.max(3, Math.round(h * 0.14));
+          box(Math.round(mid - hw / 2), V(0.24) - hh, hw, hh, hall);
+          for (let x = Math.round(mid - hw / 2); x < mid + hw / 2; x += 2) put(x, V(0.24) - hh, shade);
+          for (let i = 0; i < 34; i += 1) {
+            const tr = Math.max(1, Math.round(h * (0.012 + lr() * 0.022)));
+            disc(ca + Math.round(lr() * (cb - ca)), V(0.24) - tr, tr, farTree);
           }
-          const x0 = piers[0][0];
-          const right = px - 1;
-          const bodyTop = base - Math.round(h * 0.7);
 
-          for (const [a, b] of piers) {
+          // The wings. Their top edge is the scroll itself, running down from
+          // the middle bay out to the medallion.
+          const scroll = (f) => {
+            const s = f * f * (3 - 2 * f);
+            return 0.42 + (0.6 - 0.42) * s;
+          };
+          for (const [wa, wb, flip] of [[0.1, 0.3, false], [0.7, 0.9, true]]) {
+            const a = F(wa);
+            const b = F(wb);
             for (let x = a; x <= b; x += 1) {
-              for (let y = bodyTop; y < base; y += 1) put(x, y, x === a ? sun : x === b ? shade : face);
-            }
-            // A moulded capital at the head, a plinth at the foot, each
-            // standing a pixel proud of the shaft between them.
-            for (let k = 0; k < 2; k += 1) {
-              for (let x = a - 1; x <= b + 1; x += 1) put(x, bodyTop + k, k === 0 ? sun : face);
-            }
-            const plinth = Math.max(2, Math.round(h * 0.055));
-            for (let k = 0; k < plinth; k += 1) {
-              for (let x = a - 1; x <= b + 1; x += 1) {
-                put(x, base - 1 - k, k === plinth - 1 ? sun : x === b + 1 ? shade : face);
+              const f = flip ? (b - x) / (b - a) : (x - a) / (b - a);
+              const top = V(scroll(f));
+              const band = Math.max(3, Math.round(h * 0.04));
+              for (let y = top; y < base; y += 1) {
+                put(
+                  x,
+                  y,
+                  y === top
+                    ? sun
+                    : y < top + band
+                      ? marble
+                      : y === top + band
+                        ? shade
+                        : x <= a + 1
+                          ? marble
+                          : x >= b - 1
+                            ? shade
+                            : y % 4 === 0
+                              ? greyLit
+                              : grey,
+                );
               }
             }
           }
-          // Spandrels, and the ring of voussoirs turning each arch.
-          for (const bay of bays) {
-            const r = (bay.b - bay.a + 1) / 2;
-            const bcx = (bay.a + bay.b) / 2;
-            const spring = base - Math.round(h * bay.spring);
-            for (let x = bay.a; x <= bay.b; x += 1) {
-              const dx = x - bcx;
-              const arch = Math.round(spring - Math.sqrt(Math.max(0, r * r - dx * dx)));
-              for (let y = bodyTop; y < arch; y += 1) put(x, y, face);
-              put(x, arch - 1, sun);
-              put(x, arch - 2, face);
-              // The soffit, so the opening reads as depth and not as a hole.
-              put(x, arch, deep);
+          // The small arches let into them, dark the way they read from here.
+          const under = word(mix('#455438', bodyHex, 0.34));
+          for (const [aa, ab] of [[0.155, 0.245], [0.755, 0.845]]) {
+            const a = F(aa);
+            const b = F(ab);
+            const r = (b - a) / 2;
+            const acx = (a + b) / 2;
+            const sp = V(0.22);
+            for (let x = a; x <= b; x += 1) {
+              const top = Math.round(sp - Math.sqrt(Math.max(0, r * r - (x - acx) ** 2)));
+              // Greenery showing through, not a hole cut in the wall.
+              for (let y = top; y < base; y += 1) put(x, y, y > base - 4 && lr() < 0.5 ? deep : under);
+              put(x, top - 1, sun);
+              put(x, top - 2, marble);
             }
           }
-          // The cornice, its lip standing proud of the piers.
-          const corniceH = Math.max(2, Math.round(h * 0.08));
-          const corn = bodyTop - corniceH;
-          for (let k = 0; k < corniceH; k += 1) {
-            const over = k < Math.max(1, Math.round(corniceH * 0.5)) ? Math.max(1, Math.round(w * 0.015)) : 0;
-            for (let x = x0 - over; x <= right + over; x += 1) {
-              put(x, corn + k, k === 0 ? sun : k === corniceH - 1 ? shade : face);
+
+          // Outer piers, each with the medallion the scroll runs out into.
+          for (const [pa, pb, mf] of [[0.02, 0.1, 0.06], [0.9, 0.98, 0.94]]) {
+            const a = F(pa);
+            const b = F(pb);
+            const top = V(0.46);
+            panel(a, b, top, base);
+            for (let x = a - 1; x <= b + 1; x += 1) {
+              put(x, top, sun);
+              put(x, top + 1, marble);
+            }
+            const mx = F(mf);
+            const my = V(0.5);
+            const mr = Math.max(2, Math.round(h * 0.05));
+            disc(mx, my, mr, marble);
+            for (let t = 0; t < 360; t += 5) {
+              const rad = (t / 180) * Math.PI;
+              put(mx + Math.cos(rad) * mr, my + Math.sin(rad) * mr, shade);
+            }
+            disc(mx, my, Math.max(1, Math.round(mr * 0.38)), shade);
+          }
+
+          // The middle bay: piers, then the arch pressed up under the frieze.
+          for (const [pa, pb] of [[0.3, 0.4], [0.6, 0.7]]) panel(F(pa), F(pb), pierTop, base);
+          const spring = V(0.42);
+          for (let x = ca; x <= cb; x += 1) {
+            const top = Math.round(spring - Math.sqrt(Math.max(0, cr * cr - (x - mid) ** 2)));
+            for (let y = pierTop; y < top - 3; y += 1) put(x, y, marble);
+            put(x, top - 3, shade);
+            put(x, top - 2, marble);
+            put(x, top - 1, sun);
+            put(x, top, deep);
+          }
+          const kw = Math.max(1, Math.round(w * 0.011));
+          for (let x = Math.round(mid) - kw; x <= mid + kw; x += 1) {
+            for (let y = pierTop; y < Math.round(spring - cr) + 3; y += 1) {
+              put(x, y, x === Math.round(mid) - kw ? sun : x === Math.round(mid) + kw ? shade : marble);
             }
           }
-          // The crown: shoulders rolling out as they fall, the way the volutes
-          // on the real one do.
-          const cw = centreW + Math.round(pierW * 0.9);
-          const ccx = Math.round((x0 + right) / 2);
-          const ch = Math.max(4, Math.round(h * 0.26));
-          const ctop = corn - ch;
-          for (let y = ctop; y < corn; y += 1) {
-            const f = (y - ctop) / Math.max(1, ch - 1);
-            // A shallow arc over the top, straight sides under it, and the
-            // volutes rolling outward where it meets the cornice.
-            let half;
-            if (f < 0.2) half = Math.round((cw / 2) * (0.58 + 0.42 * Math.sqrt(f / 0.2)));
-            else if (f < 0.76) half = Math.round(cw / 2);
-            else half = Math.round((cw / 2) * (1 + 0.46 * ((f - 0.76) / 0.24) ** 2));
-            for (let x = ccx - half; x <= ccx + half; x += 1) {
-              put(x, y, y === ctop || x === ccx - half ? sun : x === ccx + half ? shade : face);
+
+          // The paired columns standing in front of the piers.
+          const shaftTop = V(0.68);
+          const pedTop = V(0.18);
+          for (const cf of [0.325, 0.375, 0.625, 0.675]) {
+            const mx = F(cf);
+            const half = Math.max(1, Math.round(w * 0.013));
+            const wide = half + 1;
+            for (let x = mx - wide; x <= mx + wide; x += 1) {
+              for (let y = pedTop; y < base; y += 1) put(x, y, x === mx - wide ? sun : x >= mx + wide - 1 ? shade : marble);
+            }
+            for (let x = mx - half; x <= mx + half; x += 1) {
+              for (let y = shaftTop; y < pedTop; y += 1) put(x, y, x === mx - half ? sun : x === mx + half ? shade : marble);
+            }
+            for (let x = mx - wide; x <= mx + wide; x += 1) {
+              for (let y = pierTop; y < shaftTop; y += 1) put(x, y, y === pierTop ? sun : x === mx + wide ? shade : marble);
             }
           }
-          // The name board, and three characters cut into it.
-          const bw = Math.max(6, Math.round(cw * 0.46));
-          const bh = Math.max(3, Math.round(ch * 0.4));
-          const by = ctop + Math.round(ch * 0.3);
-          const boardHex = lm.accent ?? '#2f3a58';
-          box(ccx - Math.floor(bw / 2), by, bw, bh, word(boardHex));
-          for (let x = ccx - Math.floor(bw / 2) - 1; x <= ccx + bw / 2; x += 1) {
-            put(x, by - 1, sun);
-            put(x, by + bh, shade);
+
+          // The frieze, and 清華園 cut into it — dark on the stone, not on a
+          // board hung over it.
+          const friezeTop = V(0.86);
+          for (let x = F(0.28); x <= F(0.72); x += 1) {
+            for (let y = friezeTop; y < pierTop; y += 1) {
+              put(x, y, y === friezeTop ? sun : y === pierTop - 1 ? shade : marble);
+            }
           }
-          const ink = word(mix(lm.light, boardHex, 0.2));
-          const gw = Math.max(1, Math.round(bw * 0.18));
-          const gh = Math.max(2, Math.round(bh * 0.6));
+          const gh = Math.max(3, Math.round(h * 0.085));
+          const gw = Math.max(2, Math.round(gh * 0.85));
           for (let i = 0; i < 3; i += 1) {
-            const gx = ccx + Math.round((i - 1) * bw * 0.3);
-            const gy = by + Math.floor(bh / 2);
-            const top2 = gy - Math.floor(gh / 2);
-            // Bars crossed by a stem, a different count each: enough to read as
-            // writing without pretending to be legible at eight pixels.
+            const gx = F(0.5) + Math.round((i - 1) * gw * 1.75);
+            const gy = friezeTop + Math.round((pierTop - friezeTop - gh) / 2);
+            // Bars crossed by a stem, a different count each, and a box round
+            // the middle one: enough to read as writing at eight pixels
+            // without pretending to be legible.
             const bars = [3, 2, 3][i];
             for (let k = 0; k < bars; k += 1) {
-              const yy = top2 + Math.round((k * gh) / Math.max(1, bars - 1));
+              const yy = gy + Math.round((k * gh) / Math.max(1, bars - 1));
               for (let x = gx - Math.floor(gw / 2); x <= gx + gw / 2; x += 1) put(x, yy, ink);
             }
             if (i === 1) {
-              // The middle one closes into a box, the way 華 and 園 do not.
-              for (let y = top2; y <= top2 + gh; y += 1) {
+              for (let y = gy; y <= gy + gh; y += 1) {
                 put(gx - Math.floor(gw / 2), y, ink);
                 put(gx + Math.ceil(gw / 2), y, ink);
               }
             } else {
-              for (let y = top2; y <= top2 + gh; y += 1) put(gx, y, ink);
+              for (let y = gy; y <= gy + gh; y += 1) put(gx, y, ink);
             }
           }
-          // Urns on the outer piers, standing on the cornice.
-          for (const [a, b] of [piers[0], piers[piers.length - 1]]) {
-            const ux = Math.round((a + b) / 2);
-            const uh = Math.max(2, Math.round(h * 0.07));
-            for (let k = 0; k < uh; k += 1) {
-              const uw = Math.max(0, Math.round((pierW * 0.34) * (1 - (k / uh) ** 1.6)));
-              for (let x = ux - uw; x <= ux + uw; x += 1) put(x, corn - 1 - k, x === ux - uw ? sun : face);
+
+          // The attic: three courses stepping in as they rise.
+          for (const [ta, tb, y1, y2] of [[0.25, 0.75, 0.86, 0.9], [0.29, 0.71, 0.9, 0.94], [0.335, 0.665, 0.94, 1]]) {
+            const a = F(ta);
+            const b = F(tb);
+            for (let x = a; x <= b; x += 1) {
+              for (let y = V(y2); y < V(y1); y += 1) {
+                put(x, y, y === V(y2) ? sun : x === b ? shade : marble);
+              }
             }
           }
-          // The step it stands on.
-          const stepH = Math.max(2, Math.round(h * 0.05));
-          for (let k = 0; k < stepH; k += 1) {
-            const over = Math.max(1, Math.round(w * 0.014)) * (k + 1);
-            for (let x = x0 - over; x <= right + over; x += 1) put(x, base + k, k === 0 ? sun : face);
+          for (let k = 0; k < Math.round(h * 0.42); k += 1) put(cx, V(1) - 1 - k, k % 4 === 3 ? shade : marble);
+
+          // The platform, the chain slung along the front of it, and the
+          // planters standing on it.
+          const plat = Math.max(2, Math.round(h * 0.045));
+          for (let k = 0; k < plat; k += 1) {
+            const over = Math.max(1, Math.round(w * 0.01)) * (k + 1);
+            for (let x = F(0) - over; x <= F(1) + over; x += 1) put(x, base + k, k === 0 ? sun : shade);
           }
+          const potY = base + plat;
+          const pots = [0.12, 0.31, 0.5, 0.69, 0.88];
+          for (let i = 0; i + 1 < pots.length; i += 1) {
+            const xa = F(pots[i]);
+            const xb = F(pots[i + 1]);
+            for (let x = xa; x <= xb; x += 1) {
+              const t = (x - xa) / Math.max(1, xb - xa);
+              put(x, potY - Math.round(h * 0.022) + Math.round(Math.sin(Math.PI * t) * h * 0.016), shade);
+            }
+          }
+          const bloom = word('#d8459a');
+          const bloomLit = word('#f284c8');
+          for (const pf of pots) {
+            const mx = F(pf);
+            const pw = Math.max(2, Math.round(w * 0.028));
+            const ph = Math.max(3, Math.round(h * 0.055));
+            for (let k = 0; k < ph; k += 1) {
+              const half = Math.round(pw * (1 - (k / ph) * 0.4));
+              for (let x = mx - half; x <= mx + half; x += 1) {
+                put(x, potY - k, x === mx - half ? sun : x === mx + half ? shade : marble);
+              }
+            }
+            for (let x = mx - pw; x <= mx + pw; x += 1) {
+              const cap = Math.round((1 - Math.abs(x - mx) / (pw + 1)) * ph * 0.7);
+              for (let k = 0; k <= cap; k += 1) put(x, potY - ph - k, lr() < 0.45 ? bloomLit : bloom);
+            }
+          }
+        } else if (lm.kind === 'cypress') {
+          // A cypress: dark, narrow and standing well over the gate, the way
+          // they do along the walk up to it.
+          const tw = Math.max(3, Math.round(h * 0.3));
+          const needle = word(bodyHex);
+          const litSide = word(mix(bodyHex, lm.light, 0.42));
+          const dark = word(mix(bodyHex, '#000000', 0.35));
+          for (let k = 0; k < h; k += 1) {
+            const f = k / h;
+            const half = Math.round((tw / 2) * Math.min(1, (1 - f) * 1.3) ** 0.75);
+            const y = base - k;
+            for (let x = cx - half; x <= cx + half; x += 1) {
+              // A ragged edge, so it reads as foliage and not as a spindle.
+              if (Math.abs(x - cx) === half && (x * 3 + y) % 4 === 0) continue;
+              put(x, y, x < cx - half + 2 ? litSide : (x * 2 + y) % 7 === 0 ? litSide : (x + y) % 5 === 0 ? dark : needle);
+            }
+          }
+          for (let k = 0; k < Math.max(1, Math.round(h * 0.05)); k += 1) put(cx, base + k, dark);
         } else if (lm.kind === 'avenue') {
           // The lawn the gate stands on, with the paving running down out of
           // the frame — widening as it comes, so the eye is walked up it.

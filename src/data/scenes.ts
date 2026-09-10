@@ -24,7 +24,7 @@ export interface SceneLandmark {
         | 'junk' | 'ferry' | 'promenade' | 'billboard'
         | 'sail' | 'jinwan' | 'jiefang' | 'clock'
         | 'peak' | 'ifc' | 'center' | 'convention'
-        | 'erxiaomen' | 'avenue';
+        | 'erxiaomen' | 'avenue' | 'cypress';
     /** Centre position, 0 (left) to 1 (right). */
     x: number;
     /** Ground row, 0 (top) to 1 (bottom). */
@@ -125,28 +125,30 @@ export const scenePixels: Record<string, ScenePixels> = {
         seed: 71,
     },
     tsinghua: {
-        // Composed after the walk up the avenue to 二校門 on a clear afternoon
-        // in October: the marble gate at the end of it, the campus trees
-        // standing close on either side, and the paving running down to where
-        // the photograph is always taken from.
+        // Composed after the walk up to 二校門 on a clear afternoon in October:
+        // the marble gate at the end of the avenue, cypresses standing over it
+        // on both sides, and the paving running down out of the frame.
         sky: ['#3f86cc', '#68a4dc', '#9ac4ea', '#c2dbf2', '#e2edf8'],
-        haze: { color: '#e2edf8', y: 0.55, strength: 0.42 },
-        clouds: { count: 7, color: '#ffffff', shade: '#9fbcd8', y: 0.19, spread: 0.2 },
+        haze: { color: '#e2edf8', y: 0.55, strength: 0.4 },
+        clouds: { count: 7, color: '#ffffff', shade: '#9fbcd8', y: 0.17, spread: 0.2 },
         layers: [
-            { kind: 'trees', y: 0.6, amp: 0.085, color: '#4e6742', accent: '#88a455', haze: 0.32 },
-            { kind: 'trees', y: 0.73, amp: 0.17, color: '#31502d', accent: '#5f8038' },
+            { kind: 'trees', y: 0.66, amp: 0.035, color: '#687c58', accent: '#88a455', haze: 0.62 },
+            { kind: 'trees', y: 0.76, amp: 0.1, color: '#33512e', accent: '#5f8038' },
         ],
         landmarks: [
             { kind: 'avenue', x: 0.5, base: 1, h: 0.19, w: 1, body: '#5d7c3c', light: '#cdc3ac' },
+            { kind: 'cypress', x: 0.05, base: 0.92, h: 0.62, body: '#22401d', light: '#6f9440' },
+            { kind: 'cypress', x: 0.14, base: 0.89, h: 0.46, body: '#2a4a24', light: '#6f9440' },
+            { kind: 'cypress', x: 0.87, base: 0.9, h: 0.5, body: '#2a4a24', light: '#6f9440' },
+            { kind: 'cypress', x: 0.95, base: 0.92, h: 0.6, body: '#22401d', light: '#6f9440' },
             {
                 kind: 'erxiaomen',
                 x: 0.5,
-                base: 0.87,
-                h: 0.46,
-                w: 0.44,
-                body: '#a8a89e',
+                base: 0.88,
+                h: 0.5,
+                body: '#6e6a63',
                 light: '#fffaf0',
-                accent: '#2b3552',
+                accent: '#2f2a26',
             },
         ],
         seed: 88,
