@@ -26,6 +26,7 @@ export const sceneTracks: Record<string, string | null> = {
     // on — the neon over the Huangpu, forty years early.
     bund: '7lXFjnw5h34', // Baroque Hoedown
     gugong: 'bq-zpXAiyKQ', // Classical Chinese Music: Guqin, Erhu, Guzheng
+    tsinghua: null, // yours to pick
     tianjin: 'W9Fq1HC_5hg', // 告五人 - 帶我去找夜生活
     shenzhen: 'Bw7ggOj9CVs', // ポケモン HGSS - しぜんこうえん
     victoria: 'KQ3PzgYN8BI', // Pokémon Black/White - Black City
