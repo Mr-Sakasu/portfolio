@@ -1135,27 +1135,64 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               put(x, y, y === friezeTop ? sun : y === pierTop - 1 ? shade : marble);
             }
           }
-          const gh = Math.max(3, Math.round(h * 0.085));
-          const gw = Math.max(2, Math.round(gh * 0.85));
-          for (let i = 0; i < 3; i += 1) {
-            const gx = F(0.5) + Math.round((i - 1) * gw * 1.75);
-            const gy = friezeTop + Math.round((pierTop - friezeTop - gh) / 2);
-            // Bars crossed by a stem, a different count each, and a box round
-            // the middle one: enough to read as writing at eight pixels
-            // without pretending to be legible.
-            const bars = [3, 2, 3][i];
-            for (let k = 0; k < bars; k += 1) {
-              const yy = gy + Math.round((k * gh) / Math.max(1, bars - 1));
-              for (let x = gx - Math.floor(gw / 2); x <= gx + gw / 2; x += 1) put(x, yy, ink);
-            }
-            if (i === 1) {
-              for (let y = gy; y <= gy + gh; y += 1) {
-                put(gx - Math.floor(gw / 2), y, ink);
-                put(gx + Math.ceil(gw / 2), y, ink);
+          // 園 華 清, right to left across the frieze as they are cut into the
+          // real one. Eleven pixels square each: not calligraphy, but the
+          // characters themselves rather than three marks standing in for them.
+          const plaque = [
+            [
+              '###########',
+              '#.........#',
+              '#..#####..#',
+              '#....#....#',
+              '#.#######.#',
+              '#....#....#',
+              '#..#####..#',
+              '#..#...#..#',
+              '#.##.#..#.#',
+              '#.........#',
+              '###########',
+            ],
+            [
+              '..#..#..#..',
+              '###########',
+              '...........',
+              '..#######..',
+              '.....#.....',
+              '..#######..',
+              '.....#.....',
+              '###########',
+              '.....#.....',
+              '.....#.....',
+              '.....#.....',
+            ],
+            [
+              '......#....',
+              '#...#####..',
+              '......#....',
+              '..#.#####..',
+              '#..........',
+              '...#######.',
+              '...#.....#.',
+              '#..#######.',
+              '...#.....#.',
+              '...#######.',
+              '...#....#..',
+            ],
+          ];
+          const gs = Math.max(1, Math.floor((pierTop - friezeTop - 2) / 11));
+          const gh = 11 * gs;
+          const gstep = gh + Math.max(2, Math.round(gs * 2.5));
+          const gy = friezeTop + Math.round((pierTop - friezeTop - gh) / 2);
+          for (let i = 0; i < plaque.length; i += 1) {
+            const gx = F(0.5) + Math.round((i - 1) * gstep) - Math.floor(gh / 2);
+            plaque[i].forEach((row, ry) => {
+              for (let rx = 0; rx < row.length; rx += 1) {
+                if (row[rx] !== '#') continue;
+                for (let dy = 0; dy < gs; dy += 1) {
+                  for (let dx = 0; dx < gs; dx += 1) put(gx + rx * gs + dx, gy + ry * gs + dy, ink);
+                }
               }
-            } else {
-              for (let y = gy; y <= gy + gh; y += 1) put(gx, y, ink);
-            }
+            });
           }
 
           // The attic: three courses stepping in as they rise.
