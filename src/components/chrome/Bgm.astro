@@ -174,8 +174,9 @@
         bgm.swap = 'loading';
         bgm.loaded = next;
         loadTrack(next); // this starts playing on its own
-        // The volume comes back up from onStateChange, once the new track is
-        // really running: fading up into a buffering player is just silence.
+        // The volume comes back up once the new track is really running:
+        // fading up into a buffering player is just silence.
+        confirmSwap();
         armStall(SWAP_STALL_MS, swapStalled);
       });
     }
@@ -186,8 +187,9 @@
     // player was busy with the last one.
     function finishSwap() {
       window.clearTimeout(bgm.stallTimer);
+      window.clearInterval(bgm.confirmTimer);
       bgm.swap = null;
-      fade(BGM_VOLUME, bgm.playing ? FADE_MS : 0);
+      fade(BGM_VOLUME, playerIsPlaying() ? FADE_MS : 0);
       wantTrack(bgm.track);
     }
 
@@ -197,7 +199,12 @@
     function armStall(ms, onStall) {
       window.clearTimeout(bgm.stallTimer);
       bgm.stallTimer = window.setTimeout(() => {
-        if (bgm.playing) return;
+        if (playerIsPlaying()) {
+          // Sound after all. Close out a handover that never announced itself,
+          // so it cannot be left turned down to nothing.
+          if (bgm.swap) finishSwap();
+          return;
+        }
         onStall();
       }, ms);
     }
@@ -223,6 +230,7 @@
     // take the music away when that will not speak either.
     function swapStalled() {
       bgm.swap = null;
+      window.clearInterval(bgm.confirmTimer);
       clearFade();
       bgm.level = BGM_VOLUME;
       bgm.player?.setVolume?.(BGM_VOLUME);
@@ -241,6 +249,35 @@
       paintName(again);
       loadTrack(again);
       armStall(SWAP_STALL_MS, swapStalled);
+    }
+
+    // Ask the player what it is doing, rather than trusting the flag. The flag
+    // only moves when an event arrives, and the events worth worrying about
+    // are the ones that never come.
+    function playerIsPlaying() {
+      try {
+        return bgm.player?.getPlayerState?.() === window.YT?.PlayerState?.PLAYING;
+      } catch {
+        return false; // the player is mid-load and not answering questions
+      }
+    }
+
+    // YouTube reports state *changes*, and a handover between two playing
+    // videos need not be one: load a track while the player is already
+    // PLAYING and it can arrive back at PLAYING without ever having left, so
+    // no event is sent at all. Waiting on the event alone leaves the swap
+    // half-finished and the volume at zero for good — the music is running,
+    // silently, with the button still lit. So ask the player directly, and
+    // let the event get there first whenever there is one.
+    function confirmSwap() {
+      window.clearInterval(bgm.confirmTimer);
+      bgm.confirmTimer = window.setInterval(() => {
+        if (bgm.swap !== 'loading') {
+          window.clearInterval(bgm.confirmTimer);
+          return;
+        }
+        if (playerIsPlaying()) finishSwap();
+      }, 120);
     }
 
     function clearFade() {
@@ -333,6 +370,7 @@
     function stop() {
       window.clearTimeout(bgm.stallTimer);
       window.clearTimeout(bgm.swapTimer);
+      window.clearInterval(bgm.confirmTimer);
       clearFade();
       bgm.on = false;
       bgm.playing = false;
@@ -439,6 +477,7 @@
             if (dead) bgm.broken.add(dead.id);
             window.clearTimeout(bgm.stallTimer);
             window.clearTimeout(bgm.swapTimer);
+            window.clearInterval(bgm.confirmTimer);
             bgm.playing = false;
             bgm.swap = null;
             clearFade();
