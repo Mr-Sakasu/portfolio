@@ -47,6 +47,11 @@ test-results/
 .mypy_cache/
 .ruff_cache/
 
+# reference photographs the 8-bit scenes were drawn from. Working material:
+# the drawing is the thing that ships, and the rights to the photographs are
+# not ours to redistribute from a public repo.
+reference/
+
 # macOS-specific files
 .DS_Store
 Thumbs.db
