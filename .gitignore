@@ -53,6 +53,7 @@ test-results/
 # is tracked; nothing that lands inside it is.
 reference/*
 !reference/README.md
+!reference/SOURCES.md
 
 # macOS-specific files
 .DS_Store
