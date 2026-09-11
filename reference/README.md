@@ -9,13 +9,15 @@ scene's id in `src/data/scenes.ts`:
 | `bund/` | The Bund | Shanghai | yes |
 | `gugong/` | The Forbidden City | Beijing | yes |
 | `tsinghua/` | Tsinghua Second Gate | Beijing | yes |
-| `tianjin/` | Jiefang Bridge | Tianjin | — |
+| `tianjin/` | Jiefang Bridge | Tianjin | yes |
 | `shenzhen/` | Lianhua Hill Park | Shenzhen | yes |
-| `victoria/` | Victoria Harbour | Hong Kong | — |
-| `tokyo/` | The Skyline | Tokyo | — |
-| `fuji/` | Mount Fuji | Yamanashi | — |
+| `victoria/` | Victoria Harbour | Hong Kong | yes |
+| `tokyo/` | The Skyline | Tokyo | yes |
+| `fuji/` | Mount Fuji | Yamanashi | yes |
 
-The folders without one were drawn from something that was never saved here.
+All eight have one. `SOURCES.md` says where each came from and under what
+licence — the record has to be kept somewhere git can see, because the images
+themselves are not.
 
 ## Nothing in here is committed
 
