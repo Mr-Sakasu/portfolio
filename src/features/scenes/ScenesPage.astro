@@ -1135,62 +1135,74 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               put(x, y, y === friezeTop ? sun : y === pierTop - 1 ? shade : marble);
             }
           }
-          // 園 華 清, right to left across the frieze as they are cut into the
-          // real one. Eleven pixels square each: not calligraphy, but the
-          // characters themselves rather than three marks standing in for them.
+          // 園 華 清, right to left across the frieze as they are cut into
+          // the real one. Fifteen pixels square each, traced off a CJK face at
+          // that size: at this scale the strokes land where a printed
+          // character's would, so it reads as writing and not as a texture.
           const plaque = [
+            // 園
             [
-              '###########',
-              '#.........#',
-              '#..#####..#',
-              '#....#....#',
-              '#.#######.#',
-              '#....#....#',
-              '#..#####..#',
-              '#..#...#..#',
-              '#.##.#..#.#',
-              '#.........#',
-              '###########',
+              '.##############',
+              '.#.....#......#',
+              '.#..########..#',
+              '.#.....#......#',
+              '.#.##########.#',
+              '.#............#',
+              '.#..########..#',
+              '.#..#......#..#',
+              '.#..########..#',
+              '.#....###..#..#',
+              '.#...#.#.##...#',
+              '.#.##..#...##.#',
+              '.#.....#......#',
+              '.##############',
+              '...............',
             ],
+            // 華
             [
-              '..#..#..#..',
-              '###########',
-              '...........',
-              '..#######..',
-              '.....#.....',
-              '..#######..',
-              '.....#.....',
-              '###########',
-              '.....#.....',
-              '.....#.....',
-              '.....#.....',
+              '.....#....#....',
+              '.##############',
+              '.....#....#....',
+              '..############.',
+              '....#..#...#...',
+              '....#..#...#...',
+              '.##############',
+              '....#..#...#...',
+              '....#..#...#...',
+              '..#############',
+              '.......#.......',
+              '.##############',
+              '.......##......',
+              '.......#.......',
+              '...............',
             ],
+            // 清
             [
-              '......#....',
-              '#...#####..',
-              '......#....',
-              '..#.#####..',
-              '#..........',
-              '...#######.',
-              '...#.....#.',
-              '#..#######.',
-              '...#.....#.',
-              '...#######.',
-              '...#....#..',
+              '..##.....#.....',
+              '...#.#########.',
+              '.........#.....',
+              '......########.',
+              '.#.......#.....',
+              '..#.###########',
+              '...............',
+              '......########.',
+              '......#......#.',
+              '...#..########.',
+              '...#..#......#.',
+              '..#...########.',
+              '..#...#......#.',
+              '.#....#......#.',
+              '.#.........##..',
             ],
           ];
-          const gs = Math.max(1, Math.floor((pierTop - friezeTop - 2) / 11));
-          const gh = 11 * gs;
-          const gstep = gh + Math.max(2, Math.round(gs * 2.5));
+          const gh = plaque[0].length;
+          const gstep = gh + 4;
           const gy = friezeTop + Math.round((pierTop - friezeTop - gh) / 2);
           for (let i = 0; i < plaque.length; i += 1) {
-            const gx = F(0.5) + Math.round((i - 1) * gstep) - Math.floor(gh / 2);
+            const gx = F(0.5) + (i - 1) * gstep - Math.floor(gh / 2);
             plaque[i].forEach((row, ry) => {
               for (let rx = 0; rx < row.length; rx += 1) {
-                if (row[rx] !== '#') continue;
-                for (let dy = 0; dy < gs; dy += 1) {
-                  for (let dx = 0; dx < gs; dx += 1) put(gx + rx * gs + dx, gy + ry * gs + dy, ink);
-                }
+                if (row[rx] === '#') put(gx + rx, gy + ry, ink);
               }
             });
           }
