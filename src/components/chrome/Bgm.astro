@@ -27,7 +27,7 @@
 </style>
 
 <script>
-  import { sameTrack, trackForPath, trackForScene } from '../../data/bgm';
+  import { defaultTrack, sameTrack, trackForPath, trackForScene } from '../../data/bgm';
 
   // The visitor starts the music and nothing else does. Until the ♪ button is
   // pressed there is no player, no request to YouTube and no sound. This used
@@ -49,11 +49,30 @@
   // rebuffer each time. Letting a scene settle first keeps the player from
   // being handed seven tracks in two seconds.
   const SETTLE_MS = 600;
+  // How long the player gets to actually make a sound after being told to —
+  // on the first press and on every track change. Fetching the iframe API and
+  // buffering a cold video over a bad connection fit inside this; a video that
+  // is never going to arrive does not.
+  const STALL_MS = 10000;
 
   function paintButtons(playing) {
     document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
       button.setAttribute('aria-pressed', playing ? 'true' : 'false');
       button.dataset.bgmState = playing ? 'on' : 'off';
+    });
+  }
+
+  // The button carries the name of whatever is cued up, which the header shows
+  // on hover. It names the track for where the visitor is rather than what is
+  // audible, so it is right before the first press as well as after it.
+  function paintName(track) {
+    const name = track?.name ?? '';
+    document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
+      button.dataset.bgmName = name;
+      // Reading the icon alone tells you nothing, so the track goes in the
+      // accessible name too, next to the verb the page was rendered with.
+      const verb = button.dataset.bgmLabel ?? '';
+      button.setAttribute('aria-label', verb && name ? `${verb}: ${name}` : verb || name);
     });
   }
 
@@ -68,36 +87,56 @@
 
     const bgm = window.__bgm ?? (window.__bgm = {
       player: null,
-      playing: false,  // the track is coming out of the speakers right now
-      starting: false, // pressed, but the player is still loading
+      // `on` is what the visitor asked for; `playing` is what the player is
+      // doing about it. Keeping them apart is the whole point: the player
+      // drops out of PLAYING for as long as it takes to buffer, which happens
+      // on every single track change, and a visitor who is owed music across
+      // that gap must not have the button, their next press, or the next scene
+      // change decided by it.
+      on: false,
+      playing: false,
       // What should be playing, and what the player actually holds. They part
       // company between choosing a track and the player catching up with it.
       track: null,
       loaded: null,
-      swapping: false, // mid-handover: faded out, waiting on the new track
+      // How far through a handover the player is: null between them,
+      // 'fading' while the outgoing track is on its way down, 'loading' once
+      // the new one has been handed over and is buffering. The two halves have
+      // to be told apart — a PLAYING event during 'fading' is the outgoing
+      // track looping, and treating it as the new one's arrival cancels the
+      // fade and the load waiting on the end of it.
+      swap: null,
       scene: null,     // the reel's current scene, while there is one
       level: BGM_VOLUME,
+      // Video ids the player has rejected — removed, made private, or blocked
+      // from embedding. Dead for the rest of the visit; handing the same id
+      // back every time its scene comes round again just buys more silence.
+      broken: new Set(),
       id: Math.random().toString(36).slice(2),
     });
 
     // The header is rebuilt on navigation while the player is not, so the fresh
     // buttons have to be told what the surviving player is doing.
-    const audible = () => bgm.playing || bgm.starting;
-    paintButtons(audible());
+    paintButtons(bgm.on);
+    paintName(bgm.track);
 
     document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
       if (button.dataset.bgmBound === '1') return;
       button.dataset.bgmBound = '1';
       // Branching on what the button shows, so a press always does what the
       // icon says it will.
-      button.addEventListener('click', () => (audible() ? stop() : start()));
+      button.addEventListener('click', () => (bgm.on ? stop() : start()));
     });
 
     // --- which track ---------------------------------------------------------
     // A scene showing in the reel wins over the page it sits on.
     function resolveTrack() {
       const path = window.location.pathname;
-      return bgm.scene ? trackForScene(bgm.scene, path) : trackForPath(path);
+      const track = bgm.scene ? trackForScene(bgm.scene, path) : trackForPath(path);
+      if (!bgm.broken.has(track.id)) return track;
+      // This one has already failed here. Fall back to the site default, or to
+      // nothing at all if that is the id that died.
+      return bgm.broken.has(defaultTrack.id) ? null : defaultTrack;
     }
 
     // Navigation and scene changes both land here, so a scene reported just
@@ -107,21 +146,59 @@
       window.clearTimeout(bgm.swapTimer);
       if (!next) return;
       bgm.track = next;
+      paintName(next);
       // Silent: the press picks the right track up on its own.
-      if (!audible() || sameTrack(bgm.loaded, next)) return;
+      if (!bgm.on || sameTrack(bgm.loaded, next)) return;
       bgm.swapTimer = window.setTimeout(swapTrack, SETTLE_MS);
     }
 
     function swapTrack() {
-      const next = bgm.track;
-      if (!bgm.player?.loadVideoById || sameTrack(bgm.loaded, next) || !audible()) return;
+      if (!bgm.player?.loadVideoById || !bgm.on || sameTrack(bgm.loaded, bgm.track)) return;
+      // A handover already under way ends on whatever the newest target is by
+      // the time its fade runs out, so never start a second one over the top:
+      // the second fade would cancel the first and take its pending load down
+      // with it, leaving the player on a track nobody asked for.
+      if (bgm.swap) return;
+      bgm.swap = 'fading';
       fade(0, FADE_MS, () => {
+        // Read the target now rather than when the fade started: the visitor
+        // has had FADE_MS to move somewhere else again.
+        const next = bgm.track;
+        if (!bgm.on || !next) {
+          finishSwap();
+          return;
+        }
+        bgm.swap = 'loading';
         bgm.loaded = next;
-        bgm.swapping = true;
         loadTrack(next); // this starts playing on its own
         // The volume comes back up from onStateChange, once the new track is
         // really running: fading up into a buffering player is just silence.
+        armStall();
       });
+    }
+
+    // A handover is over, however it ended. The volume goes back up whether or
+    // not the new track ever spoke, so nothing is left silently turned down to
+    // zero, and the target is checked once more in case it moved while the
+    // player was busy with the last one.
+    function finishSwap() {
+      window.clearTimeout(bgm.stallTimer);
+      bgm.swap = null;
+      fade(BGM_VOLUME, bgm.playing ? FADE_MS : 0);
+      wantTrack(bgm.track);
+    }
+
+    // The player has been told to do something audible. If it never gets
+    // there, stop the button claiming there is music: blocked, throttled, or
+    // behind a network that will not reach YouTube at all.
+    function armStall() {
+      window.clearTimeout(bgm.stallTimer);
+      bgm.stallTimer = window.setTimeout(() => {
+        if (bgm.playing) return;
+        bgm.on = false;
+        paintButtons(false);
+        if (bgm.swap) finishSwap();
+      }, STALL_MS);
     }
 
     function clearFade() {
@@ -161,17 +238,10 @@
     }
 
     function yieldAudio() {
-      // Another tab took over, which is not the visitor switching this one off:
-      // silence it, and let a press here take the music back.
-      window.clearTimeout(bgm.startTimer);
-      window.clearTimeout(bgm.swapTimer);
-      clearFade();
-      bgm.playing = false;
-      bgm.starting = false;
-      bgm.swapping = false;
-      bgm.level = BGM_VOLUME;
-      paintButtons(false);
-      bgm.player?.pauseVideo?.();
+      // Another tab took over, which is not the visitor switching this one off,
+      // but it sounds the same from here: silence it, and let a press take the
+      // music back.
+      stop();
     }
 
     if (!bgm.wired) {
@@ -196,20 +266,21 @@
     }
 
     function start() {
+      // The scene, the page, and the health of any given track may all have
+      // moved since the target was last chosen. Pick it again rather than
+      // committing the press to a stale one, or to one known to be dead.
+      const next = resolveTrack();
+      if (!next) return; // every candidate has failed: there is nothing to start
+      bgm.track = next;
+      paintName(next);
       claimAudio();
-      // The button answers the press at once; onStateChange corrects it if the
-      // video turns out to be unplayable.
-      bgm.starting = true;
+      // The button answers the press at once. It follows the visitor's intent
+      // from here on and not the player's state, so buffering a new track no
+      // longer flickers it off and back on mid-reel; only giving up on the
+      // player, or an unplayable video, withdraws it.
+      bgm.on = true;
       paintButtons(true);
-      // Blocked, removed, or simply too slow: stop the button claiming there is
-      // music. Only the label is withdrawn — a late arrival still plays, and
-      // paints itself back on.
-      window.clearTimeout(bgm.startTimer);
-      bgm.startTimer = window.setTimeout(() => {
-        if (bgm.playing) return;
-        bgm.starting = false;
-        paintButtons(false);
-      }, 6000);
+      armStall();
       if (bgm.player?.playVideo) {
         play();
       } else {
@@ -218,12 +289,12 @@
     }
 
     function stop() {
-      window.clearTimeout(bgm.startTimer);
+      window.clearTimeout(bgm.stallTimer);
       window.clearTimeout(bgm.swapTimer);
       clearFade();
+      bgm.on = false;
       bgm.playing = false;
-      bgm.starting = false;
-      bgm.swapping = false;
+      bgm.swap = null;
       bgm.level = BGM_VOLUME;
       paintButtons(false);
       bgm.player?.pauseVideo?.();
@@ -236,10 +307,14 @@
     }
 
     function play() {
+      if (!bgm.track) return;
       bgm.player.unMute?.(); // YouTube hands some embeds back muted
       clearFade();
       bgm.level = BGM_VOLUME;
       bgm.player.setVolume?.(BGM_VOLUME);
+      // The clock on "is anything going to happen" starts here rather than at
+      // the press: the press may have spent most of it waiting for the API.
+      armStall();
       // Moved pages while the music was off: come back on the track for
       // wherever the visitor is now, not the one they left.
       if (!sameTrack(bgm.loaded, bgm.track)) {
@@ -252,9 +327,10 @@
       bgm.player.playVideo();
     }
 
-    // The track ran out. Back to the サビ, not to the intro.
+    // The track ran out. Back to the サビ, not to the intro — of whatever the
+    // player is actually holding, which is not always what is wanted next.
     function restart() {
-      bgm.player.seekTo?.(bgm.track?.start ?? 0, true);
+      bgm.player.seekTo?.(bgm.loaded?.start ?? 0, true);
       bgm.player.playVideo();
     }
 
@@ -280,36 +356,62 @@
         },
         events: {
           onReady: () => {
-            // Pressed off again while the API was loading: stay quiet.
-            if (bgm.starting) play();
+            // Pressed off again while the API was loading: stay quiet. A press
+            // that is still standing plays, however long the API took.
+            if (bgm.on) play();
           },
           onStateChange: (event) => {
             const YT = window.YT;
             const wasPlaying = bgm.playing;
             bgm.playing = event.data === YT.PlayerState.PLAYING;
-            if (bgm.playing) {
-              window.clearTimeout(bgm.startTimer);
-              bgm.starting = false;
-              if (bgm.swapping) {
-                // The track swapped into the player is running: bring it up.
-                bgm.swapping = false;
-                fade(BGM_VOLUME, FADE_MS);
-              }
+            if (bgm.playing && !bgm.on) {
+              // Switched off, or handed to another tab, while this was still
+              // buffering: pauseVideo() aimed at a player that had not started
+              // yet does nothing at all, so catch it the moment it does.
+              bgm.playing = false;
+              bgm.player.pauseVideo?.();
+              return;
             }
-            paintButtons(audible());
-            // Every track ends, now that nothing loops natively. Pick it
-            // back up — but only one that was actually running, so this can
-            // never restart a track the visitor paused.
+            if (bgm.playing) {
+              window.clearTimeout(bgm.stallTimer);
+              // The track swapped into the player is running: bring it up.
+              // Only from 'loading' — in 'fading' this is the outgoing track
+              // coming back round, and the handover is still owed its load.
+              if (bgm.swap === 'loading') finishSwap();
+            }
+            // The button is not painted from here: it says what the visitor
+            // asked for, and the player passes through PLAYING and back out of
+            // it on every handover and at the end of every loop.
+            //
+            // Every track ends, now that nothing loops natively. Pick it back
+            // up — but only one that was actually running, so this can never
+            // restart a track the visitor paused.
             if (event.data === YT.PlayerState.ENDED && wasPlaying) restart();
           },
           onError: () => {
-            // Video removed, private, or blocked from embedding.
-            window.clearTimeout(bgm.startTimer);
-            clearFade();
+            // Video removed, private, or blocked from embedding. Remember the
+            // id so it is not tried again, then fall back — usually to the site
+            // default — rather than leaving this scene silent for the visit.
+            const dead = bgm.loaded;
+            if (dead) bgm.broken.add(dead.id);
+            window.clearTimeout(bgm.stallTimer);
+            window.clearTimeout(bgm.swapTimer);
             bgm.playing = false;
-            bgm.starting = false;
-            bgm.swapping = false;
+            bgm.swap = null;
+            clearFade();
             bgm.level = BGM_VOLUME;
+            bgm.player?.setVolume?.(BGM_VOLUME);
+            const next = resolveTrack();
+            if (bgm.on && next && !sameTrack(next, dead)) {
+              bgm.track = next;
+              paintName(next);
+              bgm.loaded = next;
+              loadTrack(next);
+              armStall();
+              return;
+            }
+            // Nothing left to fall back to.
+            bgm.on = false;
             paintButtons(false);
           },
         },
@@ -317,7 +419,10 @@
     }
 
     function loadPlayer() {
-      if (!bgm.track) return; // no track configured: stay silent and show nothing
+      if (!bgm.track) {
+        stop(); // no track configured: stay silent and show nothing
+        return;
+      }
       if (window.YT?.Player) {
         createPlayer();
         return;

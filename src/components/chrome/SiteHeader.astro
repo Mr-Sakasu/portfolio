@@ -33,7 +33,17 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
             <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
             <span class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true">☀</span>
           </button>
-          <button type="button" data-bgm-toggle data-bgm-state="off" class="theme-toggle bgm-toggle" aria-pressed="false" aria-label={t['bgm.toggle']} title={t['bgm.toggle']}>
+          {/* No title attribute: the tooltip below says the same thing and a
+              native one would sit on top of it a second later. */}
+          <button
+            type="button"
+            data-bgm-toggle
+            data-bgm-state="off"
+            data-bgm-label={t['bgm.toggle']}
+            class="theme-toggle bgm-toggle"
+            aria-pressed="false"
+            aria-label={t['bgm.toggle']}
+          >
             <span class="bgm-toggle__icon" aria-hidden="true">♪</span>
           </button>
         </div>
@@ -79,6 +89,63 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
 
   .site-nav-scroll::-webkit-scrollbar {
     display: none;
+  }
+
+  /* What is playing, on hover. The name is written onto the button by the BGM
+     player as the track changes, so this follows the reel from scene to
+     scene. Empty until then, and the rule below keeps it from showing an
+     empty box. */
+  .bgm-toggle {
+    position: relative;
+  }
+
+  .bgm-toggle::after {
+    content: attr(data-bgm-name);
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    /* Anchored to the right: the button sits near the edge of the screen, so
+       a long title has to grow inwards or it leaves the viewport. */
+    right: 0;
+    z-index: 50;
+    width: max-content;
+    max-width: min(72vw, 20rem);
+    padding: 0.4rem 0.6rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--site-card-border);
+    background: var(--site-surface, #11141d);
+    /* It hangs below the header and over the page, which on the scenes reel
+       means over artwork. The surface token is translucent, so blur behind it
+       the way the cards do or the title reads through the picture. */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--site-text);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: left;
+    box-shadow: var(--site-card-shadow);
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 140ms ease, transform 140ms ease;
+    pointer-events: none;
+  }
+
+  .bgm-toggle[data-bgm-name='']::after,
+  .bgm-toggle:not([data-bgm-name])::after {
+    content: none;
+  }
+
+  .bgm-toggle:hover::after,
+  .bgm-toggle:focus-visible::after {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bgm-toggle::after {
+      transition: none;
+      transform: none;
+    }
   }
 
   /* Below md the strip scrolls, and the scrollbar is hidden. Fade its trailing
