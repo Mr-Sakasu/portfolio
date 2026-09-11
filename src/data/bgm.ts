@@ -15,6 +15,13 @@ export interface Track {
     /** YouTube video id. */
     id: string;
     /**
+     * Shown in the ♪ button's tooltip, so a visitor can find out what they
+     * are listening to. Left in the original script rather than translated:
+     * these are titles, and a romanised or translated song title is harder to
+     * search for than the real one.
+     */
+    name: string;
+    /**
      * Seconds in, where the track starts and where it returns each time it
      * runs out — the サビ, for a song that has one. Nobody hears an intro
      * here: a scene may only hold the screen for a few seconds, so the music
@@ -31,7 +38,10 @@ export interface Track {
 }
 
 /** Plays wherever nothing more specific is set. */
-export const defaultTrack: Track = { id: '3ML2nYnCO0E' }; // Fire◎Flower - halyosy (Piano Cover)
+export const defaultTrack: Track = {
+    id: '3ML2nYnCO0E',
+    name: 'halyosy — Fire◎Flower (Piano Cover)',
+};
 
 /**
  * One track per scene in the reel, keyed by the ids in sceneOrder.
@@ -41,23 +51,29 @@ export const defaultTrack: Track = { id: '3ML2nYnCO0E' }; // Fire◎Flower - hal
  * actually been made.
  */
 export const sceneTracks: Record<string, Track | null> = {
-    // 松原みき - 真夜中のドア〜stay with me. City pop, and the genre is the
-    // subject: a modern city at night, which is what the scene is.
-    bund: { id: 'nuU2YHtxMik', start: 62 },
-    // いーあるふぁんくらぶ 〜超絶技巧ピアノアレンジVer.〜
-    gugong: { id: '-8gDcwKd3DI', start: 101 },
+    // City pop, and the genre is the subject: a modern city at night, which
+    // is what the scene is.
+    bund: { id: 'nuU2YHtxMik', name: '松原みき — 真夜中のドア〜stay with me', start: 62 },
+    gugong: {
+        id: '-8gDcwKd3DI',
+        name: 'みきとP — いーあるふぁんくらぶ（超絶技巧ピアノアレンジ）',
+        start: 101,
+    },
     // 清华二校門 arrived after the tracks were picked and has none of its own,
     // so it keeps the site default until one is chosen.
     tsinghua: null,
-    tianjin: { id: 'W9Fq1HC_5hg', start: 105 }, // 告五人 - 帶我去找夜生活
+    tianjin: { id: 'W9Fq1HC_5hg', name: '告五人 — 帶我去找夜生活', start: 105 },
     // Game music, both of them: written as loops, with no サビ to skip to.
-    shenzhen: { id: 'Bw7ggOj9CVs' }, // ポケモン HGSS - しぜんこうえん
-    victoria: { id: 'KQ3PzgYN8BI' }, // Pokémon Black/White - Black City
+    shenzhen: { id: 'Bw7ggOj9CVs', name: 'ポケモン HGSS — しぜんこうえん' },
+    victoria: { id: 'KQ3PzgYN8BI', name: 'Pokémon Black/White — Black City' },
     // The remix climbs the whole way through rather than turning a corner
     // anywhere, so there is no サビ to drop into. It plays from the top.
     // The album cut has no official upload; this is the one on her own channel.
-    tokyo: { id: 'Ej1fyNdnuFI' }, // 椎名林檎 - 丸ノ内サディスティック (Miso Remix)
-    fuji: { id: 'Sw1Flgub9s8', start: 44 }, // ヨルシカ - 春泥棒
+    tokyo: {
+        id: 'Ej1fyNdnuFI',
+        name: '椎名林檎 — 丸ノ内サディスティック（Miso Remix）',
+    },
+    fuji: { id: 'Sw1Flgub9s8', name: 'ヨルシカ — 春泥棒', start: 44 },
 };
 
 /**
