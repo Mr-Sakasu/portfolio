@@ -49,11 +49,13 @@
   // rebuffer each time. Letting a scene settle first keeps the player from
   // being handed seven tracks in two seconds.
   const SETTLE_MS = 600;
-  // How long the player gets to actually make a sound after being told to —
-  // on the first press and on every track change. Fetching the iframe API and
-  // buffering a cold video over a bad connection fit inside this; a video that
-  // is never going to arrive does not.
+  // How long the player gets to actually make a sound after being told to.
+  // A press that never produces one has nothing to lose by being withdrawn.
+  // A handover has: the music was playing a moment ago, so it is given longer
+  // and recovered rather than abandoned. Buffering a cold video over a bad
+  // connection fits inside these; never arriving at all does not.
   const STALL_MS = 10000;
+  const SWAP_STALL_MS = 15000;
 
   function paintButtons(playing) {
     document.querySelectorAll('[data-bgm-toggle]').forEach((button) => {
@@ -112,6 +114,7 @@
       // from embedding. Dead for the rest of the visit; handing the same id
       // back every time its scene comes round again just buys more silence.
       broken: new Set(),
+      stalls: 0, // handovers in a row that never made a sound
       id: Math.random().toString(36).slice(2),
     });
 
@@ -173,7 +176,7 @@
         loadTrack(next); // this starts playing on its own
         // The volume comes back up from onStateChange, once the new track is
         // really running: fading up into a buffering player is just silence.
-        armStall();
+        armStall(SWAP_STALL_MS, swapStalled);
       });
     }
 
@@ -188,17 +191,56 @@
       wantTrack(bgm.track);
     }
 
-    // The player has been told to do something audible. If it never gets
-    // there, stop the button claiming there is music: blocked, throttled, or
-    // behind a network that will not reach YouTube at all.
-    function armStall() {
+    // The player has been told to do something audible; this is how long it
+    // gets before someone comes looking. What is worth doing about the silence
+    // depends on what was riding on it, so the caller says.
+    function armStall(ms, onStall) {
       window.clearTimeout(bgm.stallTimer);
       bgm.stallTimer = window.setTimeout(() => {
         if (bgm.playing) return;
-        bgm.on = false;
-        paintButtons(false);
-        if (bgm.swap) finishSwap();
-      }, STALL_MS);
+        onStall();
+      }, ms);
+    }
+
+    // Nothing ever came of the press. Stop the button claiming there is music:
+    // blocked, throttled, or behind a network that will not reach YouTube.
+    function giveUp() {
+      bgm.on = false;
+      paintButtons(false);
+      if (bgm.swap) finishSwap();
+    }
+
+    // A handover that never made a sound. The music was playing a moment ago,
+    // so this is one track failing to arrive rather than a reason to stop:
+    // the visitor keeps what they asked for while the player is talked back
+    // into it, and the volume goes back up so that whatever does start is
+    // audible instead of sitting at zero.
+    //
+    // A silence says nothing about the video itself, unlike an outright error
+    // — a slow network and the browser's autoplay policy look exactly the same
+    // from here — so the id is not written off. Ask for it once more, then for
+    // the site default, which has been playing fine everywhere else, and only
+    // take the music away when that will not speak either.
+    function swapStalled() {
+      bgm.swap = null;
+      clearFade();
+      bgm.level = BGM_VOLUME;
+      bgm.player?.setVolume?.(BGM_VOLUME);
+      if (!bgm.on) return;
+      const stalled = bgm.loaded ?? bgm.track;
+      const again = bgm.stalls === 0
+        ? stalled
+        : (sameTrack(stalled, defaultTrack) ? null : defaultTrack);
+      bgm.stalls += 1;
+      if (!again) {
+        giveUp();
+        return;
+      }
+      bgm.track = again;
+      bgm.loaded = again;
+      paintName(again);
+      loadTrack(again);
+      armStall(SWAP_STALL_MS, swapStalled);
     }
 
     function clearFade() {
@@ -280,7 +322,7 @@
       // player, or an unplayable video, withdraws it.
       bgm.on = true;
       paintButtons(true);
-      armStall();
+      armStall(STALL_MS, giveUp);
       if (bgm.player?.playVideo) {
         play();
       } else {
@@ -314,7 +356,7 @@
       bgm.player.setVolume?.(BGM_VOLUME);
       // The clock on "is anything going to happen" starts here rather than at
       // the press: the press may have spent most of it waiting for the API.
-      armStall();
+      armStall(STALL_MS, giveUp);
       // Moved pages while the music was off: come back on the track for
       // wherever the visitor is now, not the one they left.
       if (!sameTrack(bgm.loaded, bgm.track)) {
@@ -374,6 +416,7 @@
             }
             if (bgm.playing) {
               window.clearTimeout(bgm.stallTimer);
+              bgm.stalls = 0;
               // The track swapped into the player is running: bring it up.
               // Only from 'loading' — in 'fading' this is the outgoing track
               // coming back round, and the handover is still owed its load.
@@ -407,7 +450,7 @@
               paintName(next);
               bgm.loaded = next;
               loadTrack(next);
-              armStall();
+              armStall(SWAP_STALL_MS, swapStalled);
               return;
             }
             // Nothing left to fall back to.
