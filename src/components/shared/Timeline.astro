@@ -48,14 +48,19 @@ const toneByColor = {
 
         return (
             <article class="timeline-item relative mb-6 last:mb-0 md:mb-8" data-reveal>
+                {/* Both cells are pinned to row 1. The dot sits in the middle
+                    column, so a card placed to its left would otherwise be
+                    auto-flowed onto a second row — grid never fills backwards
+                    — dropping every left-hand card the height of its own dot
+                    below the line it belongs to. */}
                 <div class="relative grid grid-cols-[2.25rem_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] items-start">
-                    <div class="relative col-start-1 md:col-start-2 flex justify-center pt-2">
+                    <div class="relative row-start-1 col-start-1 md:col-start-2 flex justify-center pt-2">
                         <span class="z-10 grid h-8 w-8 place-items-center rounded-full border border-slate-600/80 bg-[#0f131d]">
                             <span class={`h-2.5 w-2.5 rounded-full ${tone.dot}`}></span>
                         </span>
                     </div>
 
-                    <div class={`col-start-2 ${isLeft ? 'md:col-start-1 md:pr-6 md:text-right' : 'md:col-start-3 md:pl-6 md:text-left'}`}>
+                    <div class={`row-start-1 col-start-2 ${isLeft ? 'md:col-start-1 md:pr-6 md:text-right' : 'md:col-start-3 md:pl-6 md:text-left'}`}>
                         <div class={`${isCurrent ? 'timeline-card--current ' : ''}rounded-xl border bg-[#111722]/80 backdrop-blur-md px-4 py-3 md:px-5 md:py-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] transition-colors duration-300 ${tone.card}`}>
                             <p class="mb-2">
                                 <span class={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide ${tone.badge}`}>
