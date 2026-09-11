@@ -49,8 +49,10 @@ test-results/
 
 # reference photographs the 8-bit scenes were drawn from. Working material:
 # the drawing is the thing that ships, and the rights to the photographs are
-# not ours to redistribute from a public repo.
-reference/
+# not ours to redistribute from a public repo. The convention for the folder
+# is tracked; nothing that lands inside it is.
+reference/*
+!reference/README.md
 
 # macOS-specific files
 .DS_Store
