@@ -53,7 +53,7 @@ export const defaultTrack: Track = {
 export const sceneTracks: Record<string, Track | null> = {
     // City pop, and the genre is the subject: a modern city at night, which
     // is what the scene is.
-    bund: { id: 'nuU2YHtxMik', name: '松原みき — 真夜中のドア〜stay with me', start: 62 },
+    bund: { id: 'nuU2YHtxMik', name: '松原みき — 真夜中のドア〜stay with me', start: 61 },
     gugong: {
         id: '-8gDcwKd3DI',
         name: 'みきとP — いーあるふぁんくらぶ（超絶技巧ピアノアレンジ）',
@@ -62,7 +62,7 @@ export const sceneTracks: Record<string, Track | null> = {
     // 清华二校門 arrived after the tracks were picked and has none of its own,
     // so it keeps the site default until one is chosen.
     tsinghua: null,
-    tianjin: { id: 'W9Fq1HC_5hg', name: '告五人 — 帶我去找夜生活', start: 105 },
+    tianjin: { id: 'W9Fq1HC_5hg', name: '告五人 — 帶我去找夜生活', start: 106 },
     // Game music, both of them: written as loops, with no サビ to skip to.
     shenzhen: { id: 'Bw7ggOj9CVs', name: 'ポケモン HGSS — しぜんこうえん' },
     victoria: { id: 'KQ3PzgYN8BI', name: 'Pokémon Black/White — Black City' },
@@ -73,7 +73,7 @@ export const sceneTracks: Record<string, Track | null> = {
         id: 'Ej1fyNdnuFI',
         name: '椎名林檎 — 丸ノ内サディスティック（Miso Remix）',
     },
-    fuji: { id: 'Sw1Flgub9s8', name: 'ヨルシカ — 春泥棒', start: 44 },
+    fuji: { id: 'Sw1Flgub9s8', name: 'ヨルシカ — 春泥棒', start: 45 },
 };
 
 /**
