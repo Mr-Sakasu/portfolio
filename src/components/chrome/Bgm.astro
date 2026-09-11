@@ -44,11 +44,13 @@
   const BGM_CLAIM_KEY = 'portfolio-bgm-claim';
   const BGM_CHANNEL = 'portfolio-bgm-channel';
   const BGM_VOLUME = 35; // background, not a performance
-  const FADE_MS = 400;
+  const FADE_MS = 220;
   // One flick of the reel crosses every scene in it, and loadVideoById has to
   // rebuffer each time. Letting a scene settle first keeps the player from
-  // being handed seven tracks in two seconds.
-  const SETTLE_MS = 600;
+  // being handed seven tracks in two seconds. It only has to outlast the gap
+  // between announcements mid-flick, which is a little over a tenth of a
+  // second, so it can be short enough to feel like an answer.
+  const SETTLE_MS = 320;
   // How long the player gets to actually make a sound after being told to.
   // A press that never produces one has nothing to lose by being withdrawn.
   // A handover has: the music was playing a moment ago, so it is given longer
@@ -277,7 +279,7 @@
           return;
         }
         if (playerIsPlaying()) finishSwap();
-      }, 120);
+      }, 60);
     }
 
     function clearFade() {
