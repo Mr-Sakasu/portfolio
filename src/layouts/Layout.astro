@@ -397,13 +397,76 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
         line-height: 1;
     }
 
+    /* Nothing else on the page makes a sound, so nobody thinks to look for
+       something that does, and the ♪ was dimmed to half opacity on top of
+       that. Off is now the state that asks to be noticed: full strength, and
+       a light travelling slowly round the rim to catch the eye on a page that
+       is otherwise still. It stops the moment the music is on — by then the
+       button has been found, and the cyan says the rest. */
+    .bgm-toggle {
+        position: relative;
+    }
+
     .bgm-toggle[data-bgm-state='off'] {
-        opacity: 0.5;
+        color: var(--site-subtle);
+    }
+
+    @supports ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+        .bgm-toggle[data-bgm-state='off']::before {
+            content: '';
+            position: absolute;
+            /* Sits on the border rather than beside it: one pixel out, one
+               pixel of ring, so the travelling light runs along the edge the
+               button already has instead of drawing a second one. */
+            inset: -1px;
+            border-radius: 9999px;
+            padding: 1px;
+            background: conic-gradient(
+                from 0turn,
+                transparent 0 0.52turn,
+                var(--timeline-beam-soft) 0.74turn,
+                var(--timeline-beam-core) 0.84turn,
+                var(--timeline-beam-soft) 0.92turn,
+                transparent 0.99turn
+            );
+            -webkit-mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask:
+                linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            mask-composite: exclude;
+            pointer-events: none;
+            animation: bgm-shine 4s linear infinite;
+        }
+    }
+
+    /* The rim is a circle, so turning the whole pseudo-element turns the
+       gradient inside it and leaves the ring exactly where it was. */
+    @keyframes bgm-shine {
+        to {
+            transform: rotate(1turn);
+        }
+    }
+
+    .bgm-toggle[data-bgm-state='off']:hover {
+        border-color: var(--site-card-border-hover);
     }
 
     .bgm-toggle[data-bgm-state='on'] {
         opacity: 1;
         color: var(--timeline-beam-core, #22d3ee);
+        border-color: var(--timeline-beam-soft);
+    }
+
+    /* Standing out must not mean moving. The light stops where it reads best
+       and simply stays there. */
+    @media (prefers-reduced-motion: reduce) {
+        .bgm-toggle[data-bgm-state='off']::before {
+            animation: none;
+            transform: rotate(0.62turn);
+        }
     }
 
     html[data-theme='light'] .theme-toggle__icon--dark {
