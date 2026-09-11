@@ -969,7 +969,8 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const x0 = cx - Math.floor(w / 2);
           const F = (f) => x0 + Math.round(f * w);
           const V = (f) => base - Math.round(f * h);
-          const marble = word(mix(bodyHex, lm.light, 0.82));
+          const marbleHex = mix(bodyHex, lm.light, 0.82);
+          const marble = word(marbleHex);
           const sun = word(lm.light);
           const shade = word(mix(bodyHex, lm.light, 0.48));
           const grey = word(bodyHex);
@@ -1002,7 +1003,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           const cb = F(0.6);
           const cr = (cb - ca) / 2;
           const mid = (ca + cb) / 2;
-          const pierTop = V(0.71);
+          const pierTop = V(0.72);
 
           // What shows through the middle bay before anything is built over it:
           // the avenue going on, and one of the white halls at the end of it.
@@ -1129,95 +1130,72 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
           // The frieze, and 清華園 cut into it — dark on the stone, not on a
           // board hung over it.
-          const friezeTop = V(0.9);
+          const friezeTop = V(0.86);
           for (let x = F(0.28); x <= F(0.72); x += 1) {
             for (let y = friezeTop; y < pierTop; y += 1) {
               put(x, y, y === friezeTop ? sun : y === pierTop - 1 ? shade : marble);
             }
           }
           // 園 華 清, right to left across the frieze as they are cut into
-          // the real one. Traced off a Ming face at the size they are drawn,
-          // in two weights of ink — full for the stroke, half for where it
-          // thins — so the brush ends and the hairline horizontals survive at
-          // twenty-one pixels instead of collapsing into a block.
+          // the real one — those are brushed characters, not set ones, so
+          // they come off a kai face rather than a printed one, thirteen
+          // pixels square. Two weights of ink: full where the brush bore
+          // down, half where it lifted, which is what carries the stroke
+          // shapes at this size.
           const plaque = [
             // 園
             [
-              '.....................',
-              '..+..............#+..',
-              '..#++++++++++++++##..',
-              '..#......+#......#...',
-              '..#..++++##++##..#...',
-              '..#..++++##++++..#...',
-              '..#......#+...+#.#...',
-              '..#.++++++++++++.#...',
-              '..#..++++++++++..#...',
-              '..#..+#++++++##..#...',
-              '..#..++......#+..#...',
-              '..#..+########+..#...',
-              '..#..+++#+...+#+.#...',
-              '..#...##..#+.#+..#...',
-              '..#+#++#...+##...#...',
-              '..#...+#+#+..##..#...',
-              '..#...##+.....++.#...',
-              '..#...+..........#...',
-              '..#++++++++++++++#...',
-              '..#..............+...',
-              '.....................',
+              '.............',
+              '.....++###+..',
+              '..#++.#..+#..',
+              '..+..+#+..#..',
+              '..+.++###.#..',
+              '..#.+++#..#..',
+              '..#..#+++.#..',
+              '..#..#++..#..',
+              '..#.+++##.#..',
+              '..#..+..+.#..',
+              '..#+++++++#..',
+              '..........#..',
+              '.............',
             ],
             // 華
             [
-              '.....................',
-              '.....##.......#+.....',
-              '.....#+.++....#...#..',
-              '.#########.#########.',
-              '.....#+.......#......',
-              '.....+........#..#...',
-              '..#################..',
-              '.....#+...#...#+.....',
-              '.....#....#...#......',
-              '..+++#+##.#.++##+##..',
-              '.....#....#...#......',
-              '.....#....#...#......',
-              '.....+....#...+...#..',
-              '..#################+.',
-              '..........#..........',
-              '..........#......#...',
-              '..+################..',
-              '..........#..........',
-              '..........#..........',
-              '..........#..........',
-              '.....................',
+              '........+....',
+              '....++.+#....',
+              '...###+#+++..',
+              '.....+.#+....',
+              '....+##+#....',
+              '...#+.#+###+.',
+              '.+#####+#+++.',
+              '....#+####...',
+              '...+++#......',
+              '..#########..',
+              '......#......',
+              '......#......',
+              '......+......',
             ],
             // 清
             [
-              '.....................',
-              '..+#+.......#+.......',
-              '....#+......#....++..',
-              '.....#.############..',
-              '............#........',
-              '......+.++++#++++#+..',
-              '.+#+.#..++++#+++++...',
-              '..+#.#......#.....+..',
-              '....+++#############.',
-              '....#................',
-              '....#...##########...',
-              '...#+...#.......+#...',
-              '...#....#.......+#...',
-              '..+#....#+++++++##...',
-              '.+#+....#.......+#...',
-              '..#+....##########...',
-              '..+#....#.......+#...',
-              '..+#...++.......+#...',
-              '..##...#......++##...',
-              '..+#..#.........#....',
-              '.....................',
+              '.......+.....',
+              '.......#.....',
+              '..##.+###....',
+              '......+##....',
+              '.+...++#++#+.',
+              '.#++###+++++.',
+              '.....+++#+...',
+              '..++.#++++...',
+              '..#..#+.++...',
+              '.##..#++++...',
+              '.#+..#..+#...',
+              '.....+.+#+...',
+              '........+....',
             ],
           ];
           const gh = plaque[0].length;
-          const gstep = gh + Math.max(2, Math.round(gh * 0.22));
+          const gstep = gh + Math.max(2, Math.round(gh * 0.3));
           const gy = friezeTop + Math.round((pierTop - friezeTop - gh) / 2);
-          const inkMid = word(mix(lm.accent ?? '#2f2a26', mix(bodyHex, lm.light, 0.82), 0.5));
+          const inkMid = word(mix(lm.accent ?? '#2f2a26', marbleHex, 0.5));
           for (let i = 0; i < plaque.length; i += 1) {
             const gx = F(0.5) + (i - 1) * gstep - Math.floor(gh / 2);
             plaque[i].forEach((row, ry) => {
@@ -1230,7 +1208,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           }
 
           // The attic: three courses stepping in as they rise.
-          for (const [ta, tb, y1, y2] of [[0.25, 0.75, 0.9, 0.93], [0.29, 0.71, 0.93, 0.96], [0.335, 0.665, 0.96, 1]]) {
+          for (const [ta, tb, y1, y2] of [[0.25, 0.75, 0.86, 0.9], [0.29, 0.71, 0.9, 0.94], [0.335, 0.665, 0.94, 1]]) {
             const a = F(ta);
             const b = F(tb);
             for (let x = a; x <= b; x += 1) {
