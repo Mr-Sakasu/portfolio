@@ -77,7 +77,7 @@ const heroTitle = t['hero.title'];
                         </a>
                     </div>
                 </div>
-                <img class="home-card-photo" src="/scenes/profile.webp" alt="" loading="lazy" decoding="async" />
+                <div class="home-card-photo" aria-hidden="true"></div>
             </section>
 
             {/* The cards run in the order the nav lists them — scenes, playlist,
@@ -111,7 +111,7 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-3" data-reveal style="--reveal-delay: 130ms;">
-                <img class="home-card-photo" src="/cards/playlist.svg" alt="" loading="lazy" decoding="async" />
+                <div class="home-card-photo" aria-hidden="true"></div>
                 <div class="home-card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
@@ -150,7 +150,7 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/bandit/`} class="home-bento-card home-bandit-card group md:col-span-4" data-reveal style="--reveal-delay: 210ms;">
-                <img class="home-card-photo" src="/cards/bandit.svg" alt="" loading="lazy" decoding="async" />
+                <div class="home-card-photo" aria-hidden="true"></div>
                 <div class="home-card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6 sm:p-7">
                     <div class="flex items-start justify-between gap-4">
@@ -514,16 +514,28 @@ const heroTitle = t['hero.title'];
         position: absolute;
         inset: 0;
         z-index: -3;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
     }
 
-    /* The scene still is drawn at the reel's own resolution, so let its pixels
-       stay square on the way up rather than being smoothed into mush. The
-       playlist and bandit pictures are vector and scale on their own. */
-    .home-profile-card .home-card-photo {
-        image-rendering: pixelated;
+    /* Drawn twice, once per theme — the light pair repaints the ground so the
+       card is not a hole in a light page. Painted rather than an <img> so only
+       the theme's own file is ever fetched. */
+    .home-playlist-card .home-card-photo {
+        background-image: url('/cards/playlist.svg');
+    }
+
+    .home-bandit-card .home-card-photo {
+        background-image: url('/cards/bandit.svg');
+    }
+
+    :global(html[data-theme='light']) .home-playlist-card .home-card-photo {
+        background-image: url('/cards/playlist-light.svg');
+    }
+
+    :global(html[data-theme='light']) .home-bandit-card .home-card-photo {
+        background-image: url('/cards/bandit-light.svg');
     }
 
     .home-card-photo__shade {
@@ -532,10 +544,10 @@ const heroTitle = t['hero.title'];
         z-index: -2;
         background: linear-gradient(
             to top,
-            rgb(3 10 22 / var(--photo-foot, 0.86)) 0%,
-            rgb(3 10 22 / calc(var(--photo-foot, 0.86) * 0.6)) 24%,
-            rgb(3 10 22 / var(--photo-sky, 0.18)) 56%,
-            rgb(3 10 22 / var(--photo-sky, 0.18)) 100%
+            rgb(var(--photo-ink, 3 10 22) / var(--photo-foot, 0.86)) 0%,
+            rgb(var(--photo-ink, 3 10 22) / calc(var(--photo-foot, 0.86) * 0.6)) 24%,
+            rgb(var(--photo-ink, 3 10 22) / var(--photo-sky, 0.18)) 56%,
+            rgb(var(--photo-ink, 3 10 22) / var(--photo-sky, 0.18)) 100%
         );
     }
 
@@ -549,12 +561,31 @@ const heroTitle = t['hero.title'];
         text-shadow: 0 1px 10px rgba(2, 6, 18, 0.8);
     }
 
+    :global(html[data-theme='light']) .home-playlist-card p,
+    :global(html[data-theme='light']) .home-playlist-card span,
+    :global(html[data-theme='light']) .home-bandit-card h2,
+    :global(html[data-theme='light']) .home-bandit-card p,
+    :global(html[data-theme='light']) .home-bandit-card span {
+        text-shadow: 0 1px 10px rgba(248, 250, 252, 0.92);
+    }
+
     /* Nothing sits over the right of the profile card, so the skyline fades in
-       there and leaves the identity on a clean surface. */
+       there and leaves the identity on a clean surface. It is the reel's own
+       pixel art, drawn at the reel's resolution, so let the pixels stay square
+       on the way up rather than being smoothed into mush; the playlist and
+       bandit pictures are vector and scale on their own. */
     .home-profile-card .home-card-photo {
+        background-image: url('/scenes/profile.webp');
+        image-rendering: pixelated;
         opacity: 0.45;
         -webkit-mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
         mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
+    }
+
+    /* A light page's version of the same wash: less of it, because the skyline
+       is dark and the card beneath it is white. */
+    :global(html[data-theme='light']) .home-profile-card .home-card-photo {
+        opacity: 0.3;
     }
 
     /* Drawn dark to begin with, so both take a lighter cover than a scene. */
@@ -566,6 +597,16 @@ const heroTitle = t['hero.title'];
     .home-bandit-card {
         --photo-foot: 0.86;
         --photo-sky: 0.18;
+    }
+
+    /* Under the light theme both pictures are painted light, so the cover that
+       clears a space for the type has to be light as well — the same gradient
+       in white rather than in night. */
+    :global(html[data-theme='light']) .home-playlist-card,
+    :global(html[data-theme='light']) .home-bandit-card {
+        --photo-ink: 255 255 255;
+        --photo-foot: 0.9;
+        --photo-sky: 0.26;
     }
 
     .home-bandit-card {
@@ -818,11 +859,7 @@ const heroTitle = t['hero.title'];
     }
 
     :global(html[data-theme='light']) .home-playlist-card [class*='text-violet-100'] {
-        color: #ede9fe !important;
-    }
-
-    :global(html[data-theme='light']) .home-playlist-card .home-eyebrow--violet {
-        color: #ddd6fe;
+        color: #5b21b6 !important;
     }
 
     :global(html[data-theme='light']) .home-scenes-card [class*='text-emerald-100'] {
@@ -839,15 +876,11 @@ const heroTitle = t['hero.title'];
 
     :global(html[data-theme='light']) .home-bandit-card [class*='text-cyan-50'],
     :global(html[data-theme='light']) .home-bandit-card [class*='text-cyan-100'] {
-        color: #cffafe !important;
+        color: #155e75 !important;
     }
 
     :global(html[data-theme='light']) .home-bandit-card .text-white {
-        color: #f8fafc !important;
-    }
-
-    :global(html[data-theme='light']) .home-bandit-card .home-eyebrow--cyan {
-        color: #a5f3fc;
+        color: var(--site-text) !important;
     }
 
     :global(html[data-theme='light']) .home-hanoi-card [class*='text-violet-100'] {

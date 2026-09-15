@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="A record turning under its arm above a row of level meters">
   <defs>
     <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
-      <stop offset="0" stop-color="#150d38" />
-      <stop offset="1" stop-color="#3b1d66" />
+      <stop offset="0" stop-color="#faf5ff" />
+      <stop offset="1" stop-color="#d8ccfb" />
     </linearGradient>
     <radialGradient id="halo" cx="0.5" cy="0.5">
-      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.42" />
-      <stop offset="1" stop-color="#a78bfa" stop-opacity="0" />
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0" />
     </radialGradient>
     <radialGradient id="vinyl" cx="0.36" cy="0.3">
-      <stop offset="0" stop-color="#2b1b55" />
-      <stop offset="0.6" stop-color="#150d33" />
-      <stop offset="1" stop-color="#0c0722" />
+      <stop offset="0" stop-color="#453d5e" />
+      <stop offset="0.6" stop-color="#221c38" />
+      <stop offset="1" stop-color="#141024" />
     </radialGradient>
     <linearGradient id="label" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ddd6fe" />
+      <stop offset="0" stop-color="#ede9fe" />
       <stop offset="0.55" stop-color="#a78bfa" />
-      <stop offset="1" stop-color="#6d28d9" />
+      <stop offset="1" stop-color="#5b21b6" />
     </linearGradient>
     <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
@@ -24,13 +24,13 @@
       <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
     </linearGradient>
     <linearGradient id="meter" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0" stop-color="#5b21b6" stop-opacity="0.5" />
-      <stop offset="0.55" stop-color="#a855f7" stop-opacity="0.8" />
-      <stop offset="1" stop-color="#f5d0fe" stop-opacity="1" />
+      <stop offset="0" stop-color="#6d28d9" stop-opacity="0.65" />
+      <stop offset="0.55" stop-color="#9333ea" stop-opacity="0.9" />
+      <stop offset="1" stop-color="#d946ef" stop-opacity="1" />
     </linearGradient>
     <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#e2e8f0" />
-      <stop offset="1" stop-color="#64748b" />
+      <stop offset="0" stop-color="#cbd5e1" />
+      <stop offset="1" stop-color="#475569" />
     </linearGradient>
     <clipPath id="disc"><circle cx="240" cy="136" r="92" /></clipPath>
     <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
@@ -43,33 +43,33 @@
 
   <g>
     <circle cx="240" cy="136" r="92" fill="url(#vinyl)" />
-    <circle cx="240" cy="136" r="40" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="48" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="52" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="56" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="60" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="64" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="68" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="72" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="76" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="80" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="84" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="88" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="40" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="48" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="52" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="56" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="60" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="64" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="68" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="72" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="76" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="80" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="84" fill="none" stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="88" fill="none" stroke="#ffffff" stroke-opacity="0.09" stroke-width="1.2" />
     <g clip-path="url(#disc)">
-      <ellipse cx="200" cy="96" rx="104" ry="34" fill="url(#sheen)" opacity="0.22" transform="rotate(-32 200 96)" />
+      <ellipse cx="200" cy="96" rx="104" ry="34" fill="url(#sheen)" opacity="0.26" transform="rotate(-32 200 96)" />
     </g>
-    <circle cx="240" cy="136" r="92" fill="none" stroke="#c4b5fd" stroke-opacity="0.35" stroke-width="1.5" />
+    <circle cx="240" cy="136" r="92" fill="none" stroke="#6d28d9" stroke-opacity="0.4" stroke-width="1.5" />
     <circle cx="240" cy="136" r="30" fill="url(#label)" />
-    <circle cx="240" cy="136" r="30" fill="none" stroke="#f5f3ff" stroke-opacity="0.5" stroke-width="1.2" />
-    <circle cx="240" cy="136" r="4.5" fill="#150d38" />
+    <circle cx="240" cy="136" r="30" fill="none" stroke="#faf5ff" stroke-opacity="0.5" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="4.5" fill="#f5f3ff" />
   </g>
 
   <g stroke-linecap="round">
     <line x1="424" y1="58" x2="300" y2="118" stroke="url(#arm)" stroke-width="6" />
-    <rect x="286" y="112" width="22" height="13" rx="4" fill="#e2e8f0" transform="rotate(-26 297 118)" />
-    <circle cx="428" cy="54" r="13" fill="#475569" />
-    <circle cx="428" cy="54" r="6" fill="#cbd5e1" />
+    <rect x="286" y="112" width="22" height="13" rx="4" fill="#f8fafc" transform="rotate(-26 297 118)" />
+    <circle cx="428" cy="54" r="13" fill="#64748b" />
+    <circle cx="428" cy="54" r="6" fill="#f1f5f9" />
   </g>
 
   <g opacity="0.45" filter="url(#blur)">
