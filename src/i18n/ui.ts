@@ -9,10 +9,6 @@ export const defaultLang = 'en';
 export const ui = {
     en: {
         'nav.work': 'Projects',
-        'nav.stars': 'Tokyo Night Sky',
-        'nav.globe': 'Global Network',
-        'nav.bandit': 'Multi-Armed Bandit',
-        'nav.hanoi': 'Tower of Hanoi',
         'nav.playlist': 'Playlist',
         'nav.scenes': '8-bit Scenes',
         'nav.timeline': 'Timeline',
@@ -186,10 +182,6 @@ export const ui = {
     },
     zh: {
         'nav.work': '项目',
-        'nav.stars': '东京星空',
-        'nav.globe': '全球网络',
-        'nav.bandit': '多臂老虎机',
-        'nav.hanoi': '汉诺塔',
         'nav.playlist': '歌单',
         'nav.scenes': '8-bit 风景',
         'nav.timeline': '时间线',
@@ -363,10 +355,6 @@ export const ui = {
     },
     ja: {
         'nav.work': 'プロジェクト',
-        'nav.stars': '東京の星空',
-        'nav.globe': '世界の通信',
-        'nav.bandit': '多腕バンディット',
-        'nav.hanoi': 'ハノイの塔',
         'nav.playlist': 'プレイリスト',
         'nav.scenes': '8bit風景',
         'nav.timeline': 'タイムライン',
