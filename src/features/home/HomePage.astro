@@ -120,7 +120,7 @@ const heroTitle = t['hero.title'];
                 <a class="home-card-link" href={`/${lang}/playlist/`}>
                     <span class="sr-only">{t['playlist.eyebrow']}</span>
                 </a>
-                <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
+                <div class="home-playlist-body relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
                     </div>
@@ -140,8 +140,11 @@ const heroTitle = t['hero.title'];
                                                 data-playlist-id={homePlaylist?.playlistId}
                                                 data-track-title={track.title}
                                             >
-                                                <svg aria-hidden="true" viewBox="0 0 24 24" class="h-3.5 w-3.5 fill-current">
+                                                <svg aria-hidden="true" viewBox="0 0 24 24" class="home-playlist-icon home-playlist-icon--play h-3.5 w-3.5 fill-current">
                                                     <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"></path>
+                                                </svg>
+                                                <svg aria-hidden="true" viewBox="0 0 24 24" class="home-playlist-icon home-playlist-icon--pause h-3.5 w-3.5 fill-current">
+                                                    <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z"></path>
                                                 </svg>
                                             </button>
                                         )}
@@ -161,14 +164,10 @@ const heroTitle = t['hero.title'];
                         <div class="home-playlist-player hidden" data-playlist-player>
                             <p class="home-playlist-player__title" data-player-title></p>
                             <div class="home-playlist-player__frame">
-                                <iframe
-                                    title="YouTube player"
-                                    loading="lazy"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                                    allowfullscreen
-                                    referrerpolicy="strict-origin-when-cross-origin"
-                                    data-player-frame
-                                ></iframe>
+                                {/* Replaced by the player's own iframe on the
+                                    first press: an iframe handed autoplay=1
+                                    does not play, a player told to does. */}
+                                <div data-player-mount></div>
                             </div>
                         </div>
                     </div>
@@ -594,19 +593,27 @@ const heroTitle = t['hero.title'];
         mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
     }
 
-    /* The card is a card, not an anchor, so this carries the link across all
-       of it — above the type, below anything that can be pressed. */
+    /* The card is a card, not an anchor, so this carries the link across all of
+       it. It sits under the type rather than over it — an overlay above the
+       content swallows the presses meant for the buttons, which is exactly
+       what stopped a track from playing — and the type lets clicks through to
+       reach it. Anything that can be pressed takes its clicks back. */
     .home-card-link::after {
         content: '';
         position: absolute;
         inset: 0;
-        z-index: 20;
+        z-index: 5;
+    }
+
+    .home-playlist-body {
+        pointer-events: none;
     }
 
     .home-playlist-tracks__play,
     .home-playlist-player {
         position: relative;
         z-index: 30;
+        pointer-events: auto;
     }
 
     .home-playlist-tracks__play {
@@ -621,6 +628,23 @@ const heroTitle = t['hero.title'];
         color: #ede9fe;
         padding-left: 0.1rem;
         transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    /* Playing, so the press that started it now stops it. */
+    .home-playlist-icon--pause {
+        display: none;
+    }
+
+    .home-playlist-tracks__play[aria-pressed='true'] .home-playlist-icon--play {
+        display: none;
+    }
+
+    .home-playlist-tracks__play[aria-pressed='true'] .home-playlist-icon--pause {
+        display: block;
+    }
+
+    .home-playlist-tracks__play[aria-pressed='true'] {
+        padding-left: 0;
     }
 
     .home-playlist-tracks__play:hover {
