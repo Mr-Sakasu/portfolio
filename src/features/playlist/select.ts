@@ -54,6 +54,15 @@ const playlistOrderByLang: Partial<Record<PlaylistLocale, string[]>> = {
     ],
 };
 
+/**
+ * Playlists kept off the site. "Liked: Zn" is the bucket the classifier drops
+ * Chinese-language likes into before they are sorted into a named playlist; it
+ * is working storage, not something to read.
+ */
+const hiddenPlaylists = new Set([
+    'PLiz-kupUIzB5Wl6V7K-nHcq0OUOafpUDn',
+]);
+
 /** The one playlist the home page speaks for, where the locale names it. */
 const homePlaylistByLang: Partial<Record<PlaylistLocale, string[]>> = {
     ja: ['PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le'],
@@ -103,9 +112,10 @@ export function playlistCollectionFor(lang: PlaylistLocale): PlaylistData {
  */
 export function selectPlaylists(lang: PlaylistLocale, variant: 'home' | 'page'): PlaylistData[] {
     const collection = playlistCollectionFor(lang);
-    const sources = Array.isArray(collection.playlists) && collection.playlists.length > 0
+    const all = Array.isArray(collection.playlists) && collection.playlists.length > 0
         ? collection.playlists
         : [collection];
+    const sources = all.filter((playlist) => !hiddenPlaylists.has(playlist.playlistId ?? ''));
 
     const order = playlistOrderByLang[lang] ?? [];
     const ordered = order.length > 0
