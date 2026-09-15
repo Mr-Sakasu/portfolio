@@ -300,6 +300,33 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
         border-top: 1px solid var(--site-card-border);
     }
 
+    /* A card backed by a picture: the picture beneath everything, and a cover
+       that gathers at the foot where the type sits and thins to a tint above
+       it, so the picture is still a picture. Each card says how dark its own
+       ends go, and which ink to use — a picture drawn light is covered with
+       white rather than with night. */
+    .card-photo {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+    }
+
+    .card-photo__shade {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background: linear-gradient(
+            to top,
+            rgb(var(--photo-ink, 3 10 22) / var(--photo-foot, 0.86)) 0%,
+            rgb(var(--photo-ink, 3 10 22) / calc(var(--photo-foot, 0.86) * 0.6)) 24%,
+            rgb(var(--photo-ink, 3 10 22) / var(--photo-sky, 0.18)) 56%,
+            rgb(var(--photo-ink, 3 10 22) / var(--photo-sky, 0.18)) 100%
+        );
+    }
+
     .site-card {
         border: 1px solid var(--site-card-border);
         background-color: var(--site-card-bg);

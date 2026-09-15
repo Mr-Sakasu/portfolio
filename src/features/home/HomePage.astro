@@ -77,7 +77,7 @@ const heroTitle = t['hero.title'];
                         </a>
                     </div>
                 </div>
-                <div class="home-card-photo" aria-hidden="true"></div>
+                <div class="card-photo" aria-hidden="true"></div>
             </section>
 
             {/* The cards run in the order the nav lists them — scenes, playlist,
@@ -96,7 +96,7 @@ const heroTitle = t['hero.title'];
                     tabindex="-1"
                     class="pointer-events-none absolute inset-0 h-full w-full"
                 ></iframe>
-                <div class="home-card-photo__shade" aria-hidden="true"></div>
+                <div class="card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['nav.scenes']}</span>
@@ -111,8 +111,8 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-3" data-reveal style="--reveal-delay: 130ms;">
-                <div class="home-card-photo" aria-hidden="true"></div>
-                <div class="home-card-photo__shade" aria-hidden="true"></div>
+                <div class="card-photo" aria-hidden="true"></div>
+                <div class="card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
@@ -150,8 +150,8 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/bandit/`} class="home-bento-card home-bandit-card group md:col-span-4" data-reveal style="--reveal-delay: 210ms;">
-                <div class="home-card-photo" aria-hidden="true"></div>
-                <div class="home-card-photo__shade" aria-hidden="true"></div>
+                <div class="card-photo" aria-hidden="true"></div>
+                <div class="card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6 sm:p-7">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--cyan">{t['home.minigame.title']}</span>
@@ -506,49 +506,23 @@ const heroTitle = t['hero.title'];
         z-index: -3;
     }
 
-    /* A card backed by artwork: the picture beneath everything, and a cover
-       that gathers at the foot where the type sits and thins to a tint across
-       the sky, so the scene is still a scene. How dark each end goes is the
-       card's business — a night harbour needs far less than a noon sky. */
-    .home-card-photo {
-        position: absolute;
-        inset: 0;
-        z-index: -3;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-size: cover;
-    }
-
     /* Drawn twice, once per theme — the light pair repaints the ground so the
        card is not a hole in a light page. Painted rather than an <img> so only
        the theme's own file is ever fetched. */
-    .home-playlist-card .home-card-photo {
+    .home-playlist-card .card-photo {
         background-image: url('/cards/playlist.svg');
     }
 
-    .home-bandit-card .home-card-photo {
+    .home-bandit-card .card-photo {
         background-image: url('/cards/bandit.svg');
     }
 
-    :global(html[data-theme='light']) .home-playlist-card .home-card-photo {
+    :global(html[data-theme='light']) .home-playlist-card .card-photo {
         background-image: url('/cards/playlist-light.svg');
     }
 
-    :global(html[data-theme='light']) .home-bandit-card .home-card-photo {
+    :global(html[data-theme='light']) .home-bandit-card .card-photo {
         background-image: url('/cards/bandit-light.svg');
-    }
-
-    .home-card-photo__shade {
-        position: absolute;
-        inset: 0;
-        z-index: -2;
-        background: linear-gradient(
-            to top,
-            rgb(var(--photo-ink, 3 10 22) / var(--photo-foot, 0.86)) 0%,
-            rgb(var(--photo-ink, 3 10 22) / calc(var(--photo-foot, 0.86) * 0.6)) 24%,
-            rgb(var(--photo-ink, 3 10 22) / var(--photo-sky, 0.18)) 56%,
-            rgb(var(--photo-ink, 3 10 22) / var(--photo-sky, 0.18)) 100%
-        );
     }
 
     .home-scenes-card h2,
@@ -574,7 +548,7 @@ const heroTitle = t['hero.title'];
        pixel art, drawn at the reel's resolution, so let the pixels stay square
        on the way up rather than being smoothed into mush; the playlist and
        bandit pictures are vector and scale on their own. */
-    .home-profile-card .home-card-photo {
+    .home-profile-card .card-photo {
         background-image: url('/scenes/profile.webp');
         image-rendering: pixelated;
         opacity: 0.45;
@@ -584,7 +558,7 @@ const heroTitle = t['hero.title'];
 
     /* A light page's version of the same wash: less of it, because the skyline
        is dark and the card beneath it is white. */
-    :global(html[data-theme='light']) .home-profile-card .home-card-photo {
+    :global(html[data-theme='light']) .home-profile-card .card-photo {
         opacity: 0.3;
     }
 
