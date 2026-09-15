@@ -50,6 +50,27 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
     display: none;
   }
 
+  /* Framed as a card's background elsewhere on the site. The reel stops being
+     a reel: one stage fills the frame, and the rest never paint. Which stage
+     is picked comes from ?scene=; the script marks it before starting it. */
+  html[data-preview-frame] .scene-reel {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  html[data-preview-frame] .scene-stage {
+    display: none;
+  }
+
+  html[data-preview-frame] .scene-stage[data-preview-stage] {
+    display: block;
+  }
+
+  html[data-preview-frame] .scene-label {
+    display: none;
+  }
+
   .scene-stage {
     position: relative;
     height: 100%;
@@ -2797,11 +2818,32 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
     let teardown = [];
 
+    // Which scene a framing card asked for. The document carries the answer
+    // from the head script; an unknown or missing id falls back to the first
+    // stage rather than leaving the frame black.
+    const previewStage = (reel) => {
+      const wanted = document.documentElement.dataset.previewScene;
+      if (wanted === undefined) return null;
+      const escaped = wanted && window.CSS && CSS.escape ? CSS.escape(wanted) : '';
+      return (escaped && reel.querySelector(`[data-scene="${escaped}"]`))
+        || reel.querySelector('[data-scene]');
+    };
+
     const init = () => {
       teardown.forEach((fn) => fn());
       teardown = [];
       const reel = document.querySelector('[data-scene-reel]');
       if (!reel) return;
+
+      const framed = previewStage(reel);
+      if (framed) {
+        framed.setAttribute('data-preview-stage', '');
+        const canvas = framed.querySelector('[data-scene-canvas]');
+        if (canvas) teardown.push(startScene(canvas));
+        // No reel sizing and no scene watching: the frame does not scroll, and
+        // the BGM player must not be told the visitor moved to this scene.
+        return;
+      }
 
       const sizeReel = () => {
         const top = reel.getBoundingClientRect().top + window.scrollY;

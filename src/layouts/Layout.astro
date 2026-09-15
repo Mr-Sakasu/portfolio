@@ -50,9 +50,25 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
                     } catch (error) {
                         introPlayed = false;
                     }
+                    // A card on another page may be framing this one to use as
+                    // its background (?preview=1, and ?scene= to say which).
+                    // Stamped here, in the head, so the chrome is gone before
+                    // the first paint rather than a frame after it.
+                    let previewFrame = false;
+                    try {
+                        const params = new URLSearchParams(window.location.search);
+                        previewFrame = params.get('preview') === '1';
+                        if (previewFrame) {
+                            document.documentElement.dataset.previewFrame = '';
+                            document.documentElement.dataset.previewScene = params.get('scene') ?? '';
+                        }
+                    } catch {
+                        previewFrame = false;
+                    }
+
                     const stillMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                     const introEligible = document.documentElement.dataset.introEligible === 'true';
-                    if (introEligible && !introPlayed && !stillMotion) {
+                    if (introEligible && !introPlayed && !stillMotion && !previewFrame) {
                         document.documentElement.classList.add('intro-active');
                     }
                 })();
@@ -235,6 +251,34 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
         [data-reveal].is-revealed {
             animation: none;
         }
+    }
+
+    /* Framed as a card's background elsewhere on the site: one piece of the
+       page fills the frame and the chrome around it stands down. The splash
+       and the network canvas are stopped in their own scripts as well, so
+       they are not merely hidden while still animating. */
+    html[data-preview-frame],
+    html[data-preview-frame] body {
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        /* The frame sits inside a dark card. Without this the light theme
+           paints a white page for the moment before the artwork arrives. */
+        background: #000;
+    }
+
+    html[data-preview-frame] #site-intro,
+    html[data-preview-frame] #network-canvas,
+    html[data-preview-frame] .site-header,
+    html[data-preview-frame] .site-footer {
+        display: none;
+    }
+
+    html[data-preview-frame] main {
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        padding: 0;
     }
 
     .site-header {

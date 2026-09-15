@@ -578,8 +578,11 @@ const { scene } = Astro.props;
   }
 
   // --- THE IMPORTANT PART ---
-  // Run this logic every time Astro swaps the page
-  document.addEventListener('astro:page-load', initBackground);
-  initBackground();
-
+  // Run this logic every time Astro swaps the page. Except when the page is
+  // only a card's background elsewhere on the site: the frame shows one scene
+  // over this canvas, and a hidden animation would still cost a frame loop.
+  if (document.documentElement.dataset.previewFrame === undefined) {
+    document.addEventListener('astro:page-load', initBackground);
+    initBackground();
+  }
 </script>

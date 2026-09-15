@@ -90,12 +90,19 @@ const heroTitle = t['hero.title'];
                 stars, bandit, hanoi — so a visitor meets the pages in the same
                 sequence either way. The spans are what make each row add up to
                 twelve; reordering a card means handing its span along too. */}
+            {/* The reel itself, framed: the scenes page renders one scene and
+                drops its chrome under ?preview=1, so the card is backed by the
+                real artwork rather than a drawing of it. Swap the scene by
+                naming another id from sceneOrder. */}
             <a href={`/${lang}/scenes/`} class="home-bento-card home-scenes-card group md:col-span-5" data-reveal style="--reveal-delay: 80ms;">
-                <svg class="home-card-figure home-scenes-figure" viewBox="0 0 180 120" aria-hidden="true">
-                    <circle cx="139" cy="27" r="12" />
-                    <path d="M4 102L54 48L83 77L111 43L176 102" />
-                    <path d="M4 102H176M25 91L54 61L69 77" />
-                </svg>
+                <iframe
+                    src={`/${lang}/scenes/?preview=1&scene=fuji`}
+                    title={`${t['scenes.page.title']} preview`}
+                    loading="lazy"
+                    tabindex="-1"
+                    class="pointer-events-none absolute inset-0 h-full w-full"
+                ></iframe>
+                <div class="home-scenes-card__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['nav.scenes']}</span>
@@ -417,14 +424,6 @@ const heroTitle = t['hero.title'];
         opacity: 0.3;
     }
 
-    .home-scenes-figure {
-        right: -0.8rem;
-        bottom: 1.1rem;
-        width: 72%;
-        color: #6ee7b7;
-        opacity: 0.23;
-    }
-
     .home-bandit-figure {
         top: 1rem;
         right: 0.8rem;
@@ -549,7 +548,32 @@ const heroTitle = t['hero.title'];
     .home-scenes-card {
         min-height: 220px;
         border-left: 3px solid #6ee7b7;
-        background: var(--site-card-bg);
+        background: #0b1220;
+    }
+
+    .home-scenes-card iframe {
+        z-index: -3;
+    }
+
+    /* The scene is a bright daytime sky and worth seeing, so the cover sits
+       almost entirely at the foot of the card, where the type is, and thins to
+       a tint across the sky. The shadow below carries what is left. */
+    .home-scenes-card__shade {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        background: linear-gradient(
+            to top,
+            rgba(3, 10, 22, 0.86) 0%,
+            rgba(3, 10, 22, 0.52) 22%,
+            rgba(3, 10, 22, 0.2) 52%,
+            rgba(3, 10, 22, 0.14) 100%
+        );
+    }
+
+    .home-scenes-card h2,
+    .home-scenes-card span {
+        text-shadow: 0 1px 10px rgba(2, 6, 18, 0.8);
     }
 
     .home-bandit-card {
@@ -806,7 +830,15 @@ const heroTitle = t['hero.title'];
     }
 
     :global(html[data-theme='light']) .home-scenes-card [class*='text-emerald-100'] {
-        color: #047857 !important;
+        color: #a7f3d0 !important;
+    }
+
+    :global(html[data-theme='light']) .home-scenes-card .text-white {
+        color: #f8fafc !important;
+    }
+
+    :global(html[data-theme='light']) .home-scenes-card .home-eyebrow--violet {
+        color: #ddd6fe;
     }
 
     :global(html[data-theme='light']) .home-bandit-card [class*='text-cyan-50'] {
