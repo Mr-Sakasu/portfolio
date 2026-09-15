@@ -77,13 +77,7 @@ const heroTitle = t['hero.title'];
                         </a>
                     </div>
                 </div>
-                <svg class="home-card-figure home-profile-figure" viewBox="0 0 240 160" aria-hidden="true">
-                    <path d="M22 136H222M35 148V18" />
-                    <path d="M34 112C66 38 104 142 139 82S190 44 220 30" />
-                    <circle cx="74" cy="79" r="4" />
-                    <circle cx="139" cy="82" r="4" />
-                    <circle cx="194" cy="42" r="4" />
-                </svg>
+                <img class="home-card-photo" src="/scenes/profile.webp" alt="" loading="lazy" decoding="async" />
             </section>
 
             {/* The cards run in the order the nav lists them — scenes, playlist,
@@ -102,7 +96,7 @@ const heroTitle = t['hero.title'];
                     tabindex="-1"
                     class="pointer-events-none absolute inset-0 h-full w-full"
                 ></iframe>
-                <div class="home-scenes-card__shade" aria-hidden="true"></div>
+                <div class="home-card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['nav.scenes']}</span>
@@ -117,11 +111,8 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-3" data-reveal style="--reveal-delay: 130ms;">
-                <svg class="home-card-figure home-playlist-figure" viewBox="0 0 180 120" aria-hidden="true">
-                    <circle cx="132" cy="62" r="39" />
-                    <circle cx="132" cy="62" r="7" />
-                    <path d="M16 70V56M27 78V48M38 66V60M49 84V42M60 74V52M71 80V46" />
-                </svg>
+                <img class="home-card-photo" src="/scenes/playlist.webp" alt="" loading="lazy" decoding="async" />
+                <div class="home-card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
@@ -159,14 +150,8 @@ const heroTitle = t['hero.title'];
             </a>
 
             <a href={`/${lang}/bandit/`} class="home-bento-card home-bandit-card group md:col-span-4" data-reveal style="--reveal-delay: 210ms;">
-                <svg class="home-card-figure home-bandit-figure" viewBox="0 0 220 130" aria-hidden="true">
-                    <circle cx="110" cy="24" r="7" />
-                    <path d="M110 31V48M110 48L35 89M110 48L84 89M110 48L136 89M110 48L185 89" />
-                    <circle cx="35" cy="96" r="9" />
-                    <circle cx="84" cy="96" r="9" />
-                    <circle cx="136" cy="96" r="9" />
-                    <circle cx="185" cy="96" r="9" />
-                </svg>
+                <img class="home-card-photo" src="/scenes/bandit.webp" alt="" loading="lazy" decoding="async" />
+                <div class="home-card-photo__shade" aria-hidden="true"></div>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6 sm:p-7">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--cyan">{t['home.minigame.title']}</span>
@@ -396,42 +381,6 @@ const heroTitle = t['hero.title'];
         }
     }
 
-    .home-card-figure {
-        position: absolute;
-        z-index: 0;
-        display: block;
-        fill: none;
-        stroke: currentColor;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        pointer-events: none;
-    }
-
-    .home-profile-figure {
-        right: -1rem;
-        bottom: 4.5rem;
-        width: min(42%, 18rem);
-        color: #60a5fa;
-        opacity: 0.16;
-    }
-
-    .home-playlist-figure {
-        top: 2.2rem;
-        right: 0.8rem;
-        width: 52%;
-        color: #a78bfa;
-        opacity: 0.3;
-    }
-
-    .home-bandit-figure {
-        top: 1rem;
-        right: 0.8rem;
-        width: 45%;
-        color: #38bdf8;
-        opacity: 0.27;
-    }
-
     .home-profile-card::after {
         position: absolute;
         top: 1.5rem;
@@ -546,6 +495,8 @@ const heroTitle = t['hero.title'];
     }
 
     .home-scenes-card {
+        --photo-foot: 0.86;
+        --photo-sky: 0.14;
         min-height: 220px;
         border-left: 3px solid #6ee7b7;
         background: #0b1220;
@@ -555,25 +506,62 @@ const heroTitle = t['hero.title'];
         z-index: -3;
     }
 
-    /* The scene is a bright daytime sky and worth seeing, so the cover sits
-       almost entirely at the foot of the card, where the type is, and thins to
-       a tint across the sky. The shadow below carries what is left. */
-    .home-scenes-card__shade {
+    /* A card backed by artwork: the picture beneath everything, and a cover
+       that gathers at the foot where the type sits and thins to a tint across
+       the sky, so the scene is still a scene. How dark each end goes is the
+       card's business — a night harbour needs far less than a noon sky. */
+    .home-card-photo {
+        position: absolute;
+        inset: 0;
+        z-index: -3;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /* Rendered at the scene's own resolution, so let the pixels stay
+           square on the way up rather than being smoothed into mush. */
+        image-rendering: pixelated;
+    }
+
+    .home-card-photo__shade {
         position: absolute;
         inset: 0;
         z-index: -2;
         background: linear-gradient(
             to top,
-            rgba(3, 10, 22, 0.86) 0%,
-            rgba(3, 10, 22, 0.52) 22%,
-            rgba(3, 10, 22, 0.2) 52%,
-            rgba(3, 10, 22, 0.14) 100%
+            rgb(3 10 22 / var(--photo-foot, 0.86)) 0%,
+            rgb(3 10 22 / calc(var(--photo-foot, 0.86) * 0.6)) 24%,
+            rgb(3 10 22 / var(--photo-sky, 0.18)) 56%,
+            rgb(3 10 22 / var(--photo-sky, 0.18)) 100%
         );
     }
 
     .home-scenes-card h2,
-    .home-scenes-card span {
+    .home-scenes-card span,
+    .home-playlist-card p,
+    .home-playlist-card span,
+    .home-bandit-card h2,
+    .home-bandit-card p,
+    .home-bandit-card span {
         text-shadow: 0 1px 10px rgba(2, 6, 18, 0.8);
+    }
+
+    /* Nothing sits over the right of the profile card, so the skyline fades in
+       there and leaves the identity on a clean surface. */
+    .home-profile-card .home-card-photo {
+        opacity: 0.45;
+        -webkit-mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
+        mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
+    }
+
+    /* A night harbour that is already dark, and a noon sky that is not. */
+    .home-playlist-card {
+        --photo-foot: 0.78;
+        --photo-sky: 0.1;
+    }
+
+    .home-bandit-card {
+        --photo-foot: 0.9;
+        --photo-sky: 0.44;
     }
 
     .home-bandit-card {
@@ -826,7 +814,11 @@ const heroTitle = t['hero.title'];
     }
 
     :global(html[data-theme='light']) .home-playlist-card [class*='text-violet-100'] {
-        color: #5b21b6 !important;
+        color: #ede9fe !important;
+    }
+
+    :global(html[data-theme='light']) .home-playlist-card .home-eyebrow--violet {
+        color: #ddd6fe;
     }
 
     :global(html[data-theme='light']) .home-scenes-card [class*='text-emerald-100'] {
@@ -841,8 +833,17 @@ const heroTitle = t['hero.title'];
         color: #ddd6fe;
     }
 
-    :global(html[data-theme='light']) .home-bandit-card [class*='text-cyan-50'] {
-        color: #155e75 !important;
+    :global(html[data-theme='light']) .home-bandit-card [class*='text-cyan-50'],
+    :global(html[data-theme='light']) .home-bandit-card [class*='text-cyan-100'] {
+        color: #cffafe !important;
+    }
+
+    :global(html[data-theme='light']) .home-bandit-card .text-white {
+        color: #f8fafc !important;
+    }
+
+    :global(html[data-theme='light']) .home-bandit-card .home-eyebrow--cyan {
+        color: #a5f3fc;
     }
 
     :global(html[data-theme='light']) .home-hanoi-card [class*='text-violet-100'] {
@@ -898,25 +899,6 @@ const heroTitle = t['hero.title'];
             right: -2rem;
             width: 47%;
             opacity: 0.28;
-        }
-
-        .home-card-figure {
-            opacity: 0.18;
-        }
-
-        .home-profile-figure {
-            right: -2.5rem;
-            bottom: 5.5rem;
-            width: 58%;
-        }
-
-        .home-playlist-figure,
-        .home-bandit-figure {
-            width: 44%;
-        }
-
-        .home-scenes-figure {
-            width: 52%;
         }
 
         .home-projects-section {
