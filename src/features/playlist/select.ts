@@ -81,6 +81,17 @@ export function sortTracks(tracks: PlaylistTrack[] | undefined): PlaylistTrack[]
         : [];
 }
 
+/**
+ * The artist as it should be read out: YouTube Music hangs "- Topic" off an
+ * auto-generated channel, and labels shout their own name in caps.
+ */
+export function trackArtist(track: PlaylistTrack): string {
+    return (track.artists ?? '')
+        .replace(/\s*-\s*Topic$/i, '')
+        .replace(/VEVO$/, '')
+        .trim();
+}
+
 export function playlistCollectionFor(lang: PlaylistLocale): PlaylistData {
     return playlistRoot.byLang?.[lang] ?? playlistRoot;
 }

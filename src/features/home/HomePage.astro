@@ -4,7 +4,7 @@ import Layout from '../../layouts/Layout.astro';
 import { getUi, type Locale } from '../../i18n';
 import Timeline from '../../components/shared/Timeline.astro';
 import SkillStack from '../../components/shared/SkillStack.astro';
-import Playlist from '../playlist/Playlist.astro';
+import { selectPlaylists, sortTracks, trackArtist } from '../playlist/select';
 import { projectData, projectSlugs } from '../../data/projects';
 import profileImage from '../../assets/sakasu.jpg';
 import erProjectImage from '../../assets/er.png';
@@ -16,6 +16,9 @@ interface Props {
 const { lang } = Astro.props;
 const t = getUi(lang);
 const projects = projectData[lang] || projectData['en'];
+/* The card quotes the playlist the home page speaks for — the newest few, the
+   same order the playlist page deals them in. */
+const playlistTracks = sortTracks(selectPlaylists(lang, 'home')[0]?.tracks).slice(0, 3);
 const heroTitle = t['hero.title'];
 ---
 
@@ -118,7 +121,20 @@ const heroTitle = t['hero.title'];
                         <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
                     </div>
                     <div>
-                        <p class="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">{t['playlist.subtitle']}</p>
+                        {playlistTracks.length > 0 ? (
+                            <ul class="home-playlist-tracks">
+                                {playlistTracks.map((track) => (
+                                    <li>
+                                        <span class="home-playlist-tracks__title">{track.title}</span>
+                                        {trackArtist(track) && (
+                                            <span class="home-playlist-tracks__artist">{trackArtist(track)}</span>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p class="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">{t['playlist.subtitle']}</p>
+                        )}
                         <span class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-violet-100 transition-transform duration-300 group-hover:translate-x-1">
                             {t['playlist.open']} <span aria-hidden="true">→</span>
                         </span>
@@ -275,10 +291,6 @@ const heroTitle = t['hero.title'];
             ))}
         </div>
     </section>
-
-    <div class="home-playlist-module">
-        <Playlist lang={lang} />
-    </div>
 
     <div class="home-skills-module">
         <SkillStack lang={lang} />
@@ -556,6 +568,57 @@ const heroTitle = t['hero.title'];
         mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
     }
 
+    /* Three tracks, as an example of what the playlist holds. Each title on one
+       line: the card is the narrow one, and a wrapped title would push the
+       artist under it and cost a track. */
+    .home-playlist-tracks {
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        max-width: 15rem;
+    }
+
+    .home-playlist-tracks li {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
+        border-left: 2px solid rgba(196, 181, 253, 0.45);
+        padding-left: 0.6rem;
+    }
+
+    .home-playlist-tracks__title {
+        overflow: hidden;
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.35;
+        color: #f5f3ff;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .home-playlist-tracks__artist {
+        overflow: hidden;
+        font-size: 0.72rem;
+        line-height: 1.3;
+        color: rgba(221, 214, 254, 0.75);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* The card is painted light under the light theme, so the tracks are read
+       in ink rather than in white. */
+    :global(html[data-theme='light']) .home-playlist-tracks li {
+        border-left-color: rgba(109, 40, 217, 0.45);
+    }
+
+    :global(html[data-theme='light']) .home-playlist-tracks__title {
+        color: #2e1065;
+    }
+
+    :global(html[data-theme='light']) .home-playlist-tracks__artist {
+        color: rgba(76, 29, 149, 0.8);
+    }
+
     /* A light page's version of the same wash: less of it, because the skyline
        is dark and the card beneath it is white. */
     :global(html[data-theme='light']) .home-profile-card .card-photo {
@@ -663,12 +726,6 @@ const heroTitle = t['hero.title'];
         background: #10b981;
     }
 
-    .home-playlist-module {
-        margin-top: 4.5rem;
-        border-top: 1px solid var(--site-card-border);
-        padding-top: 1.2rem;
-    }
-
     .home-projects-section {
         margin-top: 5.5rem;
         border-top: 1px solid var(--site-card-border);
@@ -773,7 +830,6 @@ const heroTitle = t['hero.title'];
         line-height: 1.6;
     }
 
-    .home-playlist-module :global([data-playlist-card]),
     .home-skills-module :global(.site-card),
     .home-timeline-section :global(.timeline-card--current),
     .home-timeline-section :global([class*='rounded-xl']) {
