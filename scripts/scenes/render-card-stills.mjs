@@ -1,8 +1,10 @@
-// Renders the scenes that sit behind the home page's bento cards to stills.
+// Renders the scene that sits behind the home page's profile card to a still.
 //
-// The scenes card frames the reel itself, which is worth one iframe. Three more
-// would not be: each costs the whole scenes page again. So those cards get a
-// picture, rendered from the same artwork by the same renderer.
+// The scenes card frames the reel itself, which is worth one iframe; a second
+// would cost the whole scenes page again, so the profile takes a picture of
+// Tokyo instead, drawn by the same renderer. The playlist and bandit cards are
+// about a subject rather than a place, and are drawn by
+// scripts/cards/render-card-art.mjs.
 //
 // Run it when a scene's artwork changes:
 //
@@ -24,8 +26,6 @@ import sharp from 'sharp';
 // pixels square — and keeps the files a few KB instead of a few hundred.
 const STILLS = [
     { card: 'profile', scene: 'tokyo', width: 480, height: 240 },
-    { card: 'playlist', scene: 'victoria', width: 480, height: 240 },
-    { card: 'bandit', scene: 'shenzhen', width: 480, height: 240 },
 ];
 
 const ORIGIN = process.env.SCENE_STILL_ORIGIN ?? 'http://localhost:4321';
