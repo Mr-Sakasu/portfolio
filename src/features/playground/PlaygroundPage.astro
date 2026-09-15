@@ -129,15 +129,13 @@ const demos = [
     --photo-sky: 0.58;
   }
 
-  /* How busy each picture is decides how far back it has to sit: a row of lit
-     machines behind a heading needs more cover than a sky does. */
+  /* How busy each picture is decides how far back it has to sit. */
   .playground-card--sky {
     --photo-sky: 0.46;
   }
 
   .playground-card--cyan {
-    --photo-sky: 0.74;
-    --photo-foot: 0.92;
+    --photo-sky: 0.56;
   }
 
   .playground-card--violet {
@@ -161,10 +159,6 @@ const demos = [
     --photo-ink: 255 255 255;
     --photo-foot: 0.93;
     --photo-sky: 0.62;
-  }
-
-  :global(html[data-theme='light']) .playground-card--cyan {
-    --photo-sky: 0.84;
   }
 
   :global(html[data-theme='light']) .playground-card--sky .card-photo {

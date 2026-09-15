@@ -92,28 +92,24 @@ const PALETTES = {
     },
     bandit: {
         dark: {
-            skyTop: '#05101f', skyBottom: '#123a68',
-            speck: '#bae6fd', speckCount: 40,
-            floor: '#071a31', floorEdge: '#38bdf8', floorEdgeStrength: 0.35,
-            cabinet: ['#1e4a86', '#16355f', '#0d2547'], cabinetEdge: '#7dd3fc', cabinetEdgeStrength: 0.22,
-            crown: ['#38bdf8', '#1d4ed8'],
-            screen: '#04101f', screenEdge: '#38bdf8', screenEdgeStrength: 0.25,
-            reel: ['#ffffff', '#cbd5e1'],
-            tray: '#08192f', trayEdge: '#0ea5e9', trayEdgeStrength: 0.18,
-            pool: '#38bdf8', poolStrength: 0.4,
-            shadow: '#020a16', shadowStrength: 0.5,
+            groundTop: '#050b16', groundBottom: '#0e2036',
+            grid: '#38bdf8', gridStrength: 0.07,
+            axis: '#64748b', axisStrength: 0.55,
+            arm: '#94a3b8', armStroke: 0.5, armFill: 0.06,
+            best: '#38bdf8', bestStroke: 0.95, bestFill: 0.16,
+            whisker: '#cbd5e1', whiskerStrength: 0.6,
+            mean: '#e2e8f0', chosen: '#fbbf24',
+            sample: '#7dd3fc', sampleStrength: 0.5,
         },
         light: {
-            skyTop: '#f2f9ff', skyBottom: '#b9d9f8',
-            speck: '#60a5fa', speckCount: 26,
-            floor: '#cddff2', floorEdge: '#1d4ed8', floorEdgeStrength: 0.3,
-            cabinet: ['#60a5fa', '#3b82f6', '#1d4ed8'], cabinetEdge: '#1e3a8a', cabinetEdgeStrength: 0.25,
-            crown: ['#0ea5e9', '#1d4ed8'],
-            screen: '#0b2140', screenEdge: '#1d4ed8', screenEdgeStrength: 0.3,
-            reel: ['#ffffff', '#e2e8f0'],
-            tray: '#1e3a8a', trayEdge: '#1d4ed8', trayEdgeStrength: 0.3,
-            pool: '#2563eb', poolStrength: 0.22,
-            shadow: '#1e3a8a', shadowStrength: 0.25,
+            groundTop: '#f4f8fc', groundBottom: '#d3e0ee',
+            grid: '#1e3a8a', gridStrength: 0.09,
+            axis: '#475569', axisStrength: 0.6,
+            arm: '#64748b', armStroke: 0.55, armFill: 0.08,
+            best: '#0369a1', bestStroke: 0.95, bestFill: 0.14,
+            whisker: '#334155', whiskerStrength: 0.6,
+            mean: '#1e293b', chosen: '#b45309',
+            sample: '#0284c7', sampleStrength: 0.45,
         },
     },
 };
@@ -211,136 +207,95 @@ function playlist(palette) {
 `;
 }
 
-/** The row of machines the problem is named after: arms out, reels paid out. */
+/**
+ * The problem rather than the cabinet: four arms, each drawn as the reward
+ * distribution it is hiding, with what has been learned about it plotted
+ * underneath — an estimated mean and the interval still around it. The arm
+ * currently worth pulling is the one picked out.
+ */
 function bandit(palette) {
     const random = rng(9162026);
 
-    const symbols = (index) => {
-        const kind = index % 3;
-        if (kind === 0) {
-            return `<path d="M -7 -8 H 7 L 0 9" fill="none" stroke="#f59e0b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />`;
+    const baseline = 246;
+    const arms = [
+        { x: 84, mean: 0.42, spread: 30, height: 74, pulls: 18 },
+        { x: 176, mean: 0.58, spread: 22, height: 104, pulls: 41 },
+        { x: 288, mean: 0.74, spread: 26, height: 132, pulls: 96, best: true },
+        { x: 392, mean: 0.36, spread: 38, height: 62, pulls: 11 },
+    ];
+
+    /** A bell over the axis, sampled densely enough to read as drawn. */
+    const curve = (arm) => {
+        const points = [];
+        for (let step = 0; step <= 48; step += 1) {
+            const t = -3 + (step / 48) * 6;
+            const x = round(arm.x + t * (arm.spread / 1.6));
+            const y = round(baseline - arm.height * Math.exp(-0.5 * t * t));
+            points.push(`${x} ${y}`);
         }
-        if (kind === 1) {
-            return `<g><circle cx="-4" cy="4" r="5" fill="#ef4444" /><circle cx="5" cy="6" r="4.2" fill="#dc2626" /><path d="M -3 -1 C 0 -8, 5 -9, 8 -9" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" /></g>`;
-        }
-        return `<g fill="#0ea5e9"><rect x="-8" y="-7" width="16" height="4.5" rx="2" /><rect x="-8" y="-1.2" width="16" height="4.5" rx="2" opacity="0.85" /><rect x="-8" y="4.6" width="16" height="4.5" rx="2" opacity="0.7" /></g>`;
+        return points;
     };
 
-    const machines = [];
-    const count = 3;
-    const width = 108;
-    const gap = 32;
-    const left = (WIDTH - (count * width + (count - 1) * gap)) / 2;
+    const shapes = arms.map((arm) => {
+        const points = curve(arm);
+        const stroke = arm.best ? palette.best : palette.arm;
+        const strokeStrength = arm.best ? palette.bestStroke : palette.armStroke;
+        const fillStrength = arm.best ? palette.bestFill : palette.armFill;
+        return `<g>
+    <path d="M ${points[0]} L ${points.slice(1).join(' L ')} L ${round(arm.x + 3 * (arm.spread / 1.6))} ${baseline} L ${round(arm.x - 3 * (arm.spread / 1.6))} ${baseline} Z" fill="${stroke}" fill-opacity="${fillStrength}" />
+    <path d="M ${points[0]} L ${points.slice(1).join(' L ')}" fill="none" stroke="${stroke}" stroke-opacity="${strokeStrength}" stroke-width="${arm.best ? 2.4 : 1.6}" stroke-linejoin="round" />
+  </g>`;
+    });
 
-    for (let m = 0; m < count; m += 1) {
-        const x = round(left + m * (width + gap));
-        const top = 92;
-        const reels = [];
-        for (let reel = 0; reel < 3; reel += 1) {
-            const rx = round(x + 16 + reel * 26);
-            reels.push(`<g>
-        <rect x="${rx}" y="${top + 20}" width="22" height="44" rx="5" fill="url(#reel)" />
-        <g transform="translate(${round(rx + 11)} ${top + 42})">${symbols(m + reel)}</g>
-      </g>`);
+    // What the run has learned so far: a mean, and the interval still around it.
+    const estimates = arms.map((arm) => {
+        const centre = round(baseline + 34);
+        const halfWidth = round(46 / Math.sqrt(arm.pulls));
+        const colour = arm.best ? palette.chosen : palette.mean;
+        return `<g>
+    <line x1="${round(arm.x - halfWidth)}" y1="${centre}" x2="${round(arm.x + halfWidth)}" y2="${centre}" stroke="${palette.whisker}" stroke-opacity="${palette.whiskerStrength}" stroke-width="1.4" />
+    <line x1="${round(arm.x - halfWidth)}" y1="${centre - 5}" x2="${round(arm.x - halfWidth)}" y2="${centre + 5}" stroke="${palette.whisker}" stroke-opacity="${palette.whiskerStrength}" stroke-width="1.4" />
+    <line x1="${round(arm.x + halfWidth)}" y1="${centre - 5}" x2="${round(arm.x + halfWidth)}" y2="${centre + 5}" stroke="${palette.whisker}" stroke-opacity="${palette.whiskerStrength}" stroke-width="1.4" />
+    <circle cx="${arm.x}" cy="${centre}" r="${arm.best ? 4.4 : 3.2}" fill="${colour}" />
+  </g>`;
+    });
+
+    // The draws themselves, scattered thinly under each bell.
+    const samples = [];
+    for (const arm of arms) {
+        const count = Math.round(arm.pulls / 6);
+        for (let i = 0; i < count; i += 1) {
+            const t = (random() + random() + random() - 1.5) * 1.6;
+            const x = round(arm.x + t * (arm.spread / 1.6));
+            const y = round(baseline - random() * arm.height * 0.55);
+            samples.push(`<circle cx="${x}" cy="${y}" r="1.3" fill="${palette.sample}" opacity="${round(palette.sampleStrength * (0.4 + random() * 0.6))}" />`);
         }
-
-        const bulbs = [];
-        for (let b = 0; b < 5; b += 1) {
-            bulbs.push(`<circle cx="${round(x + 14 + b * 20)}" cy="${top - 8}" r="3.4" fill="${b % 2 ? '#fde68a' : '#a5f3fc'}" />`);
-        }
-
-        const coins = [];
-        for (let c = 0; c < 4; c += 1) {
-            coins.push(`<g transform="translate(${round(x + 26 + c * 19)} ${top + 132})"><circle r="6" fill="url(#coin)" /><circle r="2.6" fill="#fef3c7" opacity="0.85" /></g>`);
-        }
-
-        machines.push(`<g>
-      <ellipse cx="${round(x + width / 2)}" cy="274" rx="${round(width * 0.72)}" ry="16" fill="url(#pool)" />
-      <rect x="${x}" y="${top}" width="${width}" height="180" rx="12" fill="url(#cabinet)" stroke="${palette.cabinetEdge}" stroke-opacity="${palette.cabinetEdgeStrength}" />
-      <rect x="${round(x - 8)}" y="${top - 22}" width="${width + 16}" height="28" rx="11" fill="url(#crown)" stroke="${palette.cabinetEdge}" stroke-opacity="${palette.cabinetEdgeStrength}" />
-      <g filter="url(#bulbGlow)" opacity="0.9">${bulbs.join('')}</g>
-      ${bulbs.join('\n      ')}
-      <rect x="${round(x + 12)}" y="${top + 14}" width="${width - 24}" height="56" rx="8" fill="${palette.screen}" stroke="${palette.screenEdge}" stroke-opacity="${palette.screenEdgeStrength}" />
-      ${reels.join('\n      ')}
-      <g>
-        <rect x="${round(x + 18)}" y="${top + 80}" width="18" height="8" rx="4" fill="#f87171" />
-        <rect x="${round(x + 45)}" y="${top + 80}" width="18" height="8" rx="4" fill="#4ade80" />
-        <rect x="${round(x + 72)}" y="${top + 80}" width="18" height="8" rx="4" fill="#38bdf8" />
-        <rect x="${round(x + 36)}" y="${top + 96}" width="36" height="5" rx="2.5" fill="${palette.screen}" />
-      </g>
-      <rect x="${round(x + 12)}" y="${top + 110}" width="${width - 24}" height="34" rx="8" fill="${palette.tray}" stroke="${palette.trayEdge}" stroke-opacity="${palette.trayEdgeStrength}" />
-      ${coins.join('\n      ')}
-      <g>
-        <rect x="${round(x + width - 2)}" y="${top + 24}" width="10" height="12" rx="4" fill="#334155" />
-        <line x1="${round(x + width + 3)}" y1="${top + 30}" x2="${round(x + width + 18)}" y2="${top + 2}" stroke="url(#lever)" stroke-width="5.5" stroke-linecap="round" />
-        <circle cx="${round(x + width + 19)}" cy="${top}" r="9.5" fill="url(#knob)" />
-        <circle cx="${round(x + width + 16)}" cy="${top - 3}" r="3" fill="#fecaca" opacity="0.85" />
-      </g>
-    </g>`);
     }
 
-    const spill = [];
-    for (let c = 0; c < 8; c += 1) {
-        const x = round(24 + random() * (WIDTH - 48));
-        const y = round(284 + random() * 26);
-        spill.push(`<g transform="translate(${x} ${y})"><ellipse cy="4" rx="7" ry="2.4" fill="${palette.shadow}" opacity="${palette.shadowStrength}" /><circle r="5.5" fill="url(#coin)" /><circle r="2.2" fill="#fef3c7" opacity="0.8" /></g>`);
+    const grid = [];
+    for (let y = 70; y < baseline; y += 44) {
+        grid.push(`<line x1="24" y1="${y}" x2="${WIDTH - 24}" y2="${y}" stroke="${palette.grid}" stroke-opacity="${palette.gridStrength}" stroke-width="1" />`);
+    }
+    for (let x = 60; x < WIDTH; x += 60) {
+        grid.push(`<line x1="${x}" y1="46" x2="${x}" y2="${baseline}" stroke="${palette.grid}" stroke-opacity="${round(palette.gridStrength * 0.7)}" stroke-width="1" />`);
     }
 
-    // Specks in the air: stars over a night room, confetti over a lit one.
-    const specks = [];
-    for (let s = 0; s < palette.speckCount; s += 1) {
-        specks.push(`<circle cx="${round(random() * WIDTH)}" cy="${round(random() * 150)}" r="${round(0.7 + random() * 1.1)}" fill="${palette.speck}" opacity="${round(0.25 + random() * 0.45)}" />`);
-    }
-
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}" role="img" aria-label="Three slot machines side by side, each with its arm out">
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}" role="img" aria-label="Four reward distributions with the estimate and interval plotted under each">
   <defs>
-    <linearGradient id="night" x1="0" y1="0" x2="0.2" y2="1">
-      <stop offset="0" stop-color="${palette.skyTop}" />
-      <stop offset="1" stop-color="${palette.skyBottom}" />
+    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${palette.groundTop}" />
+      <stop offset="1" stop-color="${palette.groundBottom}" />
     </linearGradient>
-    <linearGradient id="cabinet" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="${palette.cabinet[0]}" />
-      <stop offset="0.5" stop-color="${palette.cabinet[1]}" />
-      <stop offset="1" stop-color="${palette.cabinet[2]}" />
-    </linearGradient>
-    <linearGradient id="crown" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${palette.crown[0]}" />
-      <stop offset="1" stop-color="${palette.crown[1]}" />
-    </linearGradient>
-    <linearGradient id="reel" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="${palette.reel[0]}" />
-      <stop offset="1" stop-color="${palette.reel[1]}" />
-    </linearGradient>
-    <linearGradient id="lever" x1="0" y1="1" x2="1" y2="0">
-      <stop offset="0" stop-color="#94a3b8" />
-      <stop offset="1" stop-color="#e2e8f0" />
-    </linearGradient>
-    <radialGradient id="knob" cx="0.35" cy="0.3">
-      <stop offset="0" stop-color="#fca5a5" />
-      <stop offset="0.5" stop-color="#ef4444" />
-      <stop offset="1" stop-color="#991b1b" />
-    </radialGradient>
-    <radialGradient id="coin" cx="0.35" cy="0.3">
-      <stop offset="0" stop-color="#fde68a" />
-      <stop offset="0.6" stop-color="#fbbf24" />
-      <stop offset="1" stop-color="#b45309" />
-    </radialGradient>
-    <radialGradient id="pool" cx="0.5" cy="0.5">
-      <stop offset="0" stop-color="${palette.pool}" stop-opacity="${palette.poolStrength}" />
-      <stop offset="1" stop-color="${palette.pool}" stop-opacity="0" />
-    </radialGradient>
-    <filter id="bulbGlow" x="-60%" y="-60%" width="220%" height="220%">
-      <feGaussianBlur stdDeviation="4" />
-    </filter>
   </defs>
 
-  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#night)" />
-  ${specks.join('\n  ')}
-  <rect y="268" width="${WIDTH}" height="${HEIGHT - 268}" fill="${palette.floor}" />
-  <rect y="268" width="${WIDTH}" height="1.5" fill="${palette.floorEdge}" fill-opacity="${palette.floorEdgeStrength}" />
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#ground)" />
+  ${grid.join('\n  ')}
 
-  ${machines.join('\n  ')}
-  ${spill.join('\n  ')}
+  ${samples.join('\n  ')}
+  ${shapes.join('\n  ')}
+
+  <line x1="24" y1="${baseline}" x2="${WIDTH - 24}" y2="${baseline}" stroke="${palette.axis}" stroke-opacity="${palette.axisStrength}" stroke-width="1.4" />
+  ${estimates.join('\n  ')}
 </svg>
 `;
 }
