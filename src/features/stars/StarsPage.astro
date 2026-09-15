@@ -539,6 +539,10 @@ const labels = {
     skyMag6El = document.getElementById('sky-mag6');
   }
 
+  /* True when the page is framed as a card's background elsewhere on the site.
+     The frame wants the sky itself: no readout, no horizon, no compass. */
+  let previewSky = false;
+
   function isPreviewMode() {
     try {
       return new URLSearchParams(window.location.search).get('preview') === '1';
@@ -549,6 +553,7 @@ const labels = {
 
   function applyPreviewModeLayout() {
     if (!isPreviewMode()) return;
+    previewSky = true;
 
     document.documentElement.style.height = '100%';
     document.documentElement.style.overflow = 'hidden';
@@ -1216,14 +1221,16 @@ const labels = {
       skyState.shootingStars = activeMeteors;
     }
 
-    const headingDeg = normalizeDegrees(yaw * RAD_TO_DEG);
-    ctx.fillStyle = 'rgba(200, 220, 255, 0.92)';
-    ctx.font = '12px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText(`${labels.heading}: ${Math.round(headingDeg)}°`, 12, 10);
-    ctx.fillText(`${labels.pitch}: ${Math.round(pitch * RAD_TO_DEG)}°`, 12, 26);
-    ctx.fillText(`${labels.fov}: ${Math.round(skyState.fov)}°`, 12, 42);
+    if (!previewSky) {
+      const headingDeg = normalizeDegrees(yaw * RAD_TO_DEG);
+      ctx.fillStyle = 'rgba(200, 220, 255, 0.92)';
+      ctx.font = '12px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.fillText(`${labels.heading}: ${Math.round(headingDeg)}°`, 12, 10);
+      ctx.fillText(`${labels.pitch}: ${Math.round(pitch * RAD_TO_DEG)}°`, 12, 26);
+      ctx.fillText(`${labels.fov}: ${Math.round(skyState.fov)}°`, 12, 42);
+    }
 
     const cardinal = [
       { label: labels.dirN, azimuth: 0 },
@@ -1237,7 +1244,7 @@ const labels = {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    for (const point of cardinal) {
+    for (const point of previewSky ? [] : cardinal) {
       const dirEast = Math.sin(point.azimuth);
       const dirNorth = Math.cos(point.azimuth);
       const dirUp = 0;
@@ -1553,6 +1560,13 @@ const labels = {
     skyState.yaw = 0;
     skyState.pitch = 0.2;
     skyState.fov = 88;
+    if (previewSky) {
+      // A card is a small window: point it at the pole, where Polaris and the
+      // Dipper are, lift the horizon out of shot, and widen the field so the
+      // frame is never a patch of empty sky.
+      skyState.pitch = TOKYO.latitude * DEG_TO_RAD;
+      skyState.fov = 104;
+    }
     skyState.isPlaying = false;
     skyState.isDragging = false;
     skyState.dragMoved = false;
