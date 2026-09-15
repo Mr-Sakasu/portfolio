@@ -1561,11 +1561,15 @@ const labels = {
     skyState.pitch = 0.2;
     skyState.fov = 88;
     if (previewSky) {
-      // A card is a small window: point it at the pole, where Polaris and the
-      // Dipper are, lift the horizon out of shot, and widen the field so the
-      // frame is never a patch of empty sky.
-      skyState.pitch = TOKYO.latitude * DEG_TO_RAD;
-      skyState.fov = 104;
+      // A card is a small window. Pitched at the latitude the pole sits at,
+      // a 104° field still reached below the horizon, so the bottom of the
+      // card was ground and the Dipper sat squashed along the edge of it.
+      // Looking higher keeps the ground out of it: what is left of the horizon
+      // falls in the last couple of degrees at the foot of the card, under the
+      // cover the title sits on. The field stays wide enough that the card is
+      // full of stars rather than a few points in a lot of empty sky.
+      skyState.pitch = 48 * DEG_TO_RAD;
+      skyState.fov = 96;
     }
     skyState.isPlaying = false;
     skyState.isDragging = false;
