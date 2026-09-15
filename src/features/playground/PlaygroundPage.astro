@@ -57,6 +57,8 @@ const demos = [
           data-reveal
           style={`--reveal-delay: ${(index % 2) * 80}ms;`}
         >
+          <div class="card-photo" aria-hidden="true"></div>
+          <div class="card-photo__shade" aria-hidden="true"></div>
           <p class="playground-card__eyebrow">{demo.eyebrow}</p>
           <h2>{demo.title}</h2>
           <p class="playground-card__summary">{demo.summary}</p>
@@ -119,13 +121,83 @@ const demos = [
 
   /* Each card wears its demo's accent on the left edge, the way the cards on
      the home page do, so the two lists read as the same set of things. */
+  /* Each card stands on the same picture its card on the home page does, so
+     the two lists are recognisably the same things. The type runs the height
+     of the card rather than sitting at its foot, so the cover is heavier here
+     than there — the picture is a ground, not a photograph. */
   .playground-card {
     position: relative;
+    isolation: isolate;
+    overflow: hidden;
     display: block;
     padding: 1.6rem 1.5rem 1.5rem;
     border-left: 3px solid var(--card-accent);
     color: inherit;
     text-decoration: none;
+    --photo-foot: 0.9;
+    --photo-sky: 0.58;
+  }
+
+  /* How busy each picture is decides how far back it has to sit: a row of lit
+     machines behind a heading needs more cover than a sky does. */
+  .playground-card--sky {
+    --photo-sky: 0.46;
+  }
+
+  .playground-card--cyan {
+    --photo-sky: 0.74;
+    --photo-foot: 0.92;
+  }
+
+  .playground-card--violet {
+    --photo-sky: 0.62;
+  }
+
+  .playground-card--sky .card-photo {
+    background-image: url('/cards/stars.svg');
+  }
+
+  .playground-card--cyan .card-photo {
+    background-image: url('/cards/bandit.svg');
+  }
+
+  .playground-card--violet .card-photo {
+    background-image: url('/cards/hanoi.svg');
+  }
+
+  /* The light pair, and a cover in white to match them. */
+  :global(html[data-theme='light']) .playground-card {
+    --photo-ink: 255 255 255;
+    --photo-foot: 0.93;
+    --photo-sky: 0.62;
+  }
+
+  :global(html[data-theme='light']) .playground-card--cyan {
+    --photo-sky: 0.84;
+  }
+
+  :global(html[data-theme='light']) .playground-card--sky .card-photo {
+    background-image: url('/cards/stars-light.svg');
+  }
+
+  :global(html[data-theme='light']) .playground-card--cyan .card-photo {
+    background-image: url('/cards/bandit-light.svg');
+  }
+
+  :global(html[data-theme='light']) .playground-card--violet .card-photo {
+    background-image: url('/cards/hanoi-light.svg');
+  }
+
+  :global(html[data-theme='light']) .playground-card--sky {
+    --card-accent: #1d4ed8;
+  }
+
+  :global(html[data-theme='light']) .playground-card--cyan {
+    --card-accent: #0e7490;
+  }
+
+  :global(html[data-theme='light']) .playground-card--violet {
+    --card-accent: #6d28d9;
   }
 
   .playground-card--sky {
