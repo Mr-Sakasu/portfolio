@@ -1,249 +1,255 @@
 // Draws the pictures behind the playlist and bandit cards on the home page.
 //
-// The other two cards borrow a scene: the reel's card frames the live page and
-// the profile takes a still of Tokyo, both of which are about the place they
-// show. These two are about a subject instead — a record being played, and the
-// row of machines the multi-armed bandit is named after — so nothing in the
-// reel fits them, and they are drawn here in the same 8-bit idiom: a small
-// canvas, a short palette, ordered dithering, and no smoothing on the way up.
+// The other two cards borrow the reel: the scenes card frames the live page and
+// the profile takes a still of Tokyo, both of which are about a place the reel
+// has drawn. These two are about a subject instead — a record being played, and
+// the row of machines the multi-armed bandit is named after — so they are drawn
+// here, as SVG: gradients and glows rather than the reel's pixels, sharp at any
+// size the card is asked to be, and a couple of KB each.
 //
 //   node scripts/cards/render-card-art.mjs
-import { mkdir } from 'node:fs/promises';
-import sharp from 'sharp';
+import { mkdir, writeFile } from 'node:fs/promises';
 
 const WIDTH = 480;
 const HEIGHT = 320;
 const OUT_DIR = new URL('../../public/cards/', import.meta.url);
 
-/** A deterministic shuffle, so the art is the same every time it is drawn. */
+/** Deterministic, so the art only changes when this file does. */
 const rng = (seed) => () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
 };
 
-const BAYER = [
-    [0, 8, 2, 10],
-    [12, 4, 14, 6],
-    [3, 11, 1, 9],
-    [15, 7, 13, 5],
-];
+const round = (value) => Math.round(value * 100) / 100;
 
-const hex = (value) => [
-    parseInt(value.slice(1, 3), 16),
-    parseInt(value.slice(3, 5), 16),
-    parseInt(value.slice(5, 7), 16),
-];
-
-function canvas() {
-    const data = new Uint8Array(WIDTH * HEIGHT * 3);
-    const put = (x, y, colour) => {
-        x = Math.round(x);
-        y = Math.round(y);
-        if (x < 0 || y < 0 || x >= WIDTH || y >= HEIGHT) return;
-        const at = (y * WIDTH + x) * 3;
-        data[at] = colour[0];
-        data[at + 1] = colour[1];
-        data[at + 2] = colour[2];
-    };
-
-    return {
-        data,
-        put,
-        /** Vertical gradient, banded by a 4x4 Bayer matrix the way the scenes are. */
-        sky(topHex, bottomHex, spread = 10) {
-            const top = hex(topHex);
-            const bottom = hex(bottomHex);
-            for (let y = 0; y < HEIGHT; y += 1) {
-                const t = y / (HEIGHT - 1);
-                for (let x = 0; x < WIDTH; x += 1) {
-                    const jitter = (BAYER[y % 4][x % 4] / 15 - 0.5) * spread;
-                    put(x, y, top.map((channel, index) =>
-                        Math.max(0, Math.min(255, Math.round(channel + (bottom[index] - channel) * t + jitter)))));
-                }
-            }
-        },
-        rect(x, y, w, h, colourHex) {
-            const colour = hex(colourHex);
-            for (let j = 0; j < h; j += 1) for (let i = 0; i < w; i += 1) put(x + i, y + j, colour);
-        },
-        disc(cx, cy, r, colourHex) {
-            const colour = hex(colourHex);
-            for (let y = -r; y <= r; y += 1) {
-                for (let x = -r; x <= r; x += 1) {
-                    if (x * x + y * y <= r * r) put(cx + x, cy + y, colour);
-                }
-            }
-        },
-        ring(cx, cy, r, thickness, colourHex) {
-            const colour = hex(colourHex);
-            const outer = r * r;
-            const inner = (r - thickness) * (r - thickness);
-            for (let y = -r; y <= r; y += 1) {
-                for (let x = -r; x <= r; x += 1) {
-                    const d = x * x + y * y;
-                    if (d <= outer && d >= inner) put(cx + x, cy + y, colour);
-                }
-            }
-        },
-        /** A line thick enough to read as drawn rather than aliased away. */
-        line(x1, y1, x2, y2, thickness, colourHex) {
-            const colour = hex(colourHex);
-            const steps = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1));
-            for (let step = 0; step <= steps; step += 1) {
-                const t = steps === 0 ? 0 : step / steps;
-                const x = x1 + (x2 - x1) * t;
-                const y = y1 + (y2 - y1) * t;
-                for (let j = 0; j < thickness; j += 1) {
-                    for (let i = 0; i < thickness; i += 1) put(x + i, y + j, colour);
-                }
-            }
-        },
-    };
-}
-
-async function write(name, art) {
-    await mkdir(OUT_DIR, { recursive: true });
-    const out = new URL(`${name}.webp`, OUT_DIR).pathname;
-    const buffer = await sharp(Buffer.from(art.data), { raw: { width: WIDTH, height: HEIGHT, channels: 3 } })
-        .webp({ lossless: true, effort: 6 })
-        .toBuffer();
-    await sharp(buffer).toFile(out);
-    console.log(`${name}: ${WIDTH}x${HEIGHT} -> public/cards/${name}.webp (${Math.round(buffer.length / 1024)}KB)`);
-}
-
-/** A record on the deck, under an arm, over a room full of level meters. */
+/** A record turning under its arm, over a room of level meters. */
 function playlist() {
-    const art = canvas();
     const random = rng(20260916);
-    art.sky('#1a1145', '#42206b');
 
-    // Dust in the light.
-    for (let i = 0; i < 150; i += 1) {
-        const x = Math.floor(random() * WIDTH);
-        const y = Math.floor(random() * (HEIGHT - 90));
-        art.rect(x, y, 1, 1, random() > 0.6 ? '#f5d0fe' : '#c4b5fd');
-    }
-
-    // The record: grooves out of a violet label, and a highlight across them.
-    const cx = 240;
-    const cy = 138;
-    art.disc(cx, cy, 92, '#0e0824');
-    for (let r = 88; r > 34; r -= 6) art.ring(cx, cy, r, 2, r % 12 === 4 ? '#2e1c5e' : '#241550');
-    art.ring(cx, cy, 90, 3, '#4c2a86');
-    art.disc(cx, cy, 30, '#a78bfa');
-    art.ring(cx, cy, 30, 2, '#ddd6fe');
-    art.disc(cx, cy, 16, '#7c3aed');
-    art.disc(cx, cy, 4, '#1a1145');
-    for (let i = 0; i < 46; i += 1) {
-        art.rect(cx - 74 + i, cy - 62 + Math.round(i * 0.9), 2, 2, '#6d4bb8');
-    }
-
-    // The arm, come down off its rest onto the outer groove.
-    art.line(432, 44, 330, 96, 4, '#94a3b8');
-    art.line(330, 96, 300, 112, 5, '#cbd5e1');
-    art.rect(296, 108, 14, 12, '#e2e8f0');
-    art.disc(436, 44, 11, '#64748b');
-    art.disc(436, 44, 5, '#cbd5e1');
-
-    // Level meters along the foot, the loudest in the middle of the room.
-    const bars = 30;
-    const gap = Math.floor(WIDTH / bars);
+    const meters = [];
+    const bars = 26;
+    const slot = WIDTH / bars;
     for (let i = 0; i < bars; i += 1) {
         const centred = 1 - Math.abs(i - (bars - 1) / 2) / ((bars - 1) / 2);
-        const height = Math.round(14 + centred * 54 + random() * 30);
-        const x = i * gap + 2;
-        for (let y = 0; y < height; y += 1) {
-            const t = y / height;
-            const colour = t > 0.74 ? '#f0abfc' : t > 0.4 ? '#c084fc' : '#7c3aed';
-            art.rect(x, HEIGHT - 1 - y, gap - 4, 1, colour);
-        }
-        art.rect(x, HEIGHT - height - 3, gap - 4, 2, '#fbcfe8');
+        const height = round(26 + centred * 62 + random() * 34);
+        const x = round(i * slot + slot * 0.18);
+        const width = round(slot * 0.64);
+        meters.push(`<rect x="${x}" y="${round(HEIGHT - height)}" width="${width}" height="${height + 12}" rx="${round(width / 2)}" fill="url(#meter)" />`);
     }
 
-    return art;
+    const grooves = [];
+    for (let r = 40; r <= 88; r += 4) {
+        grooves.push(`<circle cx="240" cy="136" r="${r}" fill="none" stroke="#ffffff" stroke-opacity="${r % 8 === 0 ? 0.07 : 0.035}" stroke-width="1.2" />`);
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}" role="img" aria-label="A record turning under its arm above a row of level meters">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#150d38" />
+      <stop offset="1" stop-color="#3b1d66" />
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.42" />
+      <stop offset="1" stop-color="#a78bfa" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="vinyl" cx="0.36" cy="0.3">
+      <stop offset="0" stop-color="#2b1b55" />
+      <stop offset="0.6" stop-color="#150d33" />
+      <stop offset="1" stop-color="#0c0722" />
+    </radialGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ddd6fe" />
+      <stop offset="0.55" stop-color="#a78bfa" />
+      <stop offset="1" stop-color="#6d28d9" />
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="meter" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#5b21b6" stop-opacity="0.5" />
+      <stop offset="0.55" stop-color="#a855f7" stop-opacity="0.8" />
+      <stop offset="1" stop-color="#f5d0fe" />
+    </linearGradient>
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e2e8f0" />
+      <stop offset="1" stop-color="#64748b" />
+    </linearGradient>
+    <clipPath id="disc"><circle cx="240" cy="136" r="92" /></clipPath>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7" />
+    </filter>
+  </defs>
+
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#sky)" />
+  <circle cx="240" cy="136" r="168" fill="url(#halo)" />
+
+  <g>
+    <circle cx="240" cy="136" r="92" fill="url(#vinyl)" />
+    ${grooves.join('\n    ')}
+    <g clip-path="url(#disc)">
+      <ellipse cx="200" cy="96" rx="104" ry="34" fill="url(#sheen)" opacity="0.22" transform="rotate(-32 200 96)" />
+    </g>
+    <circle cx="240" cy="136" r="92" fill="none" stroke="#c4b5fd" stroke-opacity="0.35" stroke-width="1.5" />
+    <circle cx="240" cy="136" r="30" fill="url(#label)" />
+    <circle cx="240" cy="136" r="30" fill="none" stroke="#f5f3ff" stroke-opacity="0.5" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="4.5" fill="#150d38" />
+  </g>
+
+  <g stroke-linecap="round">
+    <line x1="424" y1="58" x2="300" y2="118" stroke="url(#arm)" stroke-width="6" />
+    <rect x="286" y="112" width="22" height="13" rx="4" fill="#e2e8f0" transform="rotate(-26 297 118)" />
+    <circle cx="428" cy="54" r="13" fill="#475569" />
+    <circle cx="428" cy="54" r="6" fill="#cbd5e1" />
+  </g>
+
+  <g opacity="0.45" filter="url(#blur)">
+    ${meters.join('\n    ')}
+  </g>
+  <g opacity="0.92">
+    ${meters.join('\n    ')}
+  </g>
+</svg>
+`;
 }
 
-/** The row of machines the problem is named after, arms out, reels spun. */
+/** The row of machines the problem is named after: arms out, reels paid out. */
 function bandit() {
-    const art = canvas();
     const random = rng(9162026);
-    art.sky('#071528', '#123a68');
 
-    for (let i = 0; i < 90; i += 1) {
-        art.rect(Math.floor(random() * WIDTH), Math.floor(random() * 150), 1, 1, '#93c5fd');
-    }
-
-    // The floor they stand on.
-    art.rect(0, 268, WIDTH, HEIGHT - 268, '#081b33');
-    art.rect(0, 268, WIDTH, 2, '#1e4a8a');
-
-    const symbols = [
-        ['#fbbf24', '#f59e0b'],
-        ['#f87171', '#ef4444'],
-        ['#67e8f9', '#22d3ee'],
-    ];
-
-    const machines = 3;
-    const width = 104;
-    const gap = 30;
-    const left = Math.round((WIDTH - (machines * width + (machines - 1) * gap)) / 2);
-
-    for (let m = 0; m < machines; m += 1) {
-        const x = left + m * (width + gap);
-        const top = 96;
-
-        // Cabinet, with a lit crown.
-        art.rect(x, top, width, 172, '#15325f');
-        art.rect(x, top, 3, 172, '#1e4a8a');
-        art.rect(x + width - 3, top, 3, 172, '#0b2140');
-        art.rect(x - 6, top - 18, width + 12, 20, '#1e4a8a');
-        art.rect(x - 6, top - 18, width + 12, 3, '#3b82f6');
-        for (let b = 0; b < 6; b += 1) {
-            art.disc(x + 4 + b * 19, top - 8, 3, b % 2 ? '#fbbf24' : '#67e8f9');
+    const symbols = (index) => {
+        const kind = index % 3;
+        if (kind === 0) {
+            return `<path d="M -7 -8 H 7 L 0 9" fill="none" stroke="#f59e0b" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" />`;
         }
+        if (kind === 1) {
+            return `<g><circle cx="-4" cy="4" r="5" fill="#ef4444" /><circle cx="5" cy="6" r="4.2" fill="#dc2626" /><path d="M -3 -1 C 0 -8, 5 -9, 8 -9" fill="none" stroke="#22c55e" stroke-width="2.2" stroke-linecap="round" /></g>`;
+        }
+        return `<g fill="#22d3ee"><rect x="-8" y="-7" width="16" height="4.5" rx="2" /><rect x="-8" y="-1.2" width="16" height="4.5" rx="2" opacity="0.85" /><rect x="-8" y="4.6" width="16" height="4.5" rx="2" opacity="0.7" /></g>`;
+    };
 
-        // The window, and three reels stopped on a payout.
-        art.rect(x + 12, top + 14, width - 24, 50, '#04101f');
-        art.rect(x + 12, top + 14, width - 24, 2, '#0b2140');
+    const machines = [];
+    const count = 3;
+    const width = 108;
+    const gap = 32;
+    const left = (WIDTH - (count * width + (count - 1) * gap)) / 2;
+
+    for (let m = 0; m < count; m += 1) {
+        const x = round(left + m * (width + gap));
+        const top = 92;
+        const reels = [];
         for (let reel = 0; reel < 3; reel += 1) {
-            const rx = x + 16 + reel * 26;
-            art.rect(rx, top + 18, 22, 42, '#e2e8f0');
-            art.rect(rx, top + 18, 22, 2, '#94a3b8');
-            const [light, dark] = symbols[(m + reel) % symbols.length];
-            art.disc(rx + 11, top + 34, 7, light);
-            art.disc(rx + 11, top + 34, 4, dark);
-            art.rect(rx + 4, top + 46, 14, 4, dark);
+            const rx = round(x + 16 + reel * 26);
+            reels.push(`<g>
+        <rect x="${rx}" y="${top + 20}" width="22" height="44" rx="5" fill="url(#reel)" />
+        <g transform="translate(${round(rx + 11)} ${top + 42})">${symbols(m + reel)}</g>
+      </g>`);
         }
 
-        // Buttons, coin slot, and the tray they pay into.
-        for (let b = 0; b < 3; b += 1) {
-            art.rect(x + 18 + b * 24, top + 76, 16, 7, ['#f87171', '#4ade80', '#38bdf8'][b]);
-        }
-        art.rect(x + 34, top + 92, 36, 4, '#04101f');
-        art.rect(x + 12, top + 108, width - 24, 30, '#0b2140');
-        art.rect(x + 12, top + 108, width - 24, 2, '#04101f');
-        for (let coin = 0; coin < 4; coin += 1) {
-            art.disc(x + 24 + coin * 18, top + 128, 5, '#fbbf24');
-            art.disc(x + 24 + coin * 18, top + 128, 2, '#fde68a');
+        const bulbs = [];
+        for (let b = 0; b < 5; b += 1) {
+            bulbs.push(`<circle cx="${round(x + 14 + b * 20)}" cy="${top - 8}" r="3.4" fill="${b % 2 ? '#fde68a' : '#67e8f9'}" />`);
         }
 
-        // The arm. This is the part the name is about.
-        art.rect(x + width, top + 26, 8, 8, '#334155');
-        art.line(x + width + 3, top + 30, x + width + 16, top + 4, 4, '#cbd5e1');
-        art.disc(x + width + 17, top + 2, 8, '#ef4444');
-        art.disc(x + width + 15, top, 3, '#fca5a5');
+        const coins = [];
+        for (let c = 0; c < 4; c += 1) {
+            coins.push(`<g transform="translate(${round(x + 26 + c * 19)} ${top + 132})"><circle r="6" fill="url(#coin)" /><circle r="2.6" fill="#fef3c7" opacity="0.85" /></g>`);
+        }
+
+        machines.push(`<g>
+      <ellipse cx="${round(x + width / 2)}" cy="274" rx="${round(width * 0.72)}" ry="16" fill="url(#pool)" />
+      <rect x="${x}" y="${top}" width="${width}" height="180" rx="12" fill="url(#cabinet)" stroke="#7dd3fc" stroke-opacity="0.22" />
+      <rect x="${round(x - 8)}" y="${top - 22}" width="${width + 16}" height="28" rx="11" fill="url(#crown)" stroke="#7dd3fc" stroke-opacity="0.3" />
+      <g filter="url(#bulbGlow)" opacity="0.9">${bulbs.join('')}</g>
+      ${bulbs.join('\n      ')}
+      <rect x="${round(x + 12)}" y="${top + 14}" width="${width - 24}" height="56" rx="8" fill="#04101f" stroke="#38bdf8" stroke-opacity="0.25" />
+      ${reels.join('\n      ')}
+      <g>
+        <rect x="${round(x + 18)}" y="${top + 80}" width="18" height="8" rx="4" fill="#f87171" />
+        <rect x="${round(x + 45)}" y="${top + 80}" width="18" height="8" rx="4" fill="#4ade80" />
+        <rect x="${round(x + 72)}" y="${top + 80}" width="18" height="8" rx="4" fill="#38bdf8" />
+        <rect x="${round(x + 36)}" y="${top + 96}" width="36" height="5" rx="2.5" fill="#04101f" />
+      </g>
+      <rect x="${round(x + 12)}" y="${top + 110}" width="${width - 24}" height="34" rx="8" fill="#08192f" stroke="#0ea5e9" stroke-opacity="0.18" />
+      ${coins.join('\n      ')}
+      <g>
+        <rect x="${round(x + width - 2)}" y="${top + 24}" width="10" height="12" rx="4" fill="#334155" />
+        <line x1="${round(x + width + 3)}" y1="${top + 30}" x2="${round(x + width + 18)}" y2="${top + 2}" stroke="url(#lever)" stroke-width="5.5" stroke-linecap="round" />
+        <circle cx="${round(x + width + 19)}" cy="${top}" r="9.5" fill="url(#knob)" />
+        <circle cx="${round(x + width + 16)}" cy="${top - 3}" r="3" fill="#fecaca" opacity="0.85" />
+      </g>
+    </g>`);
     }
 
-    // Coins that missed the tray.
-    for (let coin = 0; coin < 9; coin += 1) {
-        const x = 20 + Math.floor(random() * (WIDTH - 40));
-        const y = 280 + Math.floor(random() * 30);
-        art.disc(x, y, 4, '#fbbf24');
-        art.disc(x, y, 2, '#fde68a');
+    const spill = [];
+    for (let c = 0; c < 8; c += 1) {
+        const x = round(24 + random() * (WIDTH - 48));
+        const y = round(284 + random() * 26);
+        spill.push(`<g transform="translate(${x} ${y})"><ellipse cy="4" rx="7" ry="2.4" fill="#020a16" opacity="0.5" /><circle r="5.5" fill="url(#coin)" /><circle r="2.2" fill="#fef3c7" opacity="0.8" /></g>`);
     }
 
-    return art;
+    const stars = [];
+    for (let s = 0; s < 40; s += 1) {
+        stars.push(`<circle cx="${round(random() * WIDTH)}" cy="${round(random() * 150)}" r="${round(0.7 + random() * 1.1)}" fill="#bae6fd" opacity="${round(0.25 + random() * 0.45)}" />`);
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}" role="img" aria-label="Three slot machines side by side, each with its arm out">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#05101f" />
+      <stop offset="1" stop-color="#123a68" />
+    </linearGradient>
+    <linearGradient id="cabinet" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1e4a86" />
+      <stop offset="0.5" stop-color="#16355f" />
+      <stop offset="1" stop-color="#0d2547" />
+    </linearGradient>
+    <linearGradient id="crown" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#38bdf8" />
+      <stop offset="1" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="reel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" />
+      <stop offset="1" stop-color="#cbd5e1" />
+    </linearGradient>
+    <linearGradient id="lever" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#94a3b8" />
+      <stop offset="1" stop-color="#e2e8f0" />
+    </linearGradient>
+    <radialGradient id="knob" cx="0.35" cy="0.3">
+      <stop offset="0" stop-color="#fca5a5" />
+      <stop offset="0.5" stop-color="#ef4444" />
+      <stop offset="1" stop-color="#991b1b" />
+    </radialGradient>
+    <radialGradient id="coin" cx="0.35" cy="0.3">
+      <stop offset="0" stop-color="#fde68a" />
+      <stop offset="0.6" stop-color="#fbbf24" />
+      <stop offset="1" stop-color="#b45309" />
+    </radialGradient>
+    <radialGradient id="pool" cx="0.5" cy="0.5">
+      <stop offset="0" stop-color="#38bdf8" stop-opacity="0.4" />
+      <stop offset="1" stop-color="#38bdf8" stop-opacity="0" />
+    </radialGradient>
+    <filter id="bulbGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="4" />
+    </filter>
+  </defs>
+
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#night)" />
+  ${stars.join('\n  ')}
+  <rect y="268" width="${WIDTH}" height="${HEIGHT - 268}" fill="#071a31" />
+  <rect y="268" width="${WIDTH}" height="1.5" fill="#38bdf8" fill-opacity="0.35" />
+
+  ${machines.join('\n  ')}
+  ${spill.join('\n  ')}
+</svg>
+`;
 }
 
-await write('playlist', playlist());
-await write('bandit', bandit());
+await mkdir(OUT_DIR, { recursive: true });
+for (const [name, svg] of [['playlist', playlist()], ['bandit', bandit()]]) {
+    const out = new URL(`${name}.svg`, OUT_DIR);
+    await writeFile(out, svg, 'utf8');
+    console.log(`${name}: ${WIDTH}x${HEIGHT} -> public/cards/${name}.svg (${Math.round(Buffer.byteLength(svg) / 1024)}KB)`);
+}

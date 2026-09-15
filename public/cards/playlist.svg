@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="A record turning under its arm above a row of level meters">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#150d38" />
+      <stop offset="1" stop-color="#3b1d66" />
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5">
+      <stop offset="0" stop-color="#a78bfa" stop-opacity="0.42" />
+      <stop offset="1" stop-color="#a78bfa" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="vinyl" cx="0.36" cy="0.3">
+      <stop offset="0" stop-color="#2b1b55" />
+      <stop offset="0.6" stop-color="#150d33" />
+      <stop offset="1" stop-color="#0c0722" />
+    </radialGradient>
+    <linearGradient id="label" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ddd6fe" />
+      <stop offset="0.55" stop-color="#a78bfa" />
+      <stop offset="1" stop-color="#6d28d9" />
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
+      <stop offset="0.5" stop-color="#ffffff" stop-opacity="0.5" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="meter" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#5b21b6" stop-opacity="0.5" />
+      <stop offset="0.55" stop-color="#a855f7" stop-opacity="0.8" />
+      <stop offset="1" stop-color="#f5d0fe" />
+    </linearGradient>
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e2e8f0" />
+      <stop offset="1" stop-color="#64748b" />
+    </linearGradient>
+    <clipPath id="disc"><circle cx="240" cy="136" r="92" /></clipPath>
+    <filter id="blur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="7" />
+    </filter>
+  </defs>
+
+  <rect width="480" height="320" fill="url(#sky)" />
+  <circle cx="240" cy="136" r="168" fill="url(#halo)" />
+
+  <g>
+    <circle cx="240" cy="136" r="92" fill="url(#vinyl)" />
+    <circle cx="240" cy="136" r="40" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="44" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="48" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="52" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="56" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="60" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="64" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="68" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="72" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="76" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="80" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="84" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="88" fill="none" stroke="#ffffff" stroke-opacity="0.07" stroke-width="1.2" />
+    <g clip-path="url(#disc)">
+      <ellipse cx="200" cy="96" rx="104" ry="34" fill="url(#sheen)" opacity="0.22" transform="rotate(-32 200 96)" />
+    </g>
+    <circle cx="240" cy="136" r="92" fill="none" stroke="#c4b5fd" stroke-opacity="0.35" stroke-width="1.5" />
+    <circle cx="240" cy="136" r="30" fill="url(#label)" />
+    <circle cx="240" cy="136" r="30" fill="none" stroke="#f5f3ff" stroke-opacity="0.5" stroke-width="1.2" />
+    <circle cx="240" cy="136" r="4.5" fill="#150d38" />
+  </g>
+
+  <g stroke-linecap="round">
+    <line x1="424" y1="58" x2="300" y2="118" stroke="url(#arm)" stroke-width="6" />
+    <rect x="286" y="112" width="22" height="13" rx="4" fill="#e2e8f0" transform="rotate(-26 297 118)" />
+    <circle cx="428" cy="54" r="13" fill="#475569" />
+    <circle cx="428" cy="54" r="6" fill="#cbd5e1" />
+  </g>
+
+  <g opacity="0.45" filter="url(#blur)">
+    <rect x="3.32" y="280.29" width="11.82" height="51.71" rx="5.91" fill="url(#meter)" />
+    <rect x="21.78" y="267.1" width="11.82" height="64.9" rx="5.91" fill="url(#meter)" />
+    <rect x="40.25" y="263.34" width="11.82" height="68.66" rx="5.91" fill="url(#meter)" />
+    <rect x="58.71" y="274.08" width="11.82" height="57.92" rx="5.91" fill="url(#meter)" />
+    <rect x="77.17" y="265.68" width="11.82" height="66.32" rx="5.91" fill="url(#meter)" />
+    <rect x="95.63" y="245.67" width="11.82" height="86.33" rx="5.91" fill="url(#meter)" />
+    <rect x="114.09" y="249.02" width="11.82" height="82.98" rx="5.91" fill="url(#meter)" />
+    <rect x="132.55" y="230.65" width="11.82" height="101.35" rx="5.91" fill="url(#meter)" />
+    <rect x="151.02" y="251.13" width="11.82" height="80.87" rx="5.91" fill="url(#meter)" />
+    <rect x="169.48" y="226.11" width="11.82" height="105.89" rx="5.91" fill="url(#meter)" />
+    <rect x="187.94" y="242.87" width="11.82" height="89.13" rx="5.91" fill="url(#meter)" />
+    <rect x="206.4" y="219.56" width="11.82" height="112.44" rx="5.91" fill="url(#meter)" />
+    <rect x="224.86" y="231.21" width="11.82" height="100.79" rx="5.91" fill="url(#meter)" />
+    <rect x="243.32" y="207.8" width="11.82" height="124.2" rx="5.91" fill="url(#meter)" />
+    <rect x="261.78" y="216.34" width="11.82" height="115.66" rx="5.91" fill="url(#meter)" />
+    <rect x="280.25" y="220.55" width="11.82" height="111.45" rx="5.91" fill="url(#meter)" />
+    <rect x="298.71" y="237.87" width="11.82" height="94.13" rx="5.91" fill="url(#meter)" />
+    <rect x="317.17" y="235.72" width="11.82" height="96.28" rx="5.91" fill="url(#meter)" />
+    <rect x="335.63" y="257.98" width="11.82" height="74.02000000000001" rx="5.91" fill="url(#meter)" />
+    <rect x="354.09" y="247.82" width="11.82" height="84.18" rx="5.91" fill="url(#meter)" />
+    <rect x="372.55" y="239.76" width="11.82" height="92.24" rx="5.91" fill="url(#meter)" />
+    <rect x="391.02" y="262.79" width="11.82" height="69.21000000000001" rx="5.91" fill="url(#meter)" />
+    <rect x="409.48" y="256.2" width="11.82" height="75.8" rx="5.91" fill="url(#meter)" />
+    <rect x="427.94" y="259.52" width="11.82" height="72.47999999999999" rx="5.91" fill="url(#meter)" />
+    <rect x="446.4" y="276.14" width="11.82" height="55.86" rx="5.91" fill="url(#meter)" />
+    <rect x="464.86" y="274.15" width="11.82" height="57.85" rx="5.91" fill="url(#meter)" />
+  </g>
+  <g opacity="0.92">
+    <rect x="3.32" y="280.29" width="11.82" height="51.71" rx="5.91" fill="url(#meter)" />
+    <rect x="21.78" y="267.1" width="11.82" height="64.9" rx="5.91" fill="url(#meter)" />
+    <rect x="40.25" y="263.34" width="11.82" height="68.66" rx="5.91" fill="url(#meter)" />
+    <rect x="58.71" y="274.08" width="11.82" height="57.92" rx="5.91" fill="url(#meter)" />
+    <rect x="77.17" y="265.68" width="11.82" height="66.32" rx="5.91" fill="url(#meter)" />
+    <rect x="95.63" y="245.67" width="11.82" height="86.33" rx="5.91" fill="url(#meter)" />
+    <rect x="114.09" y="249.02" width="11.82" height="82.98" rx="5.91" fill="url(#meter)" />
+    <rect x="132.55" y="230.65" width="11.82" height="101.35" rx="5.91" fill="url(#meter)" />
+    <rect x="151.02" y="251.13" width="11.82" height="80.87" rx="5.91" fill="url(#meter)" />
+    <rect x="169.48" y="226.11" width="11.82" height="105.89" rx="5.91" fill="url(#meter)" />
+    <rect x="187.94" y="242.87" width="11.82" height="89.13" rx="5.91" fill="url(#meter)" />
+    <rect x="206.4" y="219.56" width="11.82" height="112.44" rx="5.91" fill="url(#meter)" />
+    <rect x="224.86" y="231.21" width="11.82" height="100.79" rx="5.91" fill="url(#meter)" />
+    <rect x="243.32" y="207.8" width="11.82" height="124.2" rx="5.91" fill="url(#meter)" />
+    <rect x="261.78" y="216.34" width="11.82" height="115.66" rx="5.91" fill="url(#meter)" />
+    <rect x="280.25" y="220.55" width="11.82" height="111.45" rx="5.91" fill="url(#meter)" />
+    <rect x="298.71" y="237.87" width="11.82" height="94.13" rx="5.91" fill="url(#meter)" />
+    <rect x="317.17" y="235.72" width="11.82" height="96.28" rx="5.91" fill="url(#meter)" />
+    <rect x="335.63" y="257.98" width="11.82" height="74.02000000000001" rx="5.91" fill="url(#meter)" />
+    <rect x="354.09" y="247.82" width="11.82" height="84.18" rx="5.91" fill="url(#meter)" />
+    <rect x="372.55" y="239.76" width="11.82" height="92.24" rx="5.91" fill="url(#meter)" />
+    <rect x="391.02" y="262.79" width="11.82" height="69.21000000000001" rx="5.91" fill="url(#meter)" />
+    <rect x="409.48" y="256.2" width="11.82" height="75.8" rx="5.91" fill="url(#meter)" />
+    <rect x="427.94" y="259.52" width="11.82" height="72.47999999999999" rx="5.91" fill="url(#meter)" />
+    <rect x="446.4" y="276.14" width="11.82" height="55.86" rx="5.91" fill="url(#meter)" />
+    <rect x="464.86" y="274.15" width="11.82" height="57.85" rx="5.91" fill="url(#meter)" />
+  </g>
+</svg>
