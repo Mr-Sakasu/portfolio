@@ -1,6 +1,12 @@
 ---
-import playlistData from '../../data/generated/ytmusic-playlist.json';
 import { ui } from '../../i18n/ui';
+import {
+  playlistCollectionFor,
+  selectPlaylists,
+  sortTracks,
+  type PlaylistData,
+  type PlaylistTrack,
+} from './select';
 
 interface Props {
   lang: keyof typeof ui;
@@ -8,94 +14,15 @@ interface Props {
   showHeading?: boolean;
 }
 
-interface PlaylistTrack {
-  videoId?: string;
-  title?: string;
-  artists?: string;
-  album?: string;
-  duration?: string;
-  thumbnail?: string;
-  url?: string;
-  publishedAt?: string;
-  uploadedAt?: string;
-  addedAt?: string;
-}
-
-interface PlaylistData {
-  configured?: boolean;
-  byLang?: Partial<Record<keyof typeof ui, PlaylistData>>;
-  playlists?: PlaylistData[];
-  playlistId?: string;
-  title?: string;
-  description?: string;
-  author?: string;
-  trackCount?: number;
-  duration?: string;
-  thumbnail?: string;
-  url?: string;
-  updatedAt?: string;
-  tracks?: PlaylistTrack[];
-}
-
 const { lang, variant = 'home', showHeading = true } = Astro.props;
 const t = ui[lang] ?? ui.en;
-const playlistRoot = playlistData as PlaylistData;
-const playlistCollection = playlistRoot.byLang?.[lang] ?? playlistRoot;
-const playlistOrderByLang: Partial<Record<keyof typeof ui, string[]>> = {
-  zh: [
-    'PLiz-kupUIzB5Wl6V7K-nHcq0OUOafpUDn',
-    'PLiz-kupUIzB5_O-O6c-zNcdKe1BGJVXDZ',
-  ],
-  en: [
-    'PLiz-kupUIzB78ViYoU-wQ6iaJ3_1G_ezI',
-  ],
-  ja: [
-    'PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le',
-    'PLiz-kupUIzB6fO7Svf1w3dUi3GSss_H6f',
-    'PLiz-kupUIzB70ktndKK9cPKR2zz9siN2A',
-    'PLiz-kupUIzB5Fo3N3xVwtYsis_U9i4ol3',
-    'PLiz-kupUIzB5R2QlsvnTmpFMWXiLVvxtw',
-    'PLiz-kupUIzB7o_jAtsyT-iGY8gpQvOWxJ',
-    'PLiz-kupUIzB4bOwHGV_WKNPi6m7m2mT8l',
-    'PLiz-kupUIzB7x5yWRVSGXdNcRjnDaom6M',
-    'PLiz-kupUIzB75wypS-rh2V1ZPLgae3jcu',
-  ],
-};
-const homePlaylistByLang: Partial<Record<keyof typeof ui, string[]>> = {
-  ja: ['PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le'],
-};
-const unsortedSourcePlaylists = Array.isArray(playlistCollection.playlists) && playlistCollection.playlists.length > 0
-  ? playlistCollection.playlists
-  : [playlistCollection];
-const playlistOrder = playlistOrderByLang[lang] ?? [];
-const sourcePlaylists = playlistOrder.length > 0
-  ? [...unsortedSourcePlaylists].sort((first, second) => {
-      const firstOrder = playlistOrder.indexOf(first.playlistId ?? '');
-      const secondOrder = playlistOrder.indexOf(second.playlistId ?? '');
-      return (firstOrder === -1 ? Number.MAX_SAFE_INTEGER : firstOrder)
-        - (secondOrder === -1 ? Number.MAX_SAFE_INTEGER : secondOrder);
-    })
-  : unsortedSourcePlaylists;
-const homePlaylistOrder = variant === 'home' ? homePlaylistByLang[lang] ?? [] : [];
-const displayPlaylists = homePlaylistOrder.length > 0
-  ? sourcePlaylists.filter((playlist) => homePlaylistOrder.includes(playlist.playlistId ?? ''))
-  : sourcePlaylists;
-const trackTime = (track: PlaylistTrack) => {
-  const rawDate = track.publishedAt || track.uploadedAt || track.addedAt || '';
-  const timestamp = Date.parse(rawDate);
-  return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
-};
+const playlistCollection = playlistCollectionFor(lang);
+const displayPlaylists = selectPlaylists(lang, variant);
+/* The artist chart counts across everything the locale has, whatever the
+   variant above narrows the visible list down to. */
+const sourcePlaylists = selectPlaylists(lang, 'page');
 const normalizePlaylist = (playlist: PlaylistData) => {
-  const tracks = Array.isArray(playlist.tracks)
-    ? playlist.tracks
-        .filter((track) => track?.title)
-        .map((track, index) => ({ track, index }))
-        .sort((first, second) => {
-          const dateDifference = trackTime(second.track) - trackTime(first.track);
-          return dateDifference || first.index - second.index;
-        })
-        .map(({ track }) => track)
-    : [];
+  const tracks = sortTracks(playlist.tracks);
   const playlistUrl = playlist.url || (playlist.playlistId ? `https://music.youtube.com/playlist?list=${playlist.playlistId}` : '');
 
   return {
