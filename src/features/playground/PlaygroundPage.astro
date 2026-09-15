@@ -61,9 +61,6 @@ const demos = [
           <p class="playground-card__eyebrow">{demo.eyebrow}</p>
           <h2>{demo.title}</h2>
           <p class="playground-card__summary">{demo.summary}</p>
-          <span class="playground-card__open">
-            {t['home.minigame.play']} <span aria-hidden="true">→</span>
-          </span>
         </a>
       ))}
     </div>
@@ -224,18 +221,4 @@ const demos = [
     color: var(--site-subtle);
   }
 
-  .playground-card__open {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 1.4rem;
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--card-accent);
-    transition: transform 240ms ease;
-  }
-
-  .playground-card:hover .playground-card__open {
-    transform: translateX(3px);
-  }
 </style>
