@@ -1,5 +1,27 @@
 export type SkillLocale = 'en' | 'zh' | 'ja';
 export type SkillChildGroup = 'frontend' | 'backend';
+export type SkillCategory = 'languages' | 'frameworks' | 'infrastructure';
+
+/** The order the grid deals the categories in; every skill claims one. */
+export const skillCategoryOrder: SkillCategory[] = ['languages', 'frameworks', 'infrastructure'];
+
+export const skillCategoryLabels: Record<SkillCategory, Record<SkillLocale, string>> = {
+    languages: {
+        en: 'Languages',
+        zh: '编程语言',
+        ja: 'プログラミング言語',
+    },
+    frameworks: {
+        en: 'Frameworks & Platforms',
+        zh: '框架与平台',
+        ja: 'フレームワーク・プラットフォーム',
+    },
+    infrastructure: {
+        en: 'Tools & Infrastructure',
+        zh: '工具与基础设施',
+        ja: 'ツール・インフラ',
+    },
+};
 
 export const skillChildGroupLabels: Record<SkillChildGroup, Record<SkillLocale, string>> = {
     frontend: {
@@ -17,6 +39,7 @@ export const skillChildGroupLabels: Record<SkillChildGroup, Record<SkillLocale, 
 export interface SkillStackItem {
     name: string;
     icon: string;
+    category: SkillCategory;
     level: 1 | 2 | 3 | 4 | 5;
     summary: Record<SkillLocale, string>;
     children?: Array<{
@@ -29,6 +52,7 @@ export interface SkillStackItem {
 export const skillStack: SkillStackItem[] = [
     {
         name: 'C++',
+        category: 'languages',
         icon: '/icons/skills/cplusplus.svg',
         level: 4,
         summary: {
@@ -46,6 +70,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'C',
+        category: 'languages',
         icon: '/icons/skills/c.svg',
         level: 2,
         summary: {
@@ -60,6 +85,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'C#',
+        category: 'languages',
         icon: '/icons/skills/csharp.svg',
         level: 1,
         summary: {
@@ -70,6 +96,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'Python',
+        category: 'languages',
         icon: '/icons/skills/python.svg',
         level: 2,
         summary: {
@@ -90,6 +117,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'Web',
+        category: 'frameworks',
         icon: '/icons/skills/web.svg',
         level: 1,
         summary: {
@@ -110,7 +138,19 @@ export const skillStack: SkillStackItem[] = [
         ],
     },
     {
+        name: 'ROS',
+        category: 'frameworks',
+        icon: '/icons/skills/ros.svg',
+        level: 1,
+        summary: {
+            en: 'Robot middleware; used with C++ for robotics control.',
+            zh: '机器人中间件；与 C++ 一起用于机器人控制。',
+            ja: 'ロボット用ミドルウェア。C++と組み合わせてロボット制御で使用',
+        },
+    },
+    {
         name: 'Git / GitHub / GitLab',
+        category: 'infrastructure',
         icon: '/icons/skills/git.svg',
         level: 2,
         summary: {
@@ -127,6 +167,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'AWS',
+        category: 'infrastructure',
         icon: '/icons/skills/aws.svg',
         level: 1,
         summary: {
@@ -140,6 +181,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'Docker',
+        category: 'infrastructure',
         icon: '/icons/skills/docker.svg',
         level: 1,
         summary: {
@@ -150,6 +192,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'Java',
+        category: 'languages',
         icon: '/icons/skills/java.svg',
         level: 1,
         summary: {
@@ -160,6 +203,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'Haskell',
+        category: 'languages',
         icon: '/icons/skills/haskell.svg',
         level: 1,
         summary: {
@@ -170,6 +214,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'Rust',
+        category: 'languages',
         icon: '/icons/skills/rust.svg',
         level: 1,
         summary: {
@@ -180,6 +225,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'R',
+        category: 'languages',
         icon: '/icons/skills/r.svg',
         level: 1,
         summary: {
@@ -190,6 +236,7 @@ export const skillStack: SkillStackItem[] = [
     },
     {
         name: 'DB',
+        category: 'infrastructure',
         icon: '/icons/skills/database.svg',
         level: 1,
         summary: {
