@@ -396,16 +396,8 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 
               <div class="hidden border-y border-white/10 bg-black/25 p-3" data-playlist-player>
                 <div class="mb-2 truncate text-xs font-semibold text-violet-100/80" data-player-title></div>
-                <div class="aspect-video overflow-hidden rounded-md bg-black">
-                  <iframe
-                    title="YouTube player"
-                    class="h-full w-full"
-                    loading="lazy"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowfullscreen
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    data-player-frame
-                  ></iframe>
+                <div class="playlist-player-frame aspect-video overflow-hidden rounded-md bg-black">
+                  <div data-player-mount></div>
                 </div>
               </div>
 
@@ -426,9 +418,16 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                         <svg
                           aria-hidden="true"
                           viewBox="0 0 24 24"
-                          class="ml-0.5 h-4 w-4 fill-current"
+                          class="playlist-icon playlist-icon--play ml-0.5 h-4 w-4 fill-current"
                         >
                           <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"></path>
+                        </svg>
+                        <svg
+                          aria-hidden="true"
+                          viewBox="0 0 24 24"
+                          class="playlist-icon playlist-icon--pause h-4 w-4 fill-current"
+                        >
+                          <path d="M7.4 5h3.1v14H7.4zM13.5 5h3.1v14h-3.1z"></path>
                         </svg>
                       </button>
                     )}
@@ -494,6 +493,25 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 </script>
 
 <style>
+  /* Playing, so the press that started it now stops it. */
+  .playlist-icon--pause {
+    display: none;
+  }
+
+  [data-play-button][aria-pressed='true'] .playlist-icon--play {
+    display: none;
+  }
+
+  [data-play-button][aria-pressed='true'] .playlist-icon--pause {
+    display: block;
+  }
+
+  .playlist-player-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
   [data-play-button][aria-pressed='true'] {
     border-color: rgb(221 214 254 / 0.8);
     background: rgb(167 139 250 / 0.22);
