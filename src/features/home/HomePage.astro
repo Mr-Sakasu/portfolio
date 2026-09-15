@@ -18,7 +18,8 @@ const t = getUi(lang);
 const projects = projectData[lang] || projectData['en'];
 /* The card quotes the playlist the home page speaks for — the newest few, the
    same order the playlist page deals them in. */
-const playlistTracks = sortTracks(selectPlaylists(lang, 'home')[0]?.tracks).slice(0, 3);
+const homePlaylist = selectPlaylists(lang, 'home')[0];
+const playlistTracks = sortTracks(homePlaylist?.tracks).slice(0, 3);
 const heroTitle = t['hero.title'];
 ---
 
@@ -110,9 +111,15 @@ const heroTitle = t['hero.title'];
                 </div>
             </a>
 
-            <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-4" data-reveal style="--reveal-delay: 130ms;">
+            {/* Not a link around everything any more: the tracks play here, and a
+                button cannot live inside an anchor. The card stays one target
+                through the overlay below, which the buttons sit above. */}
+            <div class="home-bento-card home-playlist-card group md:col-span-4" data-reveal style="--reveal-delay: 130ms;" data-playlist-card>
                 <div class="card-photo" aria-hidden="true"></div>
                 <div class="card-photo__shade" aria-hidden="true"></div>
+                <a class="home-card-link" href={`/${lang}/playlist/`}>
+                    <span class="sr-only">{t['playlist.eyebrow']}</span>
+                </a>
                 <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
                     <div class="flex items-start justify-between gap-4">
                         <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
@@ -122,19 +129,51 @@ const heroTitle = t['hero.title'];
                             <ul class="home-playlist-tracks">
                                 {playlistTracks.map((track) => (
                                     <li>
-                                        <span class="home-playlist-tracks__title">{track.title}</span>
-                                        {trackArtist(track) && (
-                                            <span class="home-playlist-tracks__artist">{trackArtist(track)}</span>
+                                        {track.videoId && (
+                                            <button
+                                                type="button"
+                                                class="home-playlist-tracks__play"
+                                                aria-label={`${t['playlist.eyebrow']}: ${track.title}`}
+                                                aria-pressed="false"
+                                                data-play-button
+                                                data-video-id={track.videoId}
+                                                data-playlist-id={homePlaylist?.playlistId}
+                                                data-track-title={track.title}
+                                            >
+                                                <svg aria-hidden="true" viewBox="0 0 24 24" class="h-3.5 w-3.5 fill-current">
+                                                    <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86A1 1 0 0 0 8 5.14Z"></path>
+                                                </svg>
+                                            </button>
                                         )}
+                                        <span class="home-playlist-tracks__text">
+                                            <span class="home-playlist-tracks__title">{track.title}</span>
+                                            {trackArtist(track) && (
+                                                <span class="home-playlist-tracks__artist">{trackArtist(track)}</span>
+                                            )}
+                                        </span>
                                     </li>
                                 ))}
                             </ul>
                         ) : (
                             <p class="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">{t['playlist.subtitle']}</p>
                         )}
+
+                        <div class="home-playlist-player hidden" data-playlist-player>
+                            <p class="home-playlist-player__title" data-player-title></p>
+                            <div class="home-playlist-player__frame">
+                                <iframe
+                                    title="YouTube player"
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowfullscreen
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                    data-player-frame
+                                ></iframe>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </a>
+            </div>
 
             <a href={`/${lang}/stars/`} class="home-bento-card home-stars-card group md:col-span-4" data-reveal style="--reveal-delay: 170ms;">
                 <iframe
@@ -297,8 +336,10 @@ const heroTitle = t['hero.title'];
 
 <script>
     import { initHomePage } from './home-client.js';
+    import { initPlaylistPlayer } from '../playlist/playlist-player';
 
     initHomePage();
+    initPlaylistPlayer();
 </script>
 
 <style is:global>
@@ -553,6 +594,73 @@ const heroTitle = t['hero.title'];
         mask-image: linear-gradient(to right, transparent 30%, rgba(0, 0, 0, 0.32) 62%, #000 100%);
     }
 
+    /* The card is a card, not an anchor, so this carries the link across all
+       of it — above the type, below anything that can be pressed. */
+    .home-card-link::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+    }
+
+    .home-playlist-tracks__play,
+    .home-playlist-player {
+        position: relative;
+        z-index: 30;
+    }
+
+    .home-playlist-tracks__play {
+        display: grid;
+        place-items: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        flex-shrink: 0;
+        border: 1px solid rgba(196, 181, 253, 0.35);
+        border-radius: 9999px;
+        background: rgba(139, 92, 246, 0.22);
+        color: #ede9fe;
+        padding-left: 0.1rem;
+        transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    }
+
+    .home-playlist-tracks__play:hover {
+        border-color: rgba(221, 214, 254, 0.75);
+        background: rgba(139, 92, 246, 0.42);
+        transform: scale(1.06);
+    }
+
+    .home-playlist-tracks__play[aria-pressed='true'] {
+        border-color: #ddd6fe;
+        background: rgba(167, 139, 250, 0.6);
+    }
+
+    .home-playlist-player {
+        margin-top: 0.9rem;
+    }
+
+    .home-playlist-player__title {
+        overflow: hidden;
+        margin-bottom: 0.4rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: rgba(237, 233, 254, 0.85);
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .home-playlist-player__frame {
+        overflow: hidden;
+        aspect-ratio: 16 / 9;
+        border-radius: 0.35rem;
+        background: #000;
+    }
+
+    .home-playlist-player__frame iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
     /* Three tracks, as an example of what the playlist holds. Each title on one
        line: the card is the narrow one, and a wrapped title would push the
        artist under it and cost a track. */
@@ -565,6 +673,14 @@ const heroTitle = t['hero.title'];
 
     .home-playlist-tracks li {
         display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+    }
+
+    .home-playlist-tracks__text {
+        display: flex;
+        min-width: 0;
         flex-direction: column;
         gap: 0.1rem;
         border-left: 2px solid rgba(196, 181, 253, 0.45);
@@ -591,7 +707,22 @@ const heroTitle = t['hero.title'];
     }
 
     /* The card is painted light under the light theme, so the tracks are read
-       in ink rather than in white. */
+       in ink rather than in white — the button and the player caption too. */
+    :global(html[data-theme='light']) .home-playlist-tracks__play {
+        border-color: rgba(109, 40, 217, 0.4);
+        background: rgba(139, 92, 246, 0.16);
+        color: #4c1d95;
+    }
+
+    :global(html[data-theme='light']) .home-playlist-tracks__play:hover {
+        border-color: rgba(76, 29, 149, 0.7);
+        background: rgba(139, 92, 246, 0.3);
+    }
+
+    :global(html[data-theme='light']) .home-playlist-player__title {
+        color: #4c1d95;
+    }
+
     :global(html[data-theme='light']) .home-playlist-tracks li {
         border-left-color: rgba(109, 40, 217, 0.45);
     }
