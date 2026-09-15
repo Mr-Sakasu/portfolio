@@ -1,0 +1,12 @@
+---
+import PlaygroundPage from '../../features/playground/PlaygroundPage.astro';
+import { getLocale, localeStaticPaths } from '../../i18n';
+
+export function getStaticPaths() {
+  return localeStaticPaths();
+}
+
+const lang = getLocale(Astro.params.lang);
+---
+
+<PlaygroundPage lang={lang} />

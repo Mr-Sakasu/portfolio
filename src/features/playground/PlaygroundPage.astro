@@ -1,0 +1,182 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getUi, type Locale } from '../../i18n';
+
+interface Props {
+  lang: Locale;
+}
+
+const { lang } = Astro.props;
+const t = getUi(lang);
+
+/* The four demos, in the order they were built. Each keeps the eyebrow it
+   wears on its own page, so a visitor meets the same words twice rather than
+   a summary written only for this list. */
+const demos = [
+  {
+    href: `/${lang}/stars/`,
+    eyebrow: t['stars.sky.time'],
+    title: t['stars.title'],
+    summary: t['stars.subtitle'],
+    accent: 'sky',
+  },
+  {
+    href: `/${lang}/bandit/`,
+    eyebrow: t['home.minigame.title'],
+    title: t['bandit.title'],
+    summary: t['bandit.subtitle'],
+    accent: 'cyan',
+  },
+  {
+    href: `/${lang}/hanoi/`,
+    eyebrow: t['hanoi.eyebrow'],
+    title: t['hanoi.title'],
+    summary: t['hanoi.subtitle'],
+    accent: 'violet',
+  },
+  {
+    href: `/${lang}/globe/`,
+    eyebrow: t['globe.eyebrow'],
+    title: t['globe.title'],
+    summary: t['globe.subtitle'],
+    accent: 'emerald',
+  },
+];
+---
+
+<Layout title={`${t['playground.title']} | Sakasu Portfolio`} lang={lang} description={t['playground.subtitle']}>
+  <section class="playground">
+    <header class="playground__intro" data-reveal>
+      <p class="playground__eyebrow">{t['playground.eyebrow']}</p>
+      <h1>{t['playground.title']}</h1>
+      <span class="section-rule bg-gradient-to-r from-cyan-500 to-blue-500" aria-hidden="true"></span>
+      <p class="playground__summary">{t['playground.subtitle']}</p>
+    </header>
+
+    <div class="playground__grid">
+      {demos.map((demo, index) => (
+        <a
+          href={demo.href}
+          class={`site-card playground-card playground-card--${demo.accent}`}
+          data-reveal
+          style={`--reveal-delay: ${(index % 2) * 80}ms;`}
+        >
+          <p class="playground-card__eyebrow">{demo.eyebrow}</p>
+          <h2>{demo.title}</h2>
+          <p class="playground-card__summary">{demo.summary}</p>
+          <span class="playground-card__open">
+            {t['home.minigame.play']} <span aria-hidden="true">→</span>
+          </span>
+        </a>
+      ))}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .playground {
+    margin-top: 1.5rem;
+    margin-bottom: 5rem;
+  }
+
+  .playground__intro h1 {
+    font-size: clamp(1.9rem, 4vw, 2.6rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--site-text);
+  }
+
+  .playground__eyebrow {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--site-subtle);
+  }
+
+  .playground__summary {
+    margin-top: 0.9rem;
+    max-width: 40rem;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--site-subtle);
+  }
+
+  .playground__grid {
+    display: grid;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 2.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .playground__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Each card wears its demo's accent on the left edge, the way the cards on
+     the home page do, so the two lists read as the same set of things. */
+  .playground-card {
+    position: relative;
+    display: block;
+    padding: 1.6rem 1.5rem 1.5rem;
+    border-left: 3px solid var(--card-accent);
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .playground-card--sky {
+    --card-accent: #60a5fa;
+  }
+
+  .playground-card--cyan {
+    --card-accent: #38bdf8;
+  }
+
+  .playground-card--violet {
+    --card-accent: #a78bfa;
+  }
+
+  .playground-card--emerald {
+    --card-accent: #6ee7b7;
+  }
+
+  .playground-card__eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--card-accent);
+  }
+
+  .playground-card h2 {
+    margin-top: 0.7rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: var(--site-text);
+  }
+
+  .playground-card__summary {
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--site-subtle);
+  }
+
+  .playground-card__open {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.4rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--card-accent);
+    transition: transform 240ms ease;
+  }
+
+  .playground-card:hover .playground-card__open {
+    transform: translateX(3px);
+  }
+</style>
