@@ -14,9 +14,9 @@ interface Props {
 const { lang } = Astro.props;
 const t = ui[lang] ?? ui.en;
 const locale = (lang in ui ? lang : 'en') as SkillLocale;
-const maxSkillLevel = 5;
-const skillLevelSlots = Array.from({ length: maxSkillLevel }, (_, index) => index + 1);
 const childGroupOrder: SkillChildGroup[] = ['frontend', 'backend'];
+// The cards no longer show a level, but they still lead with the strongest:
+// `level` survives in the data as the order the grid is dealt in.
 const sortedSkillStack = [...skillStack].sort((first, second) => second.level - first.level);
 
 const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
@@ -72,16 +72,6 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
                     <h3 class="min-w-0 flex-1 text-sm font-bold leading-tight text-white md:text-base">
                         {skill.name}
                     </h3>
-                    <div
-                        class="flex shrink-0 gap-0.5 text-sm leading-none"
-                        aria-label={`${skill.name}: ${skill.level} star level`}
-                    >
-                        {skillLevelSlots.map((slot) => (
-                            <span class={slot <= skill.level ? 'star-on' : 'star-off'} aria-hidden="true">
-                                ★
-                            </span>
-                        ))}
-                    </div>
                 </div>
 
                 <p class="mt-3 text-xs leading-relaxed text-gray-400">
