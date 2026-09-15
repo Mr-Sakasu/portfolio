@@ -9,11 +9,12 @@ interface Props {
 const { lang } = Astro.props;
 const t = getUi(lang);
 const isHomePage = Astro.url.pathname === `/${lang}/`;
-const isStarsPage = Astro.url.pathname.includes('/stars');
-const isBanditPage = Astro.url.pathname.includes('/bandit');
-const isHanoiPage = Astro.url.pathname.includes('/hanoi');
 const isPlaylistPage = Astro.url.pathname.includes('/playlist');
 const isScenesPage = Astro.url.pathname.includes('/scenes');
+/* The demos are pages of their own, but they are reached through the
+   playground, so the entry stays lit while the visitor is inside one. */
+const isPlaygroundPage = ['/playground', '/stars', '/bandit', '/hanoi', '/globe']
+  .some((path) => Astro.url.pathname.includes(path));
 const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs md:text-sm font-medium transition-colors';
 ---
 
@@ -71,14 +72,8 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
           <a href={`/${lang}/#timeline`} class={`${navBaseClass} ${isHomePage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.timeline']}
           </a>
-          <a href={`/${lang}/stars/`} class={`${navBaseClass} ${isStarsPage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
-            {t['nav.stars']}
-          </a>
-          <a href={`/${lang}/bandit/`} class={`${navBaseClass} ${isBanditPage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
-            {t['nav.bandit']}
-          </a>
-          <a href={`/${lang}/hanoi/`} class={`${navBaseClass} ${isHanoiPage ? 'border-violet-400/60 bg-violet-500/15 text-violet-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
-            {t['nav.hanoi']}
+          <a href={`/${lang}/playground/`} class={`${navBaseClass} ${isPlaygroundPage ? 'border-cyan-400/60 bg-cyan-500/15 text-cyan-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+            {t['nav.playground']}
           </a>
         </div>
       </nav>
