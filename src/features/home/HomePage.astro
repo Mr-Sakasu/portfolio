@@ -86,7 +86,49 @@ const heroTitle = t['hero.title'];
                 </svg>
             </section>
 
-            <a href={`/${lang}/stars/`} class="home-bento-card home-stars-card group md:col-span-5" data-reveal style="--reveal-delay: 80ms;">
+            {/* The cards run in the order the nav lists them — scenes, playlist,
+                stars, bandit, hanoi — so a visitor meets the pages in the same
+                sequence either way. The spans are what make each row add up to
+                twelve; reordering a card means handing its span along too. */}
+            <a href={`/${lang}/scenes/`} class="home-bento-card home-scenes-card group md:col-span-5" data-reveal style="--reveal-delay: 80ms;">
+                <svg class="home-card-figure home-scenes-figure" viewBox="0 0 180 120" aria-hidden="true">
+                    <circle cx="139" cy="27" r="12" />
+                    <path d="M4 102L54 48L83 77L111 43L176 102" />
+                    <path d="M4 102H176M25 91L54 61L69 77" />
+                </svg>
+                <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <span class="home-eyebrow home-eyebrow--violet">{t['nav.scenes']}</span>
+                    </div>
+                    <div>
+                        <h2 class="max-w-[12rem] text-2xl font-black leading-tight text-white">{t['scenes.page.title']}</h2>
+                        <span class="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-100 transition-transform duration-300 group-hover:translate-x-1">
+                            {t['home.minigame.play']} <span aria-hidden="true">→</span>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-3" data-reveal style="--reveal-delay: 130ms;">
+                <svg class="home-card-figure home-playlist-figure" viewBox="0 0 180 120" aria-hidden="true">
+                    <circle cx="132" cy="62" r="39" />
+                    <circle cx="132" cy="62" r="7" />
+                    <path d="M16 70V56M27 78V48M38 66V60M49 84V42M60 74V52M71 80V46" />
+                </svg>
+                <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
+                    </div>
+                    <div>
+                        <p class="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">{t['playlist.subtitle']}</p>
+                        <span class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-violet-100 transition-transform duration-300 group-hover:translate-x-1">
+                            {t['playlist.open']} <span aria-hidden="true">→</span>
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <a href={`/${lang}/stars/`} class="home-bento-card home-stars-card group md:col-span-5" data-reveal style="--reveal-delay: 170ms;">
                 <iframe
                     src={`/${lang}/stars/?preview=1`}
                     title={`${t['stars.title']} preview`}
@@ -109,45 +151,7 @@ const heroTitle = t['hero.title'];
                 </div>
             </a>
 
-            <a href={`/${lang}/playlist/`} class="home-bento-card home-playlist-card group md:col-span-4" data-reveal style="--reveal-delay: 130ms;">
-                <svg class="home-card-figure home-playlist-figure" viewBox="0 0 180 120" aria-hidden="true">
-                    <circle cx="132" cy="62" r="39" />
-                    <circle cx="132" cy="62" r="7" />
-                    <path d="M16 70V56M27 78V48M38 66V60M49 84V42M60 74V52M71 80V46" />
-                </svg>
-                <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
-                    <div class="flex items-start justify-between gap-4">
-                        <span class="home-eyebrow home-eyebrow--violet">{t['playlist.eyebrow']}</span>
-                    </div>
-                    <div>
-                        <p class="max-w-[15rem] text-sm leading-relaxed text-violet-100/80">{t['playlist.subtitle']}</p>
-                        <span class="mt-5 inline-flex items-center gap-2 text-sm font-bold text-violet-100 transition-transform duration-300 group-hover:translate-x-1">
-                            {t['playlist.open']} <span aria-hidden="true">→</span>
-                        </span>
-                    </div>
-                </div>
-            </a>
-
-            <a href={`/${lang}/scenes/`} class="home-bento-card home-scenes-card group md:col-span-3" data-reveal style="--reveal-delay: 170ms;">
-                <svg class="home-card-figure home-scenes-figure" viewBox="0 0 180 120" aria-hidden="true">
-                    <circle cx="139" cy="27" r="12" />
-                    <path d="M4 102L54 48L83 77L111 43L176 102" />
-                    <path d="M4 102H176M25 91L54 61L69 77" />
-                </svg>
-                <div class="relative z-10 flex h-full min-h-[220px] flex-col justify-between p-6">
-                    <div class="flex items-start justify-between gap-4">
-                        <span class="home-eyebrow home-eyebrow--violet">{t['nav.scenes']}</span>
-                    </div>
-                    <div>
-                        <h2 class="max-w-[12rem] text-2xl font-black leading-tight text-white">{t['scenes.page.title']}</h2>
-                        <span class="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-100 transition-transform duration-300 group-hover:translate-x-1">
-                            {t['home.minigame.play']} <span aria-hidden="true">→</span>
-                        </span>
-                    </div>
-                </div>
-            </a>
-
-            <a href={`/${lang}/bandit/`} class="home-bento-card home-bandit-card group md:col-span-5" data-reveal style="--reveal-delay: 210ms;">
+            <a href={`/${lang}/bandit/`} class="home-bento-card home-bandit-card group md:col-span-4" data-reveal style="--reveal-delay: 210ms;">
                 <svg class="home-card-figure home-bandit-figure" viewBox="0 0 220 130" aria-hidden="true">
                     <circle cx="110" cy="24" r="7" />
                     <path d="M110 31V48M110 48L35 89M110 48L84 89M110 48L136 89M110 48L185 89" />
