@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 320" width="480" height="320" role="img" aria-label="Three pegs with stacked disks, part way through the puzzle">
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="#f7f4ff" />
+      <stop offset="1" stop-color="#ddd3f7" />
+    </linearGradient>
+    <linearGradient id="peg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e2e8f0" />
+      <stop offset="1" stop-color="#94a3b8" />
+    </linearGradient>
+    <radialGradient id="floorGlow" cx="0.5" cy="0.5">
+      <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.18" />
+      <stop offset="1" stop-color="#8b5cf6" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="480" height="320" fill="url(#room)" />
+  <ellipse cx="240" cy="250" rx="230" ry="60" fill="url(#floorGlow)" />
+
+  <path d="M 120 74 Q 240 26 360 74" fill="none" stroke="#94a3b8" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 9" />
+  <path d="M 352 66 L 360 78 L 369 63" fill="none" stroke="#94a3b8" stroke-opacity="0.6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+
+  <rect x="115" y="96" width="10" height="136" rx="5" fill="url(#peg)" />
+  <rect x="235" y="96" width="10" height="136" rx="5" fill="url(#peg)" />
+  <rect x="355" y="96" width="10" height="136" rx="5" fill="url(#peg)" />
+
+  <rect x="36" y="232" width="408" height="16" rx="8" fill="#b9adde" />
+  <rect x="36" y="232" width="408" height="2" rx="1" fill="#6d28d9" fill-opacity="0.35" />
+
+  <g>
+    <ellipse cx="120" cy="233" rx="75" ry="5" fill="#6d28d9" opacity="0.18" />
+    <rect x="45" y="210" width="150" height="22" rx="11" fill="#ec4899" />
+    <rect x="53" y="214" width="134" height="5" rx="2.5" fill="#ffffff" opacity="0.28" />
+  </g>
+  <g>
+    <ellipse cx="120" cy="209" rx="60" ry="5" fill="#6d28d9" opacity="0.18" />
+    <rect x="60" y="186" width="120" height="22" rx="11" fill="#8b5cf6" />
+    <rect x="68" y="190" width="104" height="5" rx="2.5" fill="#ffffff" opacity="0.28" />
+  </g>
+  <g>
+    <ellipse cx="120" cy="185" rx="46" ry="5" fill="#6d28d9" opacity="0.18" />
+    <rect x="74" y="162" width="92" height="22" rx="11" fill="#3b82f6" />
+    <rect x="82" y="166" width="76" height="5" rx="2.5" fill="#ffffff" opacity="0.28" />
+  </g>
+  <g>
+    <ellipse cx="360" cy="233" rx="33" ry="5" fill="#6d28d9" opacity="0.18" />
+    <rect x="327" y="210" width="66" height="22" rx="11" fill="#10b981" />
+    <rect x="335" y="214" width="50" height="5" rx="2.5" fill="#ffffff" opacity="0.28" />
+  </g>
+</svg>

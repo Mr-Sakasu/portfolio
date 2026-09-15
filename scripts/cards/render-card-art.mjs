@@ -54,6 +54,42 @@ const PALETTES = {
             meter: [['#6d28d9', 0.65], ['#9333ea', 0.9], ['#d946ef', 1]],
         },
     },
+    stars: {
+        dark: {
+            skyTop: '#040b1c', skyBottom: '#112c52',
+            star: '#e2e8f0', starCount: 80, starStrength: 0.9,
+            link: '#7dd3fc', linkStrength: 0.55, anchor: '#f8fafc',
+            horizon: '#04091a', window: '#fbbf24', windowStrength: 0.75,
+            glow: '#38bdf8', glowStrength: 0.3,
+        },
+        light: {
+            // Not noon: the hour after sunset, when the constellation is out
+            // and the sky has not gone black yet.
+            skyTop: '#e9f1ff', skyBottom: '#a9c6ea',
+            star: '#1e3a8a', starCount: 55, starStrength: 0.55,
+            link: '#1d4ed8', linkStrength: 0.5, anchor: '#1e3a8a',
+            horizon: '#7f92ad', window: '#b45309', windowStrength: 0.7,
+            glow: '#2563eb', glowStrength: 0.16,
+        },
+    },
+    hanoi: {
+        dark: {
+            skyTop: '#160e2e', skyBottom: '#311c5c',
+            base: '#0f0a22', baseEdge: '#a78bfa', baseEdgeStrength: 0.3,
+            peg: ['#cbd5e1', '#64748b'],
+            disks: ['#34d399', '#60a5fa', '#a78bfa', '#f472b6'],
+            shadow: '#050214', shadowStrength: 0.45,
+            glow: '#a78bfa', glowStrength: 0.35,
+        },
+        light: {
+            skyTop: '#f7f4ff', skyBottom: '#ddd3f7',
+            base: '#b9adde', baseEdge: '#6d28d9', baseEdgeStrength: 0.35,
+            peg: ['#e2e8f0', '#94a3b8'],
+            disks: ['#10b981', '#3b82f6', '#8b5cf6', '#ec4899'],
+            shadow: '#6d28d9', shadowStrength: 0.18,
+            glow: '#8b5cf6', glowStrength: 0.18,
+        },
+    },
     bandit: {
         dark: {
             skyTop: '#05101f', skyBottom: '#123a68',
@@ -309,8 +345,123 @@ function bandit(palette) {
 `;
 }
 
+/** Tonight's sky over a city: the Dipper picked out of the scatter. */
+function stars(palette) {
+    const random = rng(4102026);
+
+    const scatter = [];
+    for (let i = 0; i < palette.starCount; i += 1) {
+        const x = round(random() * WIDTH);
+        const y = round(random() * 250);
+        const r = round(0.6 + random() * 1.5);
+        scatter.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="${palette.star}" opacity="${round(0.25 + random() * palette.starStrength * 0.6)}" />`);
+    }
+
+    // Ursa Major, the one the sky page labels first.
+    const dipper = [[104, 156], [148, 134], [196, 130], [234, 152], [272, 142], [312, 112], [356, 122]];
+    const links = dipper.slice(1).map(([x, y], index) => {
+        const [px, py] = dipper[index];
+        return `<line x1="${px}" y1="${py}" x2="${x}" y2="${y}" stroke="${palette.link}" stroke-opacity="${palette.linkStrength}" stroke-width="1.6" stroke-linecap="round" />`;
+    });
+    const anchors = dipper.map(([x, y], index) => `<circle cx="${x}" cy="${y}" r="${index === 0 || index === 6 ? 4.6 : 3.6}" fill="${palette.anchor}" />`);
+
+    // A skyline to stand under it, with a few windows still lit.
+    const towers = [];
+    const windows = [];
+    let x = -10;
+    while (x < WIDTH + 10) {
+        const w = round(18 + random() * 34);
+        const h = round(26 + random() * 62);
+        towers.push(`<rect x="${round(x)}" y="${round(HEIGHT - 46 - h)}" width="${w}" height="${h + 46}" rx="2" fill="${palette.horizon}" />`);
+        for (let row = 0; row < Math.floor(h / 16); row += 1) {
+            if (random() > 0.62) {
+                windows.push(`<rect x="${round(x + 5 + random() * (w - 12))}" y="${round(HEIGHT - 40 - h + row * 15)}" width="3" height="4" fill="${palette.window}" opacity="${round(palette.windowStrength * (0.5 + random() * 0.5))}" />`);
+            }
+        }
+        x += w + round(3 + random() * 8);
+    }
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}" role="img" aria-label="A constellation over a city skyline">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="${palette.skyTop}" />
+      <stop offset="1" stop-color="${palette.skyBottom}" />
+    </linearGradient>
+    <radialGradient id="cityGlow" cx="0.5" cy="1">
+      <stop offset="0" stop-color="${palette.glow}" stop-opacity="${palette.glowStrength}" />
+      <stop offset="1" stop-color="${palette.glow}" stop-opacity="0" />
+    </radialGradient>
+    <filter id="starGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="3.5" />
+    </filter>
+  </defs>
+
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#sky)" />
+  ${scatter.join('\n  ')}
+  <g>
+    ${links.join('\n    ')}
+    <g filter="url(#starGlow)" opacity="0.7">${anchors.join('')}</g>
+    ${anchors.join('\n    ')}
+  </g>
+  <ellipse cx="240" cy="${HEIGHT}" rx="300" ry="110" fill="url(#cityGlow)" />
+  ${towers.join('\n  ')}
+  ${windows.join('\n  ')}
+</svg>
+`;
+}
+
+/** The puzzle mid-solve: three pegs, one of them already carrying a disk. */
+function hanoi(palette) {
+    const pegs = [120, 240, 360];
+    const baseY = 232;
+
+    const peg = (x) => `<rect x="${x - 5}" y="96" width="10" height="${baseY - 96}" rx="5" fill="url(#peg)" />`;
+
+    const disk = (x, y, width, colour) => `<g>
+    <ellipse cx="${x}" cy="${y + 12}" rx="${round(width / 2)}" ry="5" fill="${palette.shadow}" opacity="${palette.shadowStrength}" />
+    <rect x="${round(x - width / 2)}" y="${y - 11}" width="${width}" height="22" rx="11" fill="${colour}" />
+    <rect x="${round(x - width / 2 + 8)}" y="${y - 7}" width="${round(width - 16)}" height="5" rx="2.5" fill="#ffffff" opacity="0.28" />
+  </g>`;
+
+    const [smallest, small, medium, largest] = palette.disks;
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${WIDTH} ${HEIGHT}" width="${WIDTH}" height="${HEIGHT}" role="img" aria-label="Three pegs with stacked disks, part way through the puzzle">
+  <defs>
+    <linearGradient id="room" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0" stop-color="${palette.skyTop}" />
+      <stop offset="1" stop-color="${palette.skyBottom}" />
+    </linearGradient>
+    <linearGradient id="peg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${palette.peg[0]}" />
+      <stop offset="1" stop-color="${palette.peg[1]}" />
+    </linearGradient>
+    <radialGradient id="floorGlow" cx="0.5" cy="0.5">
+      <stop offset="0" stop-color="${palette.glow}" stop-opacity="${palette.glowStrength}" />
+      <stop offset="1" stop-color="${palette.glow}" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <rect width="${WIDTH}" height="${HEIGHT}" fill="url(#room)" />
+  <ellipse cx="240" cy="250" rx="230" ry="60" fill="url(#floorGlow)" />
+
+  <path d="M ${pegs[0]} 74 Q 240 26 ${pegs[2]} 74" fill="none" stroke="${palette.peg[1]}" stroke-opacity="0.5" stroke-width="2" stroke-linecap="round" stroke-dasharray="7 9" />
+  <path d="M ${pegs[2] - 8} 66 L ${pegs[2]} 78 L ${pegs[2] + 9} 63" fill="none" stroke="${palette.peg[1]}" stroke-opacity="0.6" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+
+  ${pegs.map(peg).join('\n  ')}
+
+  <rect x="36" y="${baseY}" width="408" height="16" rx="8" fill="${palette.base}" />
+  <rect x="36" y="${baseY}" width="408" height="2" rx="1" fill="${palette.baseEdge}" fill-opacity="${palette.baseEdgeStrength}" />
+
+  ${disk(pegs[0], baseY - 11, 150, largest)}
+  ${disk(pegs[0], baseY - 35, 120, medium)}
+  ${disk(pegs[0], baseY - 59, 92, small)}
+  ${disk(pegs[2], baseY - 11, 66, smallest)}
+</svg>
+`;
+}
+
 await mkdir(OUT_DIR, { recursive: true });
-for (const [name, draw] of [['playlist', playlist], ['bandit', bandit]]) {
+for (const [name, draw] of [['playlist', playlist], ['bandit', bandit], ['stars', stars], ['hanoi', hanoi]]) {
     for (const theme of ['dark', 'light']) {
         const file = theme === 'dark' ? `${name}.svg` : `${name}-light.svg`;
         const svg = draw(PALETTES[name][theme]);
