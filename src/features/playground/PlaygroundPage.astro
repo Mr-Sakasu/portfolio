@@ -9,9 +9,12 @@ interface Props {
 const { lang } = Astro.props;
 const t = getUi(lang);
 
-/* The four demos, in the order they were built. Each keeps the eyebrow it
-   wears on its own page, so a visitor meets the same words twice rather than
-   a summary written only for this list. */
+/* The demos, in the order they were built. Each keeps the eyebrow it wears on
+   its own page, so a visitor meets the same words twice rather than a summary
+   written only for this list.
+
+   Global Network is deliberately absent: its page still builds, but it has
+   been unlisted since it left the navigation and stays that way. */
 const demos = [
   {
     href: `/${lang}/stars/`,
@@ -33,13 +36,6 @@ const demos = [
     title: t['hanoi.title'],
     summary: t['hanoi.subtitle'],
     accent: 'violet',
-  },
-  {
-    href: `/${lang}/globe/`,
-    eyebrow: t['globe.eyebrow'],
-    title: t['globe.title'],
-    summary: t['globe.subtitle'],
-    accent: 'emerald',
   },
 ];
 ---
@@ -112,6 +108,12 @@ const demos = [
   @media (min-width: 768px) {
     .playground__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .playground__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
   }
 
