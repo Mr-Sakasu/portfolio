@@ -72,13 +72,32 @@ const toneByColor = {
                                 </span>
                             </p>
 
-                            <h3 class="text-base md:text-lg font-bold text-white leading-snug">
-                                {event.title}
+                            <h3 class={`timeline-title text-base md:text-lg font-bold text-white leading-snug ${isLeft ? 'md:flex-row-reverse' : ''}`}>
+                                {event.logo && (
+                                    <img
+                                        src={event.logo.src}
+                                        alt={event.logo.alt}
+                                        loading="lazy"
+                                        decoding="async"
+                                        width="28"
+                                        height="28"
+                                        class="timeline-logo"
+                                    />
+                                )}
+                                <span>{event.title}</span>
                             </h3>
 
                             <p class="mt-1.5 text-sm leading-relaxed text-gray-300">
                                 {event.desc}
                             </p>
+
+                            {event.tags && event.tags.length > 0 && (
+                                <ul class={`timeline-tags ${isLeft ? 'md:justify-end' : ''}`} aria-label="Tags">
+                                    {event.tags.map((tag) => (
+                                        <li class="timeline-tag">{tag}</li>
+                                    ))}
+                                </ul>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -94,6 +113,50 @@ const toneByColor = {
 </script>
 
 <style>
+    /* The same chip the project cards wear, so a tag reads as the same kind of
+       thing on either side of the page. */
+    .timeline-title {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    /* On a white tile, so a dark or transparent mark reads on either theme. */
+    .timeline-logo {
+        width: 1.75rem;
+        height: 1.75rem;
+        flex-shrink: 0;
+        border-radius: 0.35rem;
+        background: #fff;
+        object-fit: contain;
+        padding: 0.15rem;
+    }
+
+    .timeline-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        margin-top: 0.85rem;
+    }
+
+    .timeline-tag {
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid rgba(148, 163, 184, 0.22);
+        border-radius: 0.2rem;
+        padding: 0.28rem 0.5rem;
+        color: rgba(226, 232, 240, 0.8);
+        font-size: 0.65rem;
+        font-weight: 650;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    :global(html[data-theme='light']) .timeline-tag {
+        border-color: rgba(15, 23, 42, 0.14);
+        color: rgba(30, 41, 59, 0.85);
+    }
+
     @property --timeline-beam-angle {
         syntax: '<angle>';
         initial-value: 0deg;
