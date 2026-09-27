@@ -13,6 +13,22 @@ const pageDescription = typeof description === 'string' && description.trim().le
   : 'Sakasu portfolio with interactive star watching and bandit optimization demos.';
 const contentWidth = wide ? 'max-w-6xl' : 'max-w-3xl';
 const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
+
+/* Every page exists once per language at the same path under /en, /zh and
+   /ja, so the alternates can be written from the path alone. `site` in
+   astro.config.mjs makes them absolute, which is what search engines and
+   link previews need. */
+const siteOrigin = Astro.site?.origin ?? '';
+const pathWithoutLang = Astro.url.pathname.replace(/^\/(?:en|zh|ja)(?=\/|$)/, '') || '/';
+const canonicalUrl = `${siteOrigin}${Astro.url.pathname}`;
+const alternates = [
+  { hreflang: 'en', href: `${siteOrigin}/en${pathWithoutLang}` },
+  { hreflang: 'zh', href: `${siteOrigin}/zh${pathWithoutLang}` },
+  { hreflang: 'ja', href: `${siteOrigin}/ja${pathWithoutLang}` },
+  { hreflang: 'x-default', href: `${siteOrigin}/en${pathWithoutLang}` },
+];
+const ogLocale = { en: 'en_US', zh: 'zh_CN', ja: 'ja_JP' }[lang as 'en' | 'zh' | 'ja'] ?? 'en_US';
+const ogImage = `${siteOrigin}/og.png`;
 ---
 
 <!DOCTYPE html>
@@ -22,6 +38,25 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<meta name="description" content={pageDescription} />
 			<title>{title}</title>
+			<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+			<meta name="theme-color" content="#0a0e17" />
+			<link rel="canonical" href={canonicalUrl} />
+			{alternates.map((alternate) => (
+				<link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
+			))}
+			<meta property="og:type" content="website" />
+			<meta property="og:site_name" content="Sakasu's note" />
+			<meta property="og:title" content={title} />
+			<meta property="og:description" content={pageDescription} />
+			<meta property="og:url" content={canonicalUrl} />
+			<meta property="og:locale" content={ogLocale} />
+			<meta property="og:image" content={ogImage} />
+			<meta property="og:image:width" content="1200" />
+			<meta property="og:image:height" content="630" />
+			<meta name="twitter:card" content="summary_large_image" />
+			<meta name="twitter:title" content={title} />
+			<meta name="twitter:description" content={pageDescription} />
+			<meta name="twitter:image" content={ogImage} />
 			<link rel="preconnect" href="https://fonts.googleapis.com" />
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 			<link
