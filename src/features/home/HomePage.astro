@@ -62,7 +62,15 @@ const heroTitle = t['hero.title'];
                                     <>
                                         修士2年 <strong class="font-bold text-white">数理最適化</strong>や<strong class="font-bold text-white">感情コンピューティング</strong>の研究をしています
                                     </>
-                                ) : t['hero.subtitle']}
+                                ) : lang === 'zh' ? (
+                                    <>
+                                        硕士二年级在读，主攻<strong class="font-bold text-white">数理优化</strong>与<strong class="font-bold text-white">情感计算</strong>研究。
+                                    </>
+                                ) : (
+                                    <>
+                                        2nd-year Master's student researching <strong class="font-bold text-white">Mathematical Optimization</strong> and <strong class="font-bold text-white">Affective Computing</strong>.
+                                    </>
+                                )}
                             </p>
                         </div>
                     </div>
