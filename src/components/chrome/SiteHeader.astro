@@ -24,11 +24,14 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
       sharing one pushed the controls clean off the side of the screen. */}
   <div class="box-border w-full max-w-6xl mx-auto px-4 py-3 md:px-6 md:py-3.5">
     <div class="flex flex-col gap-3">
-      <div class="flex items-center justify-between gap-4">
+      {/* The row wraps: at 360px the brand and the three controls do not fit
+          side by side, and without this the controls ran off the right edge
+          and gave the whole page a horizontal scroll. */}
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-blue-400 transition-colors whitespace-nowrap">
           Sakasu's note<span class="site-brand__dot" aria-hidden="true">.</span>
         </a>
-        <div class="flex items-center gap-2 shrink-0">
+        <div class="ml-auto flex items-center gap-2 shrink-0">
           <LanguagePicker />
           <button type="button" data-theme-toggle class="theme-toggle" aria-label={t['theme.toggle']} title={t['theme.toggle']}>
             <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
