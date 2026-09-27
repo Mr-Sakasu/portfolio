@@ -20,7 +20,7 @@ const t = getUi(lang);
 
     <header class="project-detail__intro">
       <p>{t['projects.overview']}</p>
-      <h1>{project.title}</h1>
+      <h1 class="page-title">{project.title}</h1>
       <div class="project-detail__tags" aria-label={t['projects.tech']}>
         {project.tags.map((tag) => <span>{tag}</span>)}
       </div>
@@ -89,10 +89,6 @@ const t = getUi(lang);
 
   .project-detail h1 {
     margin-top: 0.7rem;
-    color: var(--site-text);
-    font-size: clamp(2.3rem, 6vw, 4.75rem);
-    font-weight: 700;
-    line-height: 0.98;
   }
 
   .project-detail__tags {

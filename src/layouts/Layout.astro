@@ -256,6 +256,38 @@ const ogImage = `${siteOrigin}/og.png`;
         letter-spacing: -0.01em;
     }
 
+    /* One size per level, set once here so no page can drift by carrying
+       its own. A page title is the h1 a page opens with; a section title is
+       an h2 that divides a long page, with a rule under it running the width
+       of the column. */
+    .page-title {
+        color: var(--site-text);
+        font-size: clamp(2.25rem, 5vw, 3.25rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+    }
+
+    .section-title {
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title h2 {
+        color: var(--site-text);
+        font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+    }
+
+    .section-title::after {
+        content: '';
+        display: block;
+        height: 1px;
+        margin-top: 0.9rem;
+        background: linear-gradient(to right, var(--site-card-border-hover), var(--site-card-border) 35%);
+    }
+
     ::selection {
         background: rgba(56, 189, 248, 0.32);
     }

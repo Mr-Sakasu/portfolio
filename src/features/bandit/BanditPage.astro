@@ -36,7 +36,7 @@ const labels = {
 <Layout title={`${t['bandit.title']} | Sakasu Portfolio`} lang={lang} description={t['bandit.subtitle']} wide>
   <section class="bandit-page">
     <header class="bandit-intro">
-      <h1>{t['bandit.title']}</h1>
+      <h1 class="page-title">{t['bandit.title']}</h1>
       <p class="bandit-intro__summary">{t['bandit.subtitle']}</p>
       <p class="bandit-intro__instruction">{t['bandit.instructions']}</p>
     </header>
@@ -999,13 +999,6 @@ const labels = {
 
   .bandit-intro {
     max-width: 43rem;
-  }
-
-  .bandit-intro h1 {
-    color: var(--site-text);
-    font-size: clamp(2.15rem, 5vw, 3.25rem);
-    font-weight: 700;
-    line-height: 0.98;
   }
 
   .bandit-intro__summary {

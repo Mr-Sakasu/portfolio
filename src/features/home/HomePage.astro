@@ -251,11 +251,9 @@ const heroTitle = t['hero.title'];
         </div>
     </section>
 
-    <section id="work" class="home-projects-section">
-        <div class="home-section-heading" data-reveal>
-            <div>
-                <h2>{t['nav.work']}</h2>
-            </div>
+    <section id="work" class="home-section">
+        <div class="section-title" data-reveal>
+            <h2>{t['nav.work']}</h2>
         </div>
 
         <div class="home-project-grid">
@@ -321,14 +319,13 @@ const heroTitle = t['hero.title'];
         </div>
     </section>
 
-    <div class="home-skills-module">
+    <div class="home-section home-skills-module">
         <SkillStack lang={lang} />
     </div>
 
-    <section id="timeline" class="home-timeline-section mt-16 md:mt-24 mb-24">
-        <div class="mb-8" data-reveal>
-            <h2 class="text-2xl md:text-3xl font-bold text-white">{t['timeline.title']}</h2>
-            <span class="section-rule bg-gradient-to-r from-slate-400 to-blue-500" aria-hidden="true"></span>
+    <section id="timeline" class="home-section home-timeline-section mb-24">
+        <div class="section-title" data-reveal>
+            <h2>{t['timeline.title']}</h2>
         </div>
         <Timeline lang={lang} />
     </section>
@@ -359,7 +356,9 @@ const heroTitle = t['hero.title'];
 </style>
 
 <style>
-    .home-timeline-section {
+    /* The three sections under the bento, the same distance apart. */
+    .home-section {
+        margin-top: clamp(4rem, 8vw, 6rem);
         scroll-margin-top: 6.5rem;
     }
 
@@ -872,39 +871,6 @@ const heroTitle = t['hero.title'];
         background: #10b981;
     }
 
-    .home-projects-section {
-        margin-top: 5.5rem;
-        border-top: 1px solid var(--site-card-border);
-        padding-top: 1.2rem;
-        scroll-margin-top: 6.5rem;
-    }
-
-    .home-section-heading {
-        display: flex;
-        align-items: end;
-        justify-content: space-between;
-        gap: 1rem;
-        margin-bottom: 1.25rem;
-    }
-
-    .home-section-heading h2 {
-        margin-top: 0.7rem;
-        color: var(--site-text);
-        font-size: clamp(2rem, 5vw, 3.5rem);
-        font-weight: 600;
-        letter-spacing: -0.055em;
-        line-height: 0.95;
-    }
-
-    .home-section-heading > span {
-        padding-bottom: 0.2rem;
-        color: var(--site-muted);
-        font-size: 0.75rem;
-        font-weight: 600;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-    }
-
     .home-project-card {
         display: flex;
         min-height: 100%;
@@ -986,18 +952,6 @@ const heroTitle = t['hero.title'];
         -webkit-backdrop-filter: none;
     }
 
-    .home-skills-module :global(.section-rule),
-    .home-timeline-section :global(.section-rule) {
-        width: 100%;
-        height: 1px;
-        margin-top: 0.9rem;
-        opacity: 0.65;
-    }
-
-    .home-skills-module :global(h2),
-    .home-timeline-section h2 {
-        letter-spacing: -0.04em;
-    }
 
     :global(html[data-theme='light']) .home-profile-card {
         background: var(--site-card-bg);
@@ -1009,8 +963,7 @@ const heroTitle = t['hero.title'];
         color: #334155;
     }
 
-    :global(html[data-theme='light']) .home-online-status,
-    :global(html[data-theme='light']) .home-section-heading > span {
+    :global(html[data-theme='light']) .home-online-status {
         color: #64748b;
     }
 
@@ -1078,8 +1031,7 @@ const heroTitle = t['hero.title'];
     }
 
     :global(html[data-theme='light']) .home-profile-card .text-white,
-    :global(html[data-theme='light']) .home-project-card__body h3,
-    :global(html[data-theme='light']) .home-section-heading h2 {
+    :global(html[data-theme='light']) .home-project-card__body h3 {
         color: var(--site-text);
     }
 
@@ -1112,14 +1064,6 @@ const heroTitle = t['hero.title'];
             right: -2rem;
             width: 47%;
             opacity: 0.28;
-        }
-
-        .home-projects-section {
-            margin-top: 4rem;
-        }
-
-        .home-section-heading > span {
-            display: none;
         }
 
         .home-project-card--feature .home-project-card__media {
