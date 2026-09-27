@@ -89,9 +89,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/csharp.svg',
         level: 1,
         summary: {
-            en: 'Learning and using C# out of personal interest.',
-            zh: '出于个人兴趣学习和使用 C#。',
-            ja: '個人的な興味で触れています。',
+            en: 'Used in the GAME FREAK build development course to implement build optimization; also picked up out of personal interest.',
+            zh: '在 GAME FREAK 的构建开发课程中用于实现构建效率优化；此外也出于个人兴趣学习和使用。',
+            ja: 'GAME FREAKのビルド開発コースでビルド効率化手法の実装に使用。個人的な興味でも触れています',
         },
     },
     {
@@ -100,9 +100,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/python.svg',
         level: 2,
         summary: {
-            en: 'Research experiments, data analysis, automation, web app backends, and implementation of machine-learning emotion recognition algorithms.',
-            zh: '研究实验、数据分析、自动化、Web 应用后端，以及基于机器学习的情感识别算法实现。',
-            ja: '研究実験、データ分析、自動化、Webアプリのバックエンドとして使用。機械学習による感情認識アルゴリズムも実装',
+            en: 'Research experiments, data analysis, automation, web app backends, and implementation of machine-learning emotion recognition algorithms. Used PySpark for geographic data analysis at LINE Yahoo.',
+            zh: '研究实验、数据分析、自动化、Web 应用后端，以及基于机器学习的情感识别算法实现。在 LINE Yahoo 实习时使用 PySpark 进行地理数据分析。',
+            ja: '研究実験、データ分析、自動化、Webアプリのバックエンドとして使用。機械学習による感情認識アルゴリズムも実装。LINEヤフーでは PySpark を用いた地理データ分析を担当',
         },
         children: [
             { name: 'NumPy', icon: '/icons/skills/numpy.svg' },
