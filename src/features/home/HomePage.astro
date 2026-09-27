@@ -22,10 +22,9 @@ const homePlaylist = selectPlaylists(lang, 'home')[0];
 const playlistTracks = sortTracks(homePlaylist?.tracks).slice(0, 3);
 const heroTitle = t['hero.title'];
 const schools = [
-    { src: '/logos/schools/gakugei-hs.webp', name: 'Tokyo Gakugei University Senior High School' },
-    { src: '/logos/schools/tuat-brand.png', name: 'Tokyo University of Agriculture and Technology' },
-    { src: '/logos/schools/science-tokyo.svg', name: 'Institute of Science Tokyo' },
-    { src: '/logos/schools/tsinghua.webp', name: 'Tsinghua University' },
+    { src: '/logos/schools/tuat-brand.png', name: 'Tokyo University of Agriculture and Technology', circular: true },
+    { src: '/logos/schools/science-tokyo.svg', name: 'Institute of Science Tokyo', circular: false },
+    { src: '/logos/schools/tsinghua.webp', name: 'Tsinghua University', circular: true },
 ];
 ---
 
@@ -85,7 +84,9 @@ const schools = [
                         <ul class="home-school-list">
                             {schools.map((school) => (
                                 <li class="home-school" title={school.name}>
-                                    <img src={school.src} alt={school.name} width="52" height="52" loading="lazy" decoding="async" />
+                                    <span class:list={['home-school-mark', { 'home-school-mark--circular': school.circular }]}>
+                                        <img src={school.src} alt={school.name} width="52" height="52" loading="lazy" decoding="async" />
+                                    </span>
                                 </li>
                             ))}
                         </ul>
@@ -442,9 +443,22 @@ const schools = [
         padding: 0.3rem;
         border: 1px solid rgba(191, 219, 254, 0.18);
         border-radius: 0.55rem;
-        background: rgba(255, 255, 255, 0.48);
+        background: rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+    }
+
+    .home-school-mark {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 0.3rem;
+        background: #e5e7eb;
         isolation: isolate;
         overflow: hidden;
+    }
+
+    .home-school-mark--circular {
+        border-radius: 50%;
     }
 
     .home-school img {
@@ -457,17 +471,9 @@ const schools = [
         mix-blend-mode: darken;
     }
 
-    .home-school img[src$='science-tokyo.svg'] {
-        width: 78%;
-        height: 78%;
-    }
-
     :global(html[data-theme='light']) .home-school {
-        background: #fff;
-    }
-
-    :global(html[data-theme='light']) .home-school img {
-        mix-blend-mode: normal;
+        background: rgba(15, 23, 42, 0.04);
+        border-color: rgba(15, 23, 42, 0.12);
     }
 
     .home-name {
