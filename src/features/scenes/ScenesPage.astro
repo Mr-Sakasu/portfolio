@@ -2405,7 +2405,8 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       let showImage = null;
       let showCv = null;
       let showCtx = null;
-      let visible = true;
+      let visible = false;
+      let needsBuild = true;
       let raf = 0;
       let lastDraw = 0;
 
@@ -2758,12 +2759,23 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         }
       };
 
-      build();
-      paint(performance.now() / 1000);
-      raf = requestAnimationFrame(frame);
-
       const io = new IntersectionObserver((entries) => {
-        for (const entry of entries) visible = entry.isIntersecting;
+        for (const entry of entries) {
+          if (entry.isIntersecting === visible) continue;
+          visible = entry.isIntersecting;
+          if (visible) {
+            if (needsBuild) {
+              build();
+              needsBuild = false;
+              paint(performance.now() / 1000);
+            }
+            lastDraw = 0;
+            raf = requestAnimationFrame(frame);
+          } else {
+            cancelAnimationFrame(raf);
+            raf = 0;
+          }
+        }
       }, { threshold: 0.05 });
       io.observe(canvas);
 
@@ -2771,6 +2783,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
       const onResize = () => {
         window.clearTimeout(resizeTimer);
         resizeTimer = window.setTimeout(() => {
+          if (!visible) {
+            needsBuild = true;
+            return;
+          }
           build();
           paint(performance.now() / 1000);
         }, 150);
@@ -2779,6 +2795,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
 
       return () => {
         cancelAnimationFrame(raf);
+        window.clearTimeout(resizeTimer);
         io.disconnect();
         window.removeEventListener('resize', onResize);
       };

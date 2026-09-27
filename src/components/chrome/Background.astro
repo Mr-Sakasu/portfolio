@@ -32,6 +32,7 @@ const { scene } = Astro.props;
 
   // Global variable to track the animation frame
   let animationId;
+  let visibilityHandler = null;
   // The resize listener currently attached. Kept at module scope because each
   // initBackground() call builds a new closure, and removing the *new* one (as
   // this file used to) never unhooks the old — they pile up on every navigation.
@@ -42,21 +43,21 @@ const { scene } = Astro.props;
   const networkScene = (canvas, ctx) => {
     const particleCount = 60;
     const connectionDistance = 150;
+    const connectionDistanceSquared = connectionDistance * connectionDistance;
     const particles = [];
 
-    const colorsFor = (isLight) => isLight
-      ? {
-          particle: 'rgba(37, 99, 235, 0.78)',
-          particleShadow: 'rgba(37, 99, 235, 0.26)',
-          connection: '37, 99, 235',
-          connectionAlpha: 0.2,
-        }
-      : {
-          particle: 'rgba(130, 200, 255, 0.9)',
-          particleShadow: 'rgba(0, 150, 255, 0.65)',
-          connection: '100, 200, 255',
-          connectionAlpha: 0.38,
-        };
+    const lightColors = {
+      particle: 'rgba(37, 99, 235, 0.78)',
+      particleShadow: 'rgba(37, 99, 235, 0.26)',
+      connection: '37, 99, 235',
+      connectionAlpha: 0.2,
+    };
+    const darkColors = {
+      particle: 'rgba(130, 200, 255, 0.9)',
+      particleShadow: 'rgba(0, 150, 255, 0.65)',
+      connection: '100, 200, 255',
+      connectionAlpha: 0.38,
+    };
 
     for (let i = 0; i < particleCount; i++) {
       particles.push({
@@ -69,7 +70,7 @@ const { scene } = Astro.props;
     }
 
     return (isLight) => {
-      const colors = colorsFor(isLight);
+      const colors = isLight ? lightColors : darkColors;
 
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
@@ -89,10 +90,11 @@ const { scene } = Astro.props;
         for (let j = i + 1; j < particles.length; j++) {
           const dx = p.x - particles[j].x;
           const dy = p.y - particles[j].y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
+          const distanceSquared = dx * dx + dy * dy;
 
-          if (distance < connectionDistance) {
+          if (distanceSquared < connectionDistanceSquared) {
             ctx.beginPath();
+            const distance = Math.sqrt(distanceSquared);
             const opacity = 1 - distance / connectionDistance;
             ctx.strokeStyle = `rgba(${colors.connection}, ${opacity * colors.connectionAlpha})`;
             ctx.lineWidth = 1;
@@ -122,6 +124,8 @@ const { scene } = Astro.props;
     const DRAG = 0.992;         // spark velocity retained per frame — high enough
                                 // that sparks stay streaks instead of collapsing
                                 // to stationary dots after a few frames
+    const DEFAULT_FRAME_DRAG = Math.pow(DRAG, SPARK_MOTION_SCALE);
+    const GOLD_FRAME_DRAG = Math.pow(0.997, SPARK_MOTION_SCALE);
     const SPARK_CAP = 680;      // enough density for full traditional blooms,
                                 // while still bounding overlapping shells
     const GOLD_HUE = 44;        // the colour 冠菊 settles into
@@ -158,9 +162,8 @@ const { scene } = Astro.props;
 
     // On the light theme the sky is near-white: bright sparks disappear, so the
     // hues go darker and more saturated and the white-hot core is dropped.
-    const styleFor = (isLight) => isLight
-      ? { light: 42, sat: 90, glow: 8, glowAlpha: 0.1, alpha: 0.8, core: false, additive: false }
-      : { light: 64, sat: 100, glow: 12, glowAlpha: 0.16, alpha: 0.92, core: true, additive: true };
+    const lightStyle = { light: 42, sat: 90, glow: 8, glowAlpha: 0.1, alpha: 0.8, core: false, additive: false };
+    const darkStyle = { light: 64, sat: 100, glow: 12, glowAlpha: 0.16, alpha: 0.92, core: true, additive: true };
 
     // The shells Nagaoka is known for. 菊 is the everyday one; the rest appear
     // often enough to be recognised and rarely enough to stay an event.
@@ -242,7 +245,7 @@ const { scene } = Astro.props;
           gold: opts.gold === true,
           // 冠菊 keeps its speed and falls harder, so it droops into a hanging
           // curtain instead of stalling as a ring.
-          drag: opts.gold ? 0.997 : DRAG,
+          frameDrag: opts.gold ? GOLD_FRAME_DRAG : DEFAULT_FRAME_DRAG,
           grav: opts.gold ? STAR_GRAVITY * 1.9 : STAR_GRAVITY,
           twinkle: opts.twinkle === true,
           seed: Math.random() * Math.PI * 2,
@@ -324,7 +327,7 @@ const { scene } = Astro.props;
     };
 
     return (isLight) => {
-      const style = styleFor(isLight);
+      const style = isLight ? lightStyle : darkStyle;
       tick += 1;
       motionTime += SPARK_MOTION_SCALE;
 
@@ -389,7 +392,7 @@ const { scene } = Astro.props;
             x: s.x,
             y: s.y,
             trail: [s.x, s.y, s.x, s.y, s.x, s.y],
-            drag: DRAG,
+            frameDrag: DEFAULT_FRAME_DRAG,
             grav: STAR_GRAVITY,
             hue2: null,
             gold: false,
@@ -439,9 +442,8 @@ const { scene } = Astro.props;
         p.trail[3] = p.trail[1];
         p.trail[0] = p.x;
         p.trail[1] = p.y;
-        const frameDrag = Math.pow(p.drag, SPARK_MOTION_SCALE);
-        p.vx *= frameDrag;
-        p.vy = p.vy * frameDrag + p.grav * SPARK_MOTION_SCALE;
+        p.vx *= p.frameDrag;
+        p.vy = p.vy * p.frameDrag + p.grav * SPARK_MOTION_SCALE;
         p.x += p.vx * SPARK_MOTION_SCALE;
         p.y += p.vy * SPARK_MOTION_SCALE;
         p.life -= SPARK_MOTION_SCALE;
@@ -517,17 +519,21 @@ const { scene } = Astro.props;
   // `?bg=<name>` beats both, for checking one directly. Reduced motion does not
   // change the choice — it calms the fireworks instead (see the scene), since
   // the graph animates too.
-  function pickSceneName(isLight, requested) {
-    try {
-      const forced = new URLSearchParams(window.location.search).get('bg');
-      if (forced && Object.prototype.hasOwnProperty.call(SCENES, forced)) return forced;
-    } catch {
-      // Unparseable query string is not a reason to lose the background.
-    }
+  function pickSceneName(isLight, requested, forced) {
+    if (forced && Object.prototype.hasOwnProperty.call(SCENES, forced)) return forced;
 
     if (requested && Object.prototype.hasOwnProperty.call(SCENES, requested)) return requested;
 
     return isLight ? 'network' : 'fireworks';
+  }
+
+  function forcedSceneName() {
+    try {
+      return new URLSearchParams(window.location.search).get('bg');
+    } catch {
+      // Unparseable query string is not a reason to lose the background.
+      return null;
+    }
   }
 
   // We wrap everything in a function so we can restart it
@@ -543,6 +549,8 @@ const { scene } = Astro.props;
     // --- CLEANUP PREVIOUS ANIMATION ---
     // This prevents the animation from running 2x speed if you switch pages fast
     if (animationId) cancelAnimationFrame(animationId);
+    animationId = null;
+    if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
 
     // --- RESIZE LOGIC ---
     function resize() {
@@ -559,11 +567,12 @@ const { scene } = Astro.props;
     // after the first resize either way.
     let builtName = null;
     let frame = null;
+    const forced = forcedSceneName();
 
     // --- ANIMATION LOOP ---
     function animate() {
       const isLight = document.documentElement.dataset.theme === 'light';
-      const wanted = pickSceneName(isLight, canvas.dataset.scene);
+      const wanted = pickSceneName(isLight, canvas.dataset.scene, forced);
       if (wanted !== builtName) {
         builtName = wanted;
         frame = SCENES[wanted](canvas, ctx);   // a theme flip starts it fresh
@@ -574,7 +583,16 @@ const { scene } = Astro.props;
       animationId = requestAnimationFrame(animate);
     }
 
-    animate();
+    visibilityHandler = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      } else if (animationId === null) {
+        animate();
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityHandler);
+    if (!document.hidden) animate();
   }
 
   // --- THE IMPORTANT PART ---

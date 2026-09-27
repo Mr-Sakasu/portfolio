@@ -117,7 +117,15 @@ const initGlobe = () => {
   resizeObserver.observe(mount);
   resize();
 
-  const emitRoute = () => {
+  const updateArcs = () => {
+    const renderedRoutes: RenderedRoute[] = routes.flatMap((item) => [
+      { ...item, layer: 'base' },
+      { ...item, layer: 'signal' },
+    ]);
+    globe.arcsData(renderedRoutes);
+  };
+
+  const emitRoute = (updateDisplay = true) => {
     const startIndex = Math.floor(Math.random() * cities.length);
     let endIndex = Math.floor(Math.random() * cities.length);
     while (endIndex === startIndex) endIndex = Math.floor(Math.random() * cities.length);
@@ -141,20 +149,25 @@ const initGlobe = () => {
       activeRoute = routes[Math.floor(Math.random() * routes.length)];
     }
     transfers += Math.floor(18 + Math.random() * 80);
-    if (routeAdded) {
-      const renderedRoutes: RenderedRoute[] = routes.flatMap((item) => [
-        { ...item, layer: 'base' },
-        { ...item, layer: 'signal' },
-      ]);
-      globe.arcsData(renderedRoutes);
+    if (updateDisplay) {
+      if (routeAdded) updateArcs();
+      globe.ringsData([{ lat: activeRoute.endLat, lng: activeRoute.endLng }]);
+      if (activeCount) activeCount.textContent = String(routes.length);
+      if (transferCount) transferCount.textContent = transfers.toLocaleString();
     }
-    globe.ringsData([{ lat: activeRoute.endLat, lng: activeRoute.endLng }]);
-    if (activeCount) activeCount.textContent = String(routes.length);
-    if (transferCount) transferCount.textContent = transfers.toLocaleString();
   };
 
-  for (let index = 0; index < 24; index += 1) emitRoute();
-  const routeTimer = window.setInterval(emitRoute, 680);
+  for (let index = 0; index < 24; index += 1) emitRoute(false);
+  updateArcs();
+  const lastRoute = routes[routes.length - 1];
+  globe.ringsData([{ lat: lastRoute.endLat, lng: lastRoute.endLng }]);
+  if (activeCount) activeCount.textContent = String(routes.length);
+  if (transferCount) transferCount.textContent = transfers.toLocaleString();
+  let routeTimer: number | undefined;
+  const startRoutes = () => {
+    if (routeTimer === undefined) routeTimer = window.setInterval(() => emitRoute(), 680);
+  };
+  if (!document.hidden) startRoutes();
 
   const toggleRotation = () => {
     autoRotate = !autoRotate;
@@ -165,10 +178,17 @@ const initGlobe = () => {
   if (rotationButton && !autoRotate) rotationButton.textContent = labels.resume;
 
   const onVisibility = () => {
-    if (document.hidden) globe.pauseAnimation();
-    else globe.resumeAnimation();
+    if (document.hidden) {
+      globe.pauseAnimation();
+      window.clearInterval(routeTimer);
+      routeTimer = undefined;
+    } else {
+      globe.resumeAnimation();
+      startRoutes();
+    }
   };
   document.addEventListener('visibilitychange', onVisibility);
+  if (document.hidden) globe.pauseAnimation();
 
   cleanupCurrent = () => {
     window.clearInterval(routeTimer);

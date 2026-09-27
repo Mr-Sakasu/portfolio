@@ -660,6 +660,18 @@ const labels = {
     };
   }
 
+  function prepareStar(star) {
+    const ra = star.ra * 15 * DEG_TO_RAD;
+    const dec = star.dec * DEG_TO_RAD;
+    return {
+      ...star,
+      sinRa: Math.sin(ra),
+      cosRa: Math.cos(ra),
+      sinDec: Math.sin(dec),
+      cosDec: Math.cos(dec),
+    };
+  }
+
   function createFaintStars(count, seed) {
     const rand = seededRandom(seed);
     const stars = [];
@@ -668,7 +680,7 @@ const labels = {
       const dec = Math.asin(u) * RAD_TO_DEG;
       const ra = rand() * 24;
       const mag = 3.6 + rand() * 2.8;
-      stars.push({
+      stars.push(prepareStar({
         kind: 'star',
         name: '',
         ra,
@@ -677,12 +689,12 @@ const labels = {
         color: '#cfd8ff',
         twinklePhase: rand() * Math.PI * 2,
         twinkleSpeed: 0.7 + rand() * 1.2,
-      });
+      }));
     }
     return stars;
   }
 
-  const NAMED_STARS = BRIGHT_STARS.map((star, index) => ({
+  const NAMED_STARS = BRIGHT_STARS.map((star, index) => prepareStar({
     kind: 'star',
     ...star,
     twinklePhase: (index * 0.71) % (Math.PI * 2),
@@ -797,14 +809,16 @@ const labels = {
     return normalizeDegrees(gmstHours * 15 + longitude);
   }
 
-  function equatorialToHorizontal(raHours, decDegrees, when) {
-    const latitude = TOKYO.latitude * DEG_TO_RAD;
-    const hourAngle = (localSiderealDegrees(when, TOKYO.longitude) - raHours * 15) * DEG_TO_RAD;
-    const dec = decDegrees * DEG_TO_RAD;
+  const sinLatitude = Math.sin(TOKYO.latitude * DEG_TO_RAD);
+  const cosLatitude = Math.cos(TOKYO.latitude * DEG_TO_RAD);
 
-    const east = -Math.cos(dec) * Math.sin(hourAngle);
-    const north = Math.sin(dec) * Math.cos(latitude) - Math.cos(dec) * Math.sin(latitude) * Math.cos(hourAngle);
-    const up = Math.sin(dec) * Math.sin(latitude) + Math.cos(dec) * Math.cos(latitude) * Math.cos(hourAngle);
+  function equatorialToHorizontal(star, sinSidereal, cosSidereal) {
+    const sinHourAngle = sinSidereal * star.cosRa - cosSidereal * star.sinRa;
+    const cosHourAngle = cosSidereal * star.cosRa + sinSidereal * star.sinRa;
+
+    const east = -star.cosDec * sinHourAngle;
+    const north = star.sinDec * cosLatitude - star.cosDec * sinLatitude * cosHourAngle;
+    const up = star.sinDec * sinLatitude + star.cosDec * cosLatitude * cosHourAngle;
 
     let azimuth = Math.atan2(east, north);
     if (azimuth < 0) azimuth += Math.PI * 2;
@@ -913,7 +927,8 @@ const labels = {
       return;
     }
 
-    const horizontal = selectedObject.horizontal ?? equatorialToHorizontal(selectedObject.ra, selectedObject.dec, date);
+    const sidereal = localSiderealDegrees(date, TOKYO.longitude) * DEG_TO_RAD;
+    const horizontal = selectedObject.horizontal ?? equatorialToHorizontal(selectedObject, Math.sin(sidereal), Math.cos(sidereal));
     const altitudeDeg = horizontal.altitude * RAD_TO_DEG;
     const azimuthDeg = horizontal.azimuth * RAD_TO_DEG;
 
@@ -983,6 +998,9 @@ const labels = {
     const simulationDate = getSimulationDate();
     const planetObjects = getPlanetObjects(simulationDate);
     const renderObjects = [...ALL_STARS, ...planetObjects];
+    const sidereal = localSiderealDegrees(simulationDate, TOKYO.longitude) * DEG_TO_RAD;
+    const sinSidereal = Math.sin(sidereal);
+    const cosSidereal = Math.cos(sidereal);
     const visibleStars = [];
     const visibleNamedByName = new Map();
     const belowHorizonLimitRad = 14 * DEG_TO_RAD;
@@ -1001,7 +1019,7 @@ const labels = {
     const upUp = Math.cos(pitch);
 
     for (const star of renderObjects) {
-      const horizontal = star.horizontal ?? equatorialToHorizontal(star.ra, star.dec, simulationDate);
+      const horizontal = star.horizontal ?? equatorialToHorizontal(star, sinSidereal, cosSidereal);
       if (star.kind === 'star' && horizontal.altitude > 0 && star.mag <= 6) {
         const band = Math.min(Math.max(Math.ceil(star.mag), 1), 6);
         magBandCounts[band - 1] += 1;
@@ -1708,11 +1726,38 @@ const labels = {
     if (!isPreviewMode()) {
       loadTokyoSky();
     }
-    skyState.animationId = requestAnimationFrame(tick);
 
-    window.__tokyoSkyCleanup = () => {
+    let canvasVisible = true;
+    const pauseSky = () => {
       if (skyState.animationId) cancelAnimationFrame(skyState.animationId);
       skyState.animationId = 0;
+    };
+    const resumeSky = () => {
+      if (skyState.animationId || document.hidden || !canvasVisible) return;
+      const now = performance.now();
+      skyState.lastFrameTime = now;
+      skyState.shootingLastFrameMs = now;
+      skyState.animationId = requestAnimationFrame(tick);
+    };
+    const onVisibilityChange = () => {
+      if (document.hidden) pauseSky();
+      else resumeSky();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const skyVisibilityObserver = 'IntersectionObserver' in window
+      ? new IntersectionObserver((entries) => {
+          canvasVisible = entries[0]?.isIntersecting ?? false;
+          if (canvasVisible) resumeSky();
+          else pauseSky();
+        }, { threshold: 0.01 })
+      : null;
+    if (skyVisibilityObserver) skyVisibilityObserver.observe(skyCanvas);
+    else resumeSky();
+
+    window.__tokyoSkyCleanup = () => {
+      pauseSky();
+      skyVisibilityObserver?.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
 
       if (refreshBtn) refreshBtn.removeEventListener('click', onRefreshClick);
 

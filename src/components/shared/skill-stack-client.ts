@@ -20,6 +20,7 @@ const initRing = (root: HTMLElement) => {
     const stage = root.querySelector<HTMLElement>('[data-ring-stage]');
     const ring = root.querySelector<HTMLElement>('[data-ring]');
     const cards = Array.from(root.querySelectorAll<HTMLElement>('[data-ring-card]'));
+    const jumpButtons = Array.from(root.querySelectorAll<HTMLElement>('[data-ring-jump]'));
     if (!stage || !ring || cards.length < 2) return;
 
     const count = cards.length;
@@ -36,6 +37,7 @@ const initRing = (root: HTMLElement) => {
     let lastTime = 0;
     let travelled = 0;
     let pressed: HTMLElement | null = null;
+    let renderedFront = -1;
 
     // The angle, step and radius are written on the stage so the floor under
     // the ring, a sibling, turns with it: custom properties inherit downwards.
@@ -62,14 +64,18 @@ const initRing = (root: HTMLElement) => {
             // and its neighbours already read as the ones waiting their turn.
             card.style.opacity = depth <= 0 ? '0' : String(0.14 + 0.86 * depth ** 4);
             card.style.pointerEvents = depth > 0.05 ? '' : 'none';
+        });
+        if (front === renderedFront) return;
+        cards.forEach((card, index) => {
             card.classList.toggle('is-front', index === front);
             card.setAttribute('aria-hidden', index === front ? 'false' : 'true');
         });
         const category = cards[front].dataset.category ?? '';
-        root.querySelectorAll<HTMLElement>('[data-ring-jump]').forEach((button) => {
+        jumpButtons.forEach((button) => {
             button.classList.toggle('is-active', button.dataset.ringJump === category);
             button.setAttribute('aria-pressed', String(button.dataset.ringJump === category));
         });
+        renderedFront = front;
     };
 
     const stop = () => {
@@ -194,7 +200,7 @@ const initRing = (root: HTMLElement) => {
 
     root.querySelector('[data-ring-prev]')?.addEventListener('click', () => turnTo((frontIndex() - 1 + count) % count));
     root.querySelector('[data-ring-next]')?.addEventListener('click', () => turnTo((frontIndex() + 1) % count));
-    root.querySelectorAll<HTMLElement>('[data-ring-jump]').forEach((button) => {
+    jumpButtons.forEach((button) => {
         button.addEventListener('click', () => {
             const index = cards.findIndex((card) => card.dataset.category === button.dataset.ringJump);
             if (index >= 0) turnTo(index);
@@ -207,7 +213,7 @@ const initRing = (root: HTMLElement) => {
             render();
         }).observe(stage);
     } else {
-        window.addEventListener('resize', () => {
+        (window as Window).addEventListener('resize', () => {
             measure();
             render();
         }, { passive: true });

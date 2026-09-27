@@ -1,6 +1,5 @@
 ---
-// First-visit fireworks. The overlay paints over the site background, fires a
-// few shells, and hands the page back a beat after the main burst.
+// First-visit fireworks. The transparent overlay plays above visible content.
 ---
 
 <div id="site-intro" aria-hidden="true">
@@ -14,7 +13,7 @@
     z-index: 60;
     pointer-events: none;
     opacity: 1;
-    transition: opacity 900ms ease;
+    transition: opacity 520ms ease;
   }
 
   #site-intro.is-fading {
@@ -28,43 +27,13 @@
   }
 
   /* Nothing to cover when the intro never runs, so keep it out of the way. */
-  html:not(.intro-active) #site-intro {
+  html:not(.intro-active) #site-intro:not(.is-fading) {
     display: none;
-  }
-
-  /* Held back while the shells are in the air, then floated in together. */
-  html.intro-active .site-header,
-  html.intro-active main,
-  html.intro-active .site-footer {
-    opacity: 0;
-  }
-
-  html.intro-done .site-header,
-  html.intro-done main,
-  html.intro-done .site-footer {
-    animation: site-intro-content 1000ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-
-  @keyframes site-intro-content {
-    from {
-      opacity: 0;
-      transform: translateY(18px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     #site-intro {
       display: none;
-    }
-
-    html.intro-done .site-header,
-    html.intro-done main,
-    html.intro-done .site-footer {
-      animation: none;
     }
   }
 </style>
@@ -88,39 +57,28 @@
     const canvas = document.getElementById('site-intro-canvas');
     const context = canvas && canvas.getContext ? canvas.getContext('2d') : null;
 
-    let revealed = false;
-    const revealContent = () => {
-      if (revealed) {
-        return;
-      }
-      revealed = true;
-      root.classList.remove('intro-active');
-      root.classList.add('intro-done');
-      // ClientRouter reuses <html>, so leaving the class on would re-run the
-      // float-in for every later navigation.
-      window.setTimeout(() => root.classList.remove('intro-done'), 1400);
-    };
-
     let finished = false;
-    // Whatever happens below — no canvas, a thrown frame, a backgrounded tab —
-    // the page must come back, so every exit routes through here.
+    let frameId = 0;
+    let onVisibility = null;
+    let onResize = null;
+    // A failed canvas or backgrounded tab should never leave an active loop.
     const finish = () => {
-      if (finished) {
-        return;
-      }
+      if (finished) return;
       finished = true;
-      revealContent();
+      window.clearTimeout(bailout);
+      window.cancelAnimationFrame(frameId);
+      if (onVisibility) document.removeEventListener('visibilitychange', onVisibility);
+      if (onResize) window.removeEventListener('resize', onResize);
       if (overlay) {
         overlay.classList.add('is-fading');
-        window.setTimeout(() => overlay.remove(), 1000);
+        window.setTimeout(() => overlay.remove(), 560);
       }
+      root.classList.remove('intro-active');
     };
 
-    // Backstop against a wedged animation frame holding the page hostage.
-    const bailout = window.setTimeout(finish, 6000);
+    const bailout = window.setTimeout(finish, 6500);
 
     if (!context) {
-      window.clearTimeout(bailout);
       finish();
       return;
     }
@@ -136,141 +94,218 @@
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
     resize();
-    window.addEventListener('resize', resize, { passive: true });
+    onResize = resize;
+    window.addEventListener('resize', onResize, { passive: true });
+    onVisibility = () => {
+      if (document.hidden) finish();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
 
-    // Purple, blue, green: the artist-chart palette, so the intro and the
-    // charts further down the page read as the same site.
-    const palette = ['#d695e4', '#a5a6ff', '#61b9fd', '#38c2ef', '#47cba2', '#ffffff'];
-    const pick = (list) => list[Math.floor(Math.random() * list.length)];
-
+    const isLight = root.dataset.theme === 'light';
+    const palettes = isLight
+      ? [
+          { outer: '#a16207', inner: '#7e22ce', core: '#1d4ed8' },
+          { outer: '#1d4ed8', inner: '#0f766e', core: '#7e22ce' },
+          { outer: '#b45309', inner: '#b91c1c', core: '#7e22ce' },
+        ]
+      : [
+          { outer: '#ffd77a', inner: '#d9a5ff', core: '#83d8ff' },
+          { outer: '#83d8ff', inner: '#77f1d1', core: '#e8d6ff' },
+          { outer: '#ffb678', inner: '#ff829d', core: '#cfb3ff' },
+        ];
     const shells = [];
     const sparks = [];
-    let mainBurstAt = 0;
+    const flashes = [];
+    const maxSparks = width < 640 ? 480 : 660;
+    const density = width < 640 ? 0.6 : 0.83;
+    const launchGravity = 0.001;
 
-    const launch = (xRatio, peakRatio, isMain) => {
+    const launch = (xRatio, peakRatio, kind, palette) => {
       const targetY = height * peakRatio;
-      const startY = height + 12;
+      const startY = height + 18;
       shells.push({
         x: width * xRatio,
         y: startY,
-        // Chosen so the shell arrives at its peak under gravity below.
-        vy: -Math.sqrt(2 * 0.00042 * (startY - targetY)),
+        vx: (Math.random() - 0.5) * 0.035,
+        vy: -Math.sqrt(2 * launchGravity * (startY - targetY)),
         targetY,
-        color: pick(palette),
-        isMain,
+        kind,
+        palette,
         trail: [],
       });
     };
 
-    const explode = (shell) => {
-      const count = shell.isMain ? 130 : 80;
-      const power = shell.isMain ? 0.42 : 0.3;
-      for (let index = 0; index < count; index += 1) {
-        const angle = (Math.PI * 2 * index) / count + Math.random() * 0.12;
-        // Squared random keeps most sparks near the rim rather than the centre.
-        const speed = power * (0.35 + Math.random() * Math.random());
+    const burst = (x, y, rawCount, speed, life, color, gravity, sparkle = false) => {
+      const count = Math.round(rawCount * density);
+      for (let index = 0; index < count && sparks.length < maxSparks; index += 1) {
+        const angle = (index / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.12;
+        // A projected sphere gives a dense rim and a few stars in its centre.
+        const depth = Math.random() * 2 - 1;
+        const projection = Math.sqrt(1 - depth * depth);
+        const velocity = speed * (0.75 + Math.random() * 0.5) * projection;
+        const lifespan = life * (0.78 + Math.random() * 0.44);
         sparks.push({
-          x: shell.x,
-          y: shell.y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          life: 1,
-          decay: 0.00055 + Math.random() * 0.0006,
-          color: Math.random() < 0.22 ? '#ffffff' : shell.color,
+          x, y, tailX: x, tailY: y,
+          vx: Math.cos(angle) * velocity,
+          vy: Math.sin(angle) * velocity,
+          gravity,
+          life: lifespan,
+          maxLife: lifespan,
+          color,
+          sparkle: sparkle && Math.random() < 0.35,
+          phase: Math.random() * Math.PI * 2,
         });
+      }
+    };
+
+    const explode = (shell) => {
+      const { x, y, palette } = shell;
+      flashes.push({ x, y, color: palette.outer, life: 210, maxLife: 210, radius: shell.kind === 'main' ? 105 : 64 });
+      if (shell.kind === 'main') {
+        // Three concentric blooms: slow gold willow outside, vivid peony
+        // inside, then a bright core. They fall at different rates.
+        burst(x, y, 175, 0.42, 2250, palette.outer, 0.00011, true);
+        burst(x, y, 110, 0.31, 1600, palette.inner, 0.000075, true);
+        burst(x, y, 65, 0.19, 1050, palette.core, 0.000055);
+      } else {
+        burst(x, y, 100, 0.35, 1450, palette.outer, 0.000095, true);
+        burst(x, y, 36, 0.18, 900, palette.inner, 0.00006);
       }
     };
 
     const startedAt = performance.now();
     const schedule = [
-      { at: 0, x: 0.5, peak: 0.32, main: true },
-      { at: 260, x: 0.24, peak: 0.44, main: false },
-      { at: 430, x: 0.76, peak: 0.4, main: false },
-      { at: 900, x: 0.62, peak: 0.26, main: false },
+      { at: 0, x: 0.22, peak: 0.39, kind: 'side', palette: palettes[1] },
+      { at: 160, x: 0.78, peak: 0.43, kind: 'side', palette: palettes[2] },
+      { at: 330, x: 0.5, peak: 0.2, kind: 'main', palette: palettes[0] },
+      { at: 880, x: 0.66, peak: 0.34, kind: 'side', palette: palettes[1] },
     ];
     let scheduled = 0;
 
     let previous = startedAt;
     const frame = (now) => {
-      if (finished) {
+      if (finished) return;
+      // Cap the expensive canvas strokes while keeping motion time based.
+      if (now - previous < (width < 640 ? 32 : 22)) {
+        frameId = window.requestAnimationFrame(frame);
         return;
       }
-      // Tab switches produce huge gaps; clamping keeps the physics sane.
       const delta = Math.min(now - previous, 48);
       previous = now;
       const elapsed = now - startedAt;
 
       while (scheduled < schedule.length && elapsed >= schedule[scheduled].at) {
         const item = schedule[scheduled];
-        launch(item.x, item.peak, item.main);
+        launch(item.x, item.peak, item.kind, item.palette);
         scheduled += 1;
       }
 
       context.clearRect(0, 0, width, height);
-      context.globalCompositeOperation = 'lighter';
+      context.globalCompositeOperation = isLight ? 'source-over' : 'lighter';
+      context.lineCap = 'round';
+
+      for (let index = flashes.length - 1; index >= 0; index -= 1) {
+        const flash = flashes[index];
+        flash.life -= delta;
+        if (flash.life <= 0) {
+          flashes.splice(index, 1);
+          continue;
+        }
+        const strength = flash.life / flash.maxLife;
+        const radius = flash.radius * (1.2 - strength * 0.35);
+        const glow = context.createRadialGradient(flash.x, flash.y, 0, flash.x, flash.y, radius);
+        glow.addColorStop(0, '#ffffff');
+        glow.addColorStop(0.22, flash.color);
+        glow.addColorStop(1, 'transparent');
+        context.globalAlpha = strength * (isLight ? 0.23 : 0.55);
+        context.fillStyle = glow;
+        context.beginPath();
+        context.arc(flash.x, flash.y, radius, 0, Math.PI * 2);
+        context.fill();
+      }
 
       for (let index = shells.length - 1; index >= 0; index -= 1) {
         const shell = shells[index];
-        shell.vy += 0.00042 * delta;
+        shell.vy += launchGravity * delta;
+        shell.x += shell.vx * delta;
         shell.y += shell.vy * delta;
         shell.trail.push({ x: shell.x, y: shell.y });
-        if (shell.trail.length > 9) {
-          shell.trail.shift();
-        }
+        if (shell.trail.length > 10) shell.trail.shift();
 
-        shell.trail.forEach((point, order) => {
-          context.globalAlpha = (order / shell.trail.length) * 0.55;
-          context.fillStyle = shell.color;
+        for (let order = 1; order < shell.trail.length; order += 1) {
+          const point = shell.trail[order];
+          const prior = shell.trail[order - 1];
+          context.globalAlpha = (order / shell.trail.length) * 0.8;
+          context.strokeStyle = shell.palette.outer;
+          context.lineWidth = 0.8 + (order / shell.trail.length) * 2;
           context.beginPath();
-          context.arc(point.x, point.y, 1.8, 0, Math.PI * 2);
-          context.fill();
-        });
+          context.moveTo(prior.x, prior.y);
+          context.lineTo(point.x, point.y);
+          context.stroke();
+        }
+        context.globalAlpha = 1;
+        context.fillStyle = isLight ? shell.palette.core : '#fff';
+        context.beginPath();
+        context.arc(shell.x, shell.y, 2.2, 0, Math.PI * 2);
+        context.fill();
 
         if (shell.y <= shell.targetY || shell.vy >= 0) {
           explode(shell);
-          if (shell.isMain && !mainBurstAt) {
-            mainBurstAt = now;
-            // "Slightly after the explosion": the page floats in while the
-            // first burst is still falling.
-            window.setTimeout(revealContent, 520);
-          }
           shells.splice(index, 1);
         }
       }
 
+      const drag = Math.max(0.97, 1 - 0.00042 * delta);
+      const follow = Math.min(1, delta * 0.012);
       for (let index = sparks.length - 1; index >= 0; index -= 1) {
         const spark = sparks[index];
-        spark.vy += 0.00022 * delta;
-        spark.vx *= 0.994;
-        spark.vy *= 0.994;
+        spark.vx *= drag;
+        spark.vy = spark.vy * drag + spark.gravity * delta;
         spark.x += spark.vx * delta;
         spark.y += spark.vy * delta;
-        spark.life -= spark.decay * delta;
+        spark.tailX += (spark.x - spark.tailX) * follow;
+        spark.tailY += (spark.y - spark.tailY) * follow;
+        spark.life -= delta;
 
         if (spark.life <= 0) {
           sparks.splice(index, 1);
           continue;
         }
 
-        context.globalAlpha = Math.max(spark.life, 0);
-        context.fillStyle = spark.color;
+        const remaining = spark.life / spark.maxLife;
+        const twinkle = spark.sparkle ? 0.7 + 0.3 * Math.sin(now * 0.026 + spark.phase) : 1;
+        const alpha = Math.min(1, remaining * 1.35) * twinkle;
+        context.globalAlpha = alpha * (isLight ? 0.12 : 0.22);
+        context.strokeStyle = spark.color;
+        context.lineWidth = 5;
         context.beginPath();
-        context.arc(spark.x, spark.y, 1.7, 0, Math.PI * 2);
+        context.moveTo(spark.tailX, spark.tailY);
+        context.lineTo(spark.x, spark.y);
+        context.stroke();
+        context.globalAlpha = alpha;
+        context.lineWidth = 1.65;
+        context.beginPath();
+        context.moveTo(spark.tailX, spark.tailY);
+        context.lineTo(spark.x, spark.y);
+        context.stroke();
+        context.fillStyle = isLight ? spark.color : '#fff';
+        context.globalAlpha = alpha * 0.72;
+        context.beginPath();
+        context.arc(spark.x, spark.y, 0.85, 0, Math.PI * 2);
         context.fill();
       }
 
       context.globalAlpha = 1;
       context.globalCompositeOperation = 'source-over';
 
-      const spent = scheduled >= schedule.length && !shells.length && !sparks.length;
-      if (spent || (mainBurstAt && now - mainBurstAt > 3200)) {
-        window.clearTimeout(bailout);
+      const spent = scheduled >= schedule.length && !shells.length && !sparks.length && !flashes.length;
+      if (spent || elapsed > 5400) {
         finish();
         return;
       }
-      window.requestAnimationFrame(frame);
+      frameId = window.requestAnimationFrame(frame);
     };
 
-    window.requestAnimationFrame(frame);
+    frameId = window.requestAnimationFrame(frame);
   })();
 </script>
