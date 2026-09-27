@@ -24,11 +24,11 @@ export const projectData: Record<string, Project[]> = {
             desc: "Designed control program for ER injection mechanism, etc.",
             image: "/er.png",
             link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
-            tags: ["C++", "Embedded", "Robotics", "Python"]
+            tags: ["C++", "ROS", "Embedded", "Robotics", "Python"]
         },
         {
             title: "Competitive Programming",
-            desc: "Casual participation.",
+            desc: "AtCoder green in algorithm contests and cyan in heuristic contests; competed at the ICPC 2023 Asia Yokohama Regional.",
             image: "/kyopro.avif",
             link: "https://atcoder.jp/users/Sakasu",
             tags: ["C++", "Algorithms", "Python"]
@@ -60,9 +60,9 @@ export const projectData: Record<string, Project[]> = {
         },
         {
             title: "Web Development Portfolio",
-            desc: "This website.",
+            desc: "This site: Astro static build in three languages, with a canvas star map, YouTube Music playlists, 8-bit scenes and small optimization demos.",
             image: "/css.avif",
-            link: "https://github.com/Mr-Sakasu/",
+            link: "https://github.com/Mr-Sakasu/portfolio",
             tags: ["Astro", "TypeScript", "Tailwind"]
         }
     ],
@@ -72,11 +72,11 @@ export const projectData: Record<string, Project[]> = {
             desc: "负责 ER 发射机构的控制程序设计等。",
             image: "/er.png",
             link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
-            tags: ["C++", "嵌入式", "机器人", "Python"]
+            tags: ["C++", "ROS", "嵌入式", "机器人", "Python"]
         },
         {
             title: "竞技编程 (算法竞赛)",
-            desc: "佛系参与。",
+            desc: "AtCoder 算法竞赛绿名、启发式竞赛青名；参加过 ICPC 2023 亚洲横滨赛区。",
             image: "/kyopro.avif",
             link: "https://atcoder.jp/users/Sakasu",
             tags: ["C++", "算法", "Python"]
@@ -108,9 +108,9 @@ export const projectData: Record<string, Project[]> = {
         },
         {
             title: "Web 开发作品集",
-            desc: "本网站。",
+            desc: "本网站：用 Astro 静态生成的三语站点，包含 Canvas 星空图、YouTube Music 歌单、8-bit 风景和小型优化演示。",
             image: "/css.avif",
-            link: "https://github.com/Mr-Sakasu/",
+            link: "https://github.com/Mr-Sakasu/portfolio",
             tags: ["Astro", "TypeScript", "Tailwind"]
         }
     ],
@@ -120,11 +120,11 @@ export const projectData: Record<string, Project[]> = {
             desc: "ER射出機構の制御プログラム設計など",
             image: "/er.png",
             link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
-            tags: ["C++", "組み込み", "Robotics", "Python"]
+            tags: ["C++", "ROS", "組み込み", "Robotics", "Python"]
         },
         {
             title: "競技プログラミング",
-            desc: "まったり参加",
+            desc: "AtCoder Algorithm 緑、Heuristic 水色。ICPC 2023 Asia Yokohama Regional 出場",
             image: "/kyopro.avif",
             link: "https://atcoder.jp/users/Sakasu",
             tags: ["C++", "Algorithms", "Python"]
@@ -156,9 +156,9 @@ export const projectData: Record<string, Project[]> = {
         },
         {
             title: "Web開発ポートフォリオ",
-            desc: "このサイト",
+            desc: "このサイト。Astroで静的生成した3言語対応サイトで、Canvasの星空、YouTube Musicプレイリスト、8bit風景、最適化デモを載せています",
             image: "/css.avif",
-            link: "https://github.com/Mr-Sakasu/",
+            link: "https://github.com/Mr-Sakasu/portfolio",
             tags: ["Astro", "TypeScript", "Tailwind"]
         }
     ]
