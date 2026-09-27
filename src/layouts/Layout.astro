@@ -71,6 +71,27 @@ const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
                     if (introEligible && !introPlayed && !stillMotion && !previewFrame) {
                         document.documentElement.classList.add('intro-active');
                     }
+
+                    // A client-side navigation swaps in the next page's <html>
+                    // attributes, and with them goes everything stamped above:
+                    // the theme fell back to dark and the `js` class vanished,
+                    // which left the skill ring lying flat after a language
+                    // switch. This script runs once, so the listener outlives
+                    // the page and stamps them back after every swap.
+                    document.addEventListener('astro:after-swap', () => {
+                        // Read again rather than reuse `theme`: the toggle may
+                        // have been pressed since this script ran.
+                        let current = 'dark';
+                        try {
+                            const stored = window.localStorage.getItem(storageKey);
+                            if (stored === 'dark' || stored === 'light') current = stored;
+                        } catch {
+                            current = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+                        }
+                        document.documentElement.dataset.theme = current;
+                        document.documentElement.style.colorScheme = current;
+                        document.documentElement.classList.add('js');
+                    });
                 })();
             </script>
 			<ClientRouter />
