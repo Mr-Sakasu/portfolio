@@ -31,9 +31,9 @@ html[data-theme='light'] {
   --site-bg-glow:
     radial-gradient(900px 620px at 85% -10%, rgba(59, 130, 246, 0.1), transparent 62%),
     radial-gradient(720px 520px at -12% 108%, rgba(14, 165, 233, 0.08), transparent 60%);
-  --site-text: #0f172a;
+  --site-text: #334155;
   --site-muted: #475569;
-  --site-subtle: #334155;
+  --site-subtle: #475569;
   --site-border: rgba(148, 163, 184, 0.48);
   --site-surface: rgba(255, 255, 255, 0.84);
   --site-surface-strong: rgba(255, 255, 255, 0.94);

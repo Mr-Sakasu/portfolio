@@ -217,7 +217,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         },
         {
             date: '2026-08',
-            title: 'LINEヤフー ソフトウェアエンジニアインターン',
+            title: 'LINEヤフー ソフトウェアエンジニアインターンシップ',
             desc: '地理データの分析',
             color: 'green',
             icon: '💼',

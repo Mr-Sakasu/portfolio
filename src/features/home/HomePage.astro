@@ -21,6 +21,12 @@ const projects = projectData[lang] || projectData['en'];
 const homePlaylist = selectPlaylists(lang, 'home')[0];
 const playlistTracks = sortTracks(homePlaylist?.tracks).slice(0, 3);
 const heroTitle = t['hero.title'];
+const schools = [
+    { src: '/logos/schools/gakugei-hs.webp', name: 'Tokyo Gakugei University Senior High School' },
+    { src: '/logos/schools/tuat-brand.png', name: 'Tokyo University of Agriculture and Technology' },
+    { src: '/logos/schools/science-tokyo.svg', name: 'Institute of Science Tokyo' },
+    { src: '/logos/schools/tsinghua.webp', name: 'Tsinghua University' },
+];
 ---
 
 <Layout title="Sakasu Portfolio" lang={lang} description={t['hero.subtitle']} wide>
@@ -75,11 +81,20 @@ const heroTitle = t['hero.title'];
                         </div>
                     </div>
 
+                    <div class="home-school-row">
+                        <ul class="home-school-list">
+                            {schools.map((school) => (
+                                <li class="home-school" title={school.name}>
+                                    <img src={school.src} alt={school.name} width="52" height="52" loading="lazy" decoding="async" />
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+
                     <div class="flex flex-wrap items-center justify-between gap-4 border-t border-white/10 pt-5">
                         <div class="flex flex-wrap gap-2" aria-label={t['home.focus.label']}>
                             <span class="home-tag">{t['home.focus.optimization']}</span>
                             <span class="home-tag">{t['home.focus.affective']}</span>
-                            <span class="home-tag">{t['home.focus.creative']}</span>
                         </div>
                         <a href="https://github.com/Mr-Sakasu/" target="_blank" rel="noopener" class="home-text-link">
                             <svg aria-hidden="true" viewBox="0 0 16 16" class="h-4 w-4" fill="currentColor">
@@ -102,7 +117,8 @@ const heroTitle = t['hero.title'];
                 naming another id from sceneOrder. */}
             <a href={`/${lang}/scenes/`} class="home-bento-card home-scenes-card group md:col-span-5" data-reveal style="--reveal-delay: 80ms;">
                 <iframe
-                    src={`/${lang}/scenes/?preview=1&scene=fuji`}
+                    data-src={`/${lang}/scenes/?preview=1&scene=fuji`}
+                    data-home-preview
                     title={`${t['scenes.page.title']} preview`}
                     loading="lazy"
                     tabindex="-1"
@@ -184,7 +200,8 @@ const heroTitle = t['hero.title'];
 
             <a href={`/${lang}/stars/`} class="home-bento-card home-stars-card group md:col-span-4" data-reveal style="--reveal-delay: 170ms;">
                 <iframe
-                    src={`/${lang}/stars/?preview=1`}
+                    data-src={`/${lang}/stars/?preview=1`}
+                    data-home-preview
                     title={`${t['stars.title']} preview`}
                     loading="lazy"
                     tabindex="-1"
@@ -404,6 +421,34 @@ const heroTitle = t['hero.title'];
         background: var(--site-card-bg);
     }
 
+    .home-school-row {
+        display: flex;
+    }
+
+    .home-school-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+    }
+
+    .home-school {
+        display: grid;
+        width: 3.25rem;
+        height: 3.25rem;
+        flex: none;
+        place-items: center;
+        padding: 0.25rem;
+        border: 1px solid rgba(191, 219, 254, 0.18);
+        border-radius: 0.55rem;
+        background: rgba(255, 255, 255, 0.7);
+    }
+
+    .home-school img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
     .home-name {
         max-width: 100%;
         font-size: clamp(1.85rem, 5vw, 3.35rem);
@@ -515,7 +560,7 @@ const heroTitle = t['hero.title'];
 
     .home-stars-card {
         min-height: 380px;
-        background: #080d19;
+        background: #080d19 url('/cards/stars.svg') center / cover no-repeat;
         border-left: 3px solid #60a5fa;
     }
 
@@ -541,7 +586,7 @@ const heroTitle = t['hero.title'];
         --photo-sky: 0.14;
         min-height: 220px;
         border-left: 3px solid #6ee7b7;
-        background: #0b1220;
+        background: radial-gradient(circle at 74% 26%, #8290ae 0, transparent 31%), linear-gradient(165deg, #14243e 3%, #22394e 49%, #17232d 100%);
     }
 
     .home-scenes-card iframe {
@@ -950,6 +995,16 @@ const heroTitle = t['hero.title'];
         box-shadow: none;
         backdrop-filter: none;
         -webkit-backdrop-filter: none;
+    }
+
+    :global(html[data-theme='light']) .home-skills-module :global(.skill-card) {
+        --site-surface-strong: #fff;
+        background: #fff;
+        border-color: rgba(71, 85, 105, 0.28);
+    }
+
+    :global(html[data-theme='light']) .home-skills-module :global(.skill-card:not(.is-front)) {
+        box-shadow: 0 16px 36px -24px rgba(15, 23, 42, 0.35);
     }
 
 

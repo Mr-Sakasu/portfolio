@@ -19,7 +19,6 @@ const t = getUi(lang);
     <a href={`/${lang}/#work`} class="project-detail__back">← {t['projects.back']}</a>
 
     <header class="project-detail__intro">
-      <p>{t['projects.overview']}</p>
       <h1 class="page-title">{project.title}</h1>
       <div class="project-detail__tags" aria-label={t['projects.tech']}>
         {project.tags.map((tag) => <span>{tag}</span>)}

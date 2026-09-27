@@ -53,24 +53,34 @@ const trackListClass = variant === 'page'
     : 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
   : 'divide-y divide-white/10';
 const jpopArtistChartConfig = [
-  { artist: 'Yorushika', playlistTitle: 'Liked: JPOP - Yorushika' },
-  { artist: 'Zutomayo', playlistTitle: 'Liked: JPOP - Zutomayo' },
-  { artist: 'YonezuKenshi', playlistTitle: 'Liked: JPOP - YonezuKenshi' },
+  { artist: 'ヨルシカ', playlistTitle: 'Liked: JPOP - Yorushika' },
+  { artist: 'ずとまよ', playlistTitle: 'Liked: JPOP - Zutomayo' },
+  { artist: '米津玄師', playlistTitle: 'Liked: JPOP - YonezuKenshi' },
   { artist: 'YOASOBI', playlistTitle: 'Liked: JPOP - YOASOBI' },
   { artist: 'Ado', playlistTitle: 'Liked: JPOP - Ado', auditFallbackCount: 15 },
   { artist: 'RADWIMPS', playlistTitle: 'Liked: JPOP - RADWIMPS', auditFallbackCount: 9 },
   { artist: 'SEKAI NO OWARI', playlistTitle: 'Liked: JPOP - SEKAI NO OWARI' },
   { artist: 'Orangestar', playlistTitle: 'Liked: JPOP - Orangestar' },
   { artist: 'Aqu3ra', playlistTitle: 'Liked: JPOP - Aqu3ra' },
-  { artist: 'Vocaloid', playlistTitle: 'Liked: JPOP - Vocaloid', auditFallbackCount: 25 },
   { artist: 'tuki.', playlistTitle: 'Liked: JPOP - tuki.', auditFallbackCount: 4 },
-  { artist: 'Sangatsu no Phantasia', playlistTitle: 'Liked: JPOP - Sangatsu no Phantasia', auditFallbackCount: 10 },
+  { artist: '三月のパンタシア', playlistTitle: 'Liked: JPOP - Sangatsu no Phantasia', auditFallbackCount: 10 },
   { artist: 'Mrs. GREEN APPLE', playlistTitle: 'Liked: JPOP - Mrs. GREEN APPLE', auditFallbackCount: 4 },
   { artist: 'Vaundy', playlistTitle: 'Liked: JPOP - Vaundy', auditFallbackCount: 2 },
-  { artist: 'Sakanaction', playlistTitle: 'Liked: JPOP - Sakanaction', auditFallbackCount: 4 },
+  { artist: 'サカナクション', playlistTitle: 'Liked: JPOP - Sakanaction', auditFallbackCount: 4 },
   { artist: 'yama', playlistTitle: 'Liked: JPOP - yama', auditFallbackCount: 3 },
   { artist: 'Reol', playlistTitle: 'Liked: JPOP - Reol', auditFallbackCount: 4 },
 ];
+const jpopPlaylistNames: Record<string, string> = {
+  'Liked: JPOP - Yorushika': 'ヨルシカ',
+  'Liked: JPOP - Zutomayo': 'ずとまよ',
+  'Liked: JPOP - YonezuKenshi': '米津玄師',
+  'Liked: JPOP - YOASOBI': 'YOASOBI',
+  'Liked: JPOP - Ado': 'Ado',
+  'Liked: JPOP - RADWIMPS': 'RADWIMPS',
+  'Liked: JPOP - SEKAI NO OWARI': 'SEKAI NO OWARI',
+  'Liked: JPOP - Orangestar': 'Orangestar',
+  'Liked: JPOP - Aqu3ra': 'Aqu3ra',
+};
 const englishArtistNameOverrides: Record<string, string> = {
   'AbbaVEVO': 'ABBA',
   'billyjoelVEVO': 'Billy Joel',
@@ -274,9 +284,6 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
             <h2 class="text-xl font-black leading-tight text-white sm:text-2xl">
               {t['playlist.artistChart.title']}
             </h2>
-            <p class="mt-2 max-w-2xl text-sm leading-relaxed text-gray-400">
-              {t['playlist.artistChart.subtitle']}
-            </p>
           </div>
           <div class="shrink-0 sm:text-right">
             <p class="text-[11px] font-semibold uppercase tracking-widest text-violet-100/65">
@@ -290,12 +297,17 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 
         {lang === 'ja' || lang === 'en' ? (
           <div class="mt-5 grid gap-5 lg:grid-cols-[minmax(14rem,19rem)_minmax(0,1fr)] lg:items-center">
-            <div
-              class="mx-auto aspect-square w-full max-w-72 rounded-full border border-white/10 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.95)]"
-              role="img"
-              aria-label={`${t['playlist.artistChart.title']}: ${artistChartSlices.map((item) => `${item.artist} ${formatTrackCount(item.count)}`).join(', ')}`}
-              style={`background: conic-gradient(${artistChartGradient});`}
-            ></div>
+            <div class="relative mx-auto aspect-square w-full max-w-72" data-artist-chart data-slices={JSON.stringify(artistChartSlices.map((item) => ({ artist: item.artist, percentage: formatPercentage(item.percentage), end: item.end })))}>
+              <div
+                class="artist-chart-disc h-full w-full rounded-full border border-white/10 shadow-[0_18px_45px_-24px_rgba(15,23,42,0.95)] outline-none focus-visible:ring-2 focus-visible:ring-violet-200"
+                role="img"
+                tabindex="0"
+                aria-label={`${t['playlist.artistChart.title']}: ${artistChartSlices.map((item) => `${item.artist} ${formatPercentage(item.percentage)}`).join(', ')}`}
+                style={`background: conic-gradient(${artistChartGradient});`}
+                data-artist-chart-disc
+              ></div>
+              <div class="artist-chart-tooltip pointer-events-none absolute z-10 hidden whitespace-nowrap rounded-md border px-3 py-2 text-sm font-semibold shadow-lg" data-artist-chart-tooltip aria-hidden="true"></div>
+            </div>
             <div class="max-h-96 space-y-2 overflow-y-auto overscroll-contain pr-1">
               {artistChartSlices.map((item) => (
                 <button
@@ -379,16 +391,11 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                 )}
                 <div class="min-w-0 flex-1">
                   <h3 class="text-lg font-black leading-tight text-white break-words group-hover:text-violet-100 sm:text-xl">
-                    {playlist.title || t['playlist.titleFallback']}
+                    {lang === 'ja' ? jpopPlaylistNames[playlist.title ?? ''] ?? playlist.title ?? t['playlist.titleFallback'] : playlist.title || t['playlist.titleFallback']}
                   </h3>
                   {playlist.metaItems.length > 0 && (
                     <p class="mt-1.5 text-[11px] uppercase tracking-widest text-violet-100/65 sm:mt-2 sm:text-xs">
                       {playlist.metaItems.join(' / ')}
-                    </p>
-                  )}
-                  {playlist.description && (
-                    <p class="mt-3 line-clamp-2 text-sm leading-relaxed text-gray-300">
-                      {playlist.description}
                     </p>
                   )}
                 </div>
@@ -488,11 +495,30 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 
 <script>
   import { initPlaylistPlayer } from './playlist-player';
+  import { initArtistCharts } from './artist-chart-client';
 
   initPlaylistPlayer();
+  initArtistCharts();
 </script>
 
 <style>
+  .artist-chart-tooltip {
+    background: #101827;
+    border-color: rgb(255 255 255 / 0.2);
+    color: #fff;
+  }
+
+  :global(html[data-theme='light']) .artist-chart-tooltip {
+    background: #fff;
+    border-color: rgb(15 23 42 / 0.18);
+    color: var(--site-text);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 0.18);
+  }
+
+  :global(html[data-theme='light']) .artist-chart-disc:focus-visible {
+    --tw-ring-color: #6d28d9;
+  }
+
   /* Playing, so the press that started it now stops it. */
   .playlist-icon--pause {
     display: none;

@@ -14,15 +14,9 @@ const t = getUi(lang);
 
 <Layout title={`${t['playlist.page.title']} | Sakasu Portfolio`} lang={lang} description={t['playlist.page.subtitle']}>
   <section class="py-10 md:py-14">
-    <p class="text-sm font-bold text-rose-300 uppercase tracking-widest">
-      {t['playlist.eyebrow']}
-    </p>
-    <h1 class="page-title mt-3">
+    <h1 class="page-title">
       {t['playlist.page.title']}
     </h1>
-    <p class="mt-4 max-w-2xl text-base md:text-lg leading-relaxed text-gray-300">
-      {t['playlist.page.subtitle']}
-    </p>
   </section>
 
   <Playlist lang={activeLang} variant="page" showHeading={false} />

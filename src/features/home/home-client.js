@@ -1,5 +1,34 @@
 const homeWindow = window;
 
+const initPreviews = () => {
+  homeWindow.__homePreviewObserver?.disconnect();
+  homeWindow.__homePreviewObserver = null;
+  const previews = document.querySelectorAll('iframe[data-home-preview]:not([src])');
+  if (!previews.length) return;
+
+  const loadPreview = (iframe) => {
+    if (!(iframe instanceof HTMLIFrameElement) || iframe.hasAttribute('src') || !iframe.dataset.src) return;
+    iframe.src = iframe.dataset.src;
+  };
+
+  if (!('IntersectionObserver' in window)) {
+    previews.forEach(loadPreview);
+    return;
+  }
+
+  // Native iframe lazy loading can start well before a card reaches the viewport.
+  // The preview pages each initialize a canvas, so keep them out of the first paint.
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      loadPreview(entry.target);
+      observer.unobserve(entry.target);
+    }
+  }, { rootMargin: '240px 0px' });
+  homeWindow.__homePreviewObserver = observer;
+  previews.forEach((iframe) => observer.observe(iframe));
+};
+
 const initProjectVideos = () => {
   const videos = Array.from(document.querySelectorAll('[data-project-video]'));
   if (!videos.length) return;
@@ -29,11 +58,7 @@ const initProjectVideos = () => {
     }, { rootMargin: '200px 0px', threshold: 0.2 });
     homeWindow.__projectVideoObserver = observer;
 
-    videos.forEach((video) => {
-      if (video.dataset.projectVideoBound === 'true') return;
-      video.dataset.projectVideoBound = 'true';
-      observer.observe(video);
-    });
+    videos.forEach((video) => observer.observe(video));
     return;
   }
 
@@ -125,15 +150,22 @@ const runHeroTypewriter = () => {
 };
 
 export const initHomePage = () => {
+  initPreviews();
   initProjectVideos();
   runHeroTypewriter();
 
   if (!homeWindow.__homePageHooksAttached) {
     document.addEventListener('astro:page-load', () => {
+      initPreviews();
       initProjectVideos();
       runHeroTypewriter();
     });
-    document.addEventListener('astro:before-swap', clearHeroTypewriterTimers);
+    document.addEventListener('astro:before-swap', () => {
+      homeWindow.__homePreviewObserver?.disconnect();
+      homeWindow.__homePreviewObserver = null;
+      homeWindow.__projectVideoObserver?.disconnect();
+      clearHeroTypewriterTimers();
+    });
     homeWindow.__homePageHooksAttached = true;
   }
 };
