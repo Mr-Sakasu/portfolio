@@ -62,6 +62,19 @@ npm run playlist:update
 
 公開サイトが参照するのは `src/data/` 以下の生成済みデータだけです。
 
+## OGP 画像の更新
+
+リンクプレビュー用の `public/og.png` は `public/scenes/profile.webp` から生成しています。絵を差し替えたら再生成してください。
+
+```bash
+node scripts/cards/render-og-image.mjs
+```
+
+## SEO まわり
+
+- `astro.config.mjs` の `site` を基準に canonical / hreflang / OGP の絶対 URL を出力
+- `src/pages/sitemap.xml.ts` が全ページ分の sitemap を生成（`public/robots.txt` から参照）
+
 ## ディレクトリ構成
 
 ```text
