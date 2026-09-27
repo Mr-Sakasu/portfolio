@@ -40,7 +40,7 @@ const demos = [
 ];
 ---
 
-<Layout title={`${t['playground.title']} | Sakasu Portfolio`} lang={lang} description={t['playground.subtitle']}>
+<Layout title={`${t['playground.title']} | Sakasu Portfolio`} lang={lang} description={t['playground.subtitle']} wide>
   <section class="playground">
     <header class="playground__intro" data-reveal>
       <h1>{t['playground.title']}</h1>
@@ -88,6 +88,9 @@ const demos = [
     color: var(--site-subtle);
   }
 
+  /* The cards grow with the screen: three across from lg, each as tall as the
+     home page's picture cards, rather than three thumbnails in a reading
+     column. */
   .playground__grid {
     display: grid;
     grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -117,13 +120,22 @@ const demos = [
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    display: block;
-    padding: 1.6rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: clamp(15rem, 26vw, 22rem);
+    padding: clamp(1.4rem, 2vw, 2rem);
     border-left: 3px solid var(--card-accent);
     color: inherit;
     text-decoration: none;
     --photo-foot: 0.9;
     --photo-sky: 0.58;
+  }
+
+  /* The eyebrow at the head, the title and summary at the foot, the way the
+     same cards sit on the home page. */
+  .playground-card__eyebrow {
+    margin-bottom: auto;
   }
 
   /* How busy each picture is decides how far back it has to sit. */
@@ -207,16 +219,17 @@ const demos = [
   }
 
   .playground-card h2 {
-    margin-top: 0.7rem;
-    font-size: 1.5rem;
+    margin-top: 1.5rem;
+    font-size: clamp(1.5rem, 2.3vw, 2.15rem);
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.15;
     color: var(--site-text);
   }
 
   .playground-card__summary {
     margin-top: 0.6rem;
-    font-size: 0.9rem;
+    max-width: 24rem;
+    font-size: clamp(0.9rem, 1.1vw, 1rem);
     line-height: 1.65;
     color: var(--site-subtle);
   }
