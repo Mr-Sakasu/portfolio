@@ -21,7 +21,7 @@ export const projectData: Record<string, Project[]> = {
     en: [
         {
             title: "NHK Student Robocon",
-            desc: "Designed control program for ER injection mechanism, etc.",
+            desc: "Runner-up at NHK Student Robocon. Designed control program for ER injection mechanism, etc.",
             image: "/er.png",
             link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
             tags: ["C++", "ROS", "Embedded", "Robotics", "Python"]
@@ -69,7 +69,7 @@ export const projectData: Record<string, Project[]> = {
     zh: [
         {
             title: "NHK 学生机器人大赛",
-            desc: "负责 ER 发射机构的控制程序设计等。",
+            desc: "NHK 学生机器人大赛亚军。负责 ER 发射机构的控制程序设计等。",
             image: "/er.png",
             link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
             tags: ["C++", "ROS", "嵌入式", "机器人", "Python"]
@@ -117,7 +117,7 @@ export const projectData: Record<string, Project[]> = {
     ja: [
         {
             title: "NHK学生ロボコン",
-            desc: "ER射出機構の制御プログラム設計など",
+            desc: "NHK学生ロボコン 準優勝。ER射出機構の制御プログラム設計など",
             image: "/er.png",
             link: "https://www.tuat.ac.jp/NEWS/activity/20230713_01.html",
             tags: ["C++", "ROS", "組み込み", "Robotics", "Python"]
