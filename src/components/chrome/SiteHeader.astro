@@ -28,7 +28,7 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
           side by side, and without this the controls ran off the right edge
           and gave the whole page a horizontal scroll. */}
       <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-blue-400 transition-colors whitespace-nowrap">
+        <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-[var(--site-accent)] transition-colors whitespace-nowrap">
           Sakasu's note<span class="site-brand__dot" aria-hidden="true">.</span>
         </a>
         <div class="ml-auto flex items-center gap-2 shrink-0">
@@ -58,24 +58,19 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
           onto a second rather than being clipped with the scrollbar hidden. */}
       <nav aria-label="Top navigation" class="w-full min-w-0">
         <div class="site-nav-scroll flex items-center gap-1.5 overflow-x-auto pb-1 md:flex-wrap md:justify-center md:overflow-visible md:pb-0">
-          <a href={`/${lang}/#work`} class={`${navBaseClass} ${isHomePage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+          <a href={`/${lang}/#work`} class={`${navBaseClass} ${isHomePage ? 'site-nav-active' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.work']}
           </a>
-          <a href={`/${lang}/scenes/`} class={`${navBaseClass} ${isScenesPage ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+          <a href={`/${lang}/scenes/`} class={`${navBaseClass} ${isScenesPage ? 'site-nav-active' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.scenes']}
           </a>
-          <a href={`/${lang}/playlist/`} class={`${navBaseClass} ${isPlaylistPage ? 'border-violet-400/60 bg-violet-500/15 text-violet-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+          <a href={`/${lang}/playlist/`} class={`${navBaseClass} ${isPlaylistPage ? 'site-nav-active' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.playlist']}
           </a>
-          {/* Lit in the same blue as the projects anchor above: on the home page
-              both point at a section of the page you are already on, and giving
-              this one a slate pill of its own made it read as a different kind
-              of thing — and left it invisible on the light theme, which has no
-              override for slate text. */}
-          <a href={`/${lang}/#timeline`} class={`${navBaseClass} ${isHomePage ? 'border-blue-400/60 bg-blue-500/15 text-blue-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+          <a href={`/${lang}/#timeline`} class={`${navBaseClass} ${isHomePage ? 'site-nav-active' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.timeline']}
           </a>
-          <a href={`/${lang}/playground/`} class={`${navBaseClass} ${isPlaygroundPage ? 'border-cyan-400/60 bg-cyan-500/15 text-cyan-300' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
+          <a href={`/${lang}/playground/`} class={`${navBaseClass} ${isPlaygroundPage ? 'site-nav-active' : 'border-transparent text-gray-400 hover:text-white hover:bg-white/[0.06]'}`}>
             {t['nav.playground']}
           </a>
         </div>
@@ -85,6 +80,12 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
 </header>
 
 <style>
+  .site-nav-active {
+    border-color: var(--site-card-border-hover);
+    background: rgba(var(--site-accent-rgb), 0.1);
+    color: var(--site-accent);
+  }
+
   .site-nav-scroll {
     -ms-overflow-style: none;
     scrollbar-width: none;

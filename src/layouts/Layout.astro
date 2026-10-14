@@ -32,14 +32,14 @@ const ogImage = `${siteOrigin}/og.png`;
 ---
 
 <!DOCTYPE html>
-<html lang={lang} class="scroll-smooth bg-[#0a0e17]" data-intro-eligible={introEligible ? 'true' : undefined}>
+<html lang={lang} class="scroll-smooth bg-[#181410]" data-intro-eligible={introEligible ? 'true' : undefined}>
 		<head>
 			<meta charset="UTF-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<meta name="description" content={pageDescription} />
 			<title>{title}</title>
 			<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-			<meta name="theme-color" content="#0a0e17" />
+			<meta name="theme-color" content="#181410" />
 			<link rel="canonical" href={canonicalUrl} />
 			{alternates.map((alternate) => (
 				<link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
@@ -81,7 +81,7 @@ const ogImage = `${siteOrigin}/og.png`;
 
                     let introPlayed = true;
                     try {
-                        introPlayed = window.sessionStorage.getItem('portfolio-intro-played') === '1';
+                        introPlayed = window.sessionStorage.getItem('portfolio-autumn-intro-played') === '1';
                     } catch (error) {
                         introPlayed = false;
                     }
@@ -289,20 +289,20 @@ const ogImage = `${siteOrigin}/og.png`;
     }
 
     ::selection {
-        background: rgba(56, 189, 248, 0.32);
+        background: rgba(var(--site-accent-rgb), 0.3);
     }
 
     html[data-theme='light'] ::selection {
-        background: rgba(37, 99, 235, 0.2);
+        background: rgba(var(--site-accent-rgb), 0.2);
     }
 
     :focus-visible {
-        outline: 2px solid rgba(56, 189, 248, 0.7);
+        outline: 2px solid var(--site-accent);
         outline-offset: 2px;
     }
 
     html[data-theme='light'] :focus-visible {
-        outline-color: rgba(37, 99, 235, 0.7);
+        outline-color: var(--site-accent);
     }
 
     /* Scroll reveal: elements with [data-reveal] float in when they enter the viewport. */
@@ -378,7 +378,7 @@ const ogImage = `${siteOrigin}/og.png`;
     }
 
     .site-brand__dot {
-        background: linear-gradient(120deg, #3b82f6, #22d3ee);
+        background: linear-gradient(120deg, #bc6545, #e6bc77);
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -506,9 +506,9 @@ const ogImage = `${siteOrigin}/og.png`;
     }
 
     .lang-picker a.is-active {
-        background: linear-gradient(120deg, #2563eb, #0891b2);
+        background: linear-gradient(120deg, #9c4f2f, #805a2f);
         color: #fff;
-        box-shadow: 0 6px 16px -8px rgba(37, 99, 235, 0.7);
+        box-shadow: 0 6px 16px -8px rgba(156, 79, 47, 0.5);
     }
 
     .lang-picker a.is-active:hover {
@@ -553,7 +553,7 @@ const ogImage = `${siteOrigin}/og.png`;
        that. Off is now the state that asks to be noticed: full strength, and
        a light travelling slowly round the rim to catch the eye on a page that
        is otherwise still. It stops the moment the music is on — by then the
-       button has been found, and the cyan says the rest. */
+       button has been found, and the amber says the rest. */
     .bgm-toggle {
         position: relative;
     }

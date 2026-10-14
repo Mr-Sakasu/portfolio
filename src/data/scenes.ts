@@ -20,7 +20,7 @@ export interface SceneLandmark {
         | 'pearl' | 'twist' | 'opener' | 'stepped'
         | 'boc' | 'crown' | 'pyramid' | 'slab' | 'spire'
         | 'skytree' | 'tokyotower' | 'fuji'
-        | 'canopy' | 'statue' | 'hall' | 'wall' | 'sakura'
+        | 'canopy' | 'statue' | 'hall' | 'wall' | 'sakura' | 'maple'
         | 'junk' | 'ferry' | 'promenade' | 'billboard'
         | 'sail' | 'jinwan' | 'jiefang' | 'clock'
         | 'peak' | 'ifc' | 'center' | 'convention'
@@ -59,7 +59,7 @@ export interface ScenePixels {
     /** Named buildings drawn on top of the generic skyline. */
     landmarks?: SceneLandmark[];
     water?: { y: number; colors: string[]; shimmer: string; reflect: number };
-    weather?: 'fireflies' | 'petals';
+    weather?: 'fireflies' | 'petals' | 'leaves';
     /** Deterministic terrain seed. */
     seed: number;
 }
@@ -254,41 +254,27 @@ export const scenePixels: Record<string, ScenePixels> = {
         seed: 33,
     },
     fuji: {
-        // Composed after the mountain in spring, from the hills an hour west of
-        // the city: the cone over a hazy ridge, cedar along the valley, and a
-        // bank of cherry close enough to shed petals across the frame.
-        sky: ['#3f88cc', '#6fa9dc', '#a5cbe9', '#cfe2f2', '#f0e2e2'],
-        haze: { color: '#f2e0e4', y: 0.62, strength: 0.6 },
-        clouds: { count: 6, color: '#ffffff', shade: '#a8bcd8', y: 0.18, spread: 0.16 },
+        // Clear autumn air, a snowy summit, and red maple in the foreground.
+        sky: ['#537fa3', '#80a2b9', '#b5c5cc', '#ded9cc', '#eddbc1'],
+        haze: { color: '#eddbc1', y: 0.62, strength: 0.6 },
+        clouds: { count: 6, color: '#fff7e7', shade: '#bcc6cc', y: 0.18, spread: 0.16 },
         layers: [
-            { kind: 'hills', y: 0.68, amp: 0.06, color: '#7e88ac', haze: 0.6 },
-            { kind: 'trees', y: 0.75, amp: 0.05, color: '#4a6152', haze: 0.4 },
-            { kind: 'trees', y: 0.88, amp: 0.09, color: '#3c5545', accent: '#f7c9dc', bloom: 0.05 },
-            { kind: 'trees', y: 1.1, amp: 0.34, color: '#584250', accent: '#ffc3d8', bloom: 0.22 },
+            { kind: 'hills', y: 0.68, amp: 0.06, color: '#8b8c91', haze: 0.6 },
+            { kind: 'trees', y: 0.75, amp: 0.05, color: '#666646', haze: 0.4 },
+            { kind: 'trees', y: 0.88, amp: 0.09, color: '#805735', accent: '#d6a048', bloom: 0.18 },
+            { kind: 'trees', y: 1.1, amp: 0.34, color: '#673e2d', accent: '#cf6d36', bloom: 0.3 },
         ],
         landmarks: [
             {
-                kind: 'fuji',
-                x: 0.5,
-                base: 0.72,
-                h: 0.46,
-                w: 2,
-                body: '#7c86b8',
-                light: '#fff4e4',
-                accent: '#f2f4fb',
-                behind: true,
+                kind: 'fuji', x: 0.5, base: 0.72, h: 0.46, w: 2,
+                body: '#7c899e', light: '#fff4e4', accent: '#f2f4fb', behind: true,
             },
             {
-                kind: 'sakura',
-                x: 0.16,
-                base: 1.14,
-                h: 0.92,
-                body: '#4a3340',
-                light: '#7a5a66',
-                accent: '#ffb8d2',
+                kind: 'maple', x: 0.16, base: 1.14, h: 0.92,
+                body: '#51372b', light: '#8d6541', accent: '#bd4e2c',
             },
         ],
-        weather: 'petals',
+        weather: 'leaves',
         seed: 24,
     },
     victoria: {

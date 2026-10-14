@@ -1,263 +1,57 @@
 ---
 import Background from '../components/chrome/Background.astro';
+import '../styles/tokens.css';
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="bg-[#111] h-full overflow-hidden">
-<head>
+<html lang="en">
+  <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="description" content="Redirecting you to the best-matched language page for Sakasu Portfolio." />
-    <title>Initializing...</title>
-</head>
-<body class="h-full m-0 flex flex-col items-center justify-center text-white relative">
-
-    <!-- Still sky: the one shell below is the whole show, so the background
-         keeps its colour but launches nothing of its own. -->
-    <Background scene="none" />
-
-    <canvas id="entry-firework" class="pointer-events-none fixed inset-0 z-10 h-full w-full"></canvas>
-
-    <script>
-        function toRouteLang(langTag) {
-            const tag = String(langTag || '').toLowerCase();
-            if (tag.startsWith('ja') || tag.startsWith('jp')) return 'ja';
-            if (tag.startsWith('zh')) return 'zh';
-            if (tag.startsWith('en')) return 'en';
-            return '';
-        }
-
-        function detectPreferredLang() {
-            const preferred = Array.isArray(navigator.languages) && navigator.languages.length
-                ? navigator.languages
-                : [navigator.language];
-
-            for (const langTag of preferred) {
-                const mapped = toRouteLang(langTag);
-                if (mapped) return mapped;
-            }
-
-            return 'en';
-        }
-
-        const targetUrl = `/${detectPreferredLang()}/`;
-        const stillMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        // This splash is the first thing a visitor sees, so the burst belongs
-        // here. Claiming the flag stops the landing page from firing its own
-        // intro a moment later and showing two firework displays in a row.
-        if (!stillMotion) {
-            try {
-                window.sessionStorage.setItem('portfolio-intro-played', '1');
-            } catch (error) {
-                /* private mode: the landing page plays its intro instead */
-            }
-        }
-
-        // .replace() rather than .href so Back does not strand the visitor here.
-        const leave = () => window.location.replace(targetUrl);
-
-        const canvas = document.getElementById('entry-firework');
-        const context = !stillMotion && canvas ? canvas.getContext('2d') : null;
-
-        if (!context) {
-            setTimeout(leave, stillMotion ? 300 : 1200);
-        } else {
-            let width = 0;
-            let height = 0;
-            const resize = () => {
-                const ratio = Math.min(window.devicePixelRatio || 1, 2);
-                width = window.innerWidth;
-                height = window.innerHeight;
-                canvas.width = Math.floor(width * ratio);
-                canvas.height = Math.floor(height * ratio);
-                context.setTransform(ratio, 0, 0, ratio, 0, 0);
-            };
-            resize();
-            window.addEventListener('resize', resize, { passive: true });
-
-            // A 八重芯冠菊: a chrysanthemum with a second core inside it, under
-            // a gold crown that keeps falling after the rest has gone out. What
-            // makes a shell read as Japanese is its geometry more than its
-            // colour — every star leaves the burst at the same speed, so it
-            // opens as a sphere rather than a spray; a layer holds one colour
-            // instead of confetti; and the stars go out together, the 消え口 a
-            // shell is judged on.
-            const SKY_RGB = '10, 14, 23'; // the sky the rest of the site sits on
-            canvas.style.background = `rgb(${SKY_RGB})`;
-
-            const RISE_MS = 1300;   // the climb
-            const HANG_MS = 3700;   // and the flower: five seconds of sky
-            const DRAG_TAU = 820;   // ms for the air to take a star's speed away
-            const TRAIL_TAU = 190;  // and to rub its streak off the sky
-            const FLASH_MS = 280;
-            // Big enough to fill the sky: held off the height so the sphere
-            // clears the top and bottom, and off the width only loosely, so on
-            // a phone it spills past the sides the way a shell overhead does.
-            const REACH = Math.min(width * 0.72, height * 0.44);
-            const SINK = REACH * 1.05e-4; // the speed the air lets a star fall at
-            const PACE = REACH / DRAG_TAU; // opening speed of the outer petals
-            const GOLDEN = Math.PI * (3 - Math.sqrt(5));
-
-            // `turn` is the point in a star's burn where its colour changes:
-            // the flash leaves everything white-hot, and it settles from there.
-            const CORE = { count: 110, pace: 0.42, life: 2500, vary: 60, size: 2,
-                turn: 0.88, from: '#eaf2ff', to: '#47cba2' };   // 芯
-            const PETAL = { count: 300, pace: 1, life: 2500, vary: 60, size: 2.2,
-                turn: 0.88, from: '#eaf2ff', to: '#8fa8ff' };   // 花弁
-            const CROWN = { count: 110, pace: 0.72, life: 3350, vary: 130, size: 2.1,
-                turn: 0.55, from: '#ffe9b0', to: '#f0a63c' };   // 冠
-            // 昇り曲導 — what the shell sheds on the way up.
-            const RISER = { life: 420, vary: 140, size: 1.3,
-                turn: 0.5, from: '#fff4d6', to: '#e0912f' };
-
-            const stars = [];
-            // Burst near the middle of the screen: a sphere this wide needs the
-            // room above it.
-            const targetY = height * 0.46;
-            const startY = height + 10;
-            // Solve the launch for a fixed climb instead of a fixed gravity, so
-            // the burst lands on time on a phone and on a tall desktop alike:
-            // d = g t^2 / 2 at the peak, where v = g t.
-            const climb = (2 * (startY - targetY)) / (RISE_MS * RISE_MS);
-            const shell = {
-                x: width / 2,
-                y: startY,
-                vy: -climb * RISE_MS,
-                done: false,
-            };
-            let burstAt = 0;
-
-            // Whatever the animation does, the visitor must still get through.
-            const bailout = setTimeout(leave, RISE_MS + HANG_MS + 1600);
-            const depart = () => {
-                clearTimeout(bailout);
-                leave();
-            };
-
-            const burst = () => {
-                burstAt = performance.now();
-                [CORE, PETAL, CROWN].forEach((layer) => {
-                    for (let index = 0; index < layer.count; index += 1) {
-                        // Fibonacci points over a sphere, flattened to the
-                        // screen. Stars aimed at or away from us barely move
-                        // sideways, so the rim comes out denser than the middle
-                        // — which is how a real burst reads.
-                        const depth = 1 - (2 * index + 1) / layer.count;
-                        const ring = Math.sqrt(Math.max(1 - depth * depth, 0));
-                        const angle = index * GOLDEN;
-                        // Near-identical speeds: a sphere stays a sphere.
-                        const speed = PACE * layer.pace * (0.97 + Math.random() * 0.06);
-                        stars.push({
-                            x: shell.x,
-                            y: shell.y,
-                            vx: Math.cos(angle) * ring * speed,
-                            vy: Math.sin(angle) * ring * speed,
-                            age: 0,
-                            span: layer.life + (Math.random() * 2 - 1) * layer.vary,
-                            depth,
-                            layer,
-                        });
-                    }
-                });
-                // The page swaps in on the dark sky the shell leaves behind.
-                setTimeout(depart, HANG_MS);
-            };
-
-            let previous = performance.now();
-            const frame = (now) => {
-                const delta = Math.min(now - previous, 48);
-                previous = now;
-
-                // Trails come from fading the sky rather than wiping it: a star
-                // leaves the streak it does in a photograph, for one rectangle
-                // a frame. Both fades are written against the clock, not the
-                // frame, so a 120Hz screen shows the same firework as a 60Hz one.
-                context.globalCompositeOperation = 'source-over';
-                context.globalAlpha = 1;
-                context.fillStyle = `rgba(${SKY_RGB}, ${1 - Math.exp(-delta / TRAIL_TAU)})`;
-                context.fillRect(0, 0, width, height);
-                context.globalCompositeOperation = 'lighter';
-
-                if (!shell.done) {
-                    shell.vy += climb * delta;
-                    shell.y += shell.vy * delta;
-                    if (Math.random() < 0.55) {
-                        stars.push({
-                            x: shell.x + (Math.random() - 0.5) * 3,
-                            y: shell.y,
-                            vx: (Math.random() - 0.5) * 0.012,
-                            vy: 0.008 + Math.random() * 0.018,
-                            age: 0,
-                            span: RISER.life + (Math.random() * 2 - 1) * RISER.vary,
-                            depth: 0,
-                            layer: RISER,
-                        });
-                    }
-                    // A lifted shell burns unevenly on the way up.
-                    context.globalAlpha = 0.6 + Math.random() * 0.4;
-                    context.fillStyle = '#fff6e0';
-                    context.beginPath();
-                    context.arc(shell.x, shell.y, 2.2, 0, Math.PI * 2);
-                    context.fill();
-                    if (shell.y <= targetY || shell.vy >= 0) {
-                        shell.done = true;
-                        burst();
-                    }
-                }
-
-                if (burstAt) {
-                    // 割火薬 — the flash that opens the shell.
-                    const spent = (now - burstAt) / FLASH_MS;
-                    if (spent < 1) {
-                        const radius = REACH * (0.15 + 0.65 * spent);
-                        const glow = context.createRadialGradient(
-                            shell.x, shell.y, 0, shell.x, shell.y, radius);
-                        glow.addColorStop(0, `rgba(255, 252, 240, ${1 - spent})`);
-                        glow.addColorStop(1, 'rgba(255, 252, 240, 0)');
-                        context.globalAlpha = 1;
-                        context.fillStyle = glow;
-                        context.beginPath();
-                        context.arc(shell.x, shell.y, radius, 0, Math.PI * 2);
-                        context.fill();
-                    }
-                }
-
-                const drag = Math.exp(-delta / DRAG_TAU);
-                for (let index = stars.length - 1; index >= 0; index -= 1) {
-                    const star = stars[index];
-                    star.age += delta;
-                    const left = 1 - star.age / star.span;
-                    if (left <= 0) {
-                        stars.splice(index, 1);
-                        continue;
-                    }
-
-                    star.vx *= drag;
-                    // Damped fall: the air caps how fast a star can sink, which
-                    // is why a crown drifts down instead of dropping.
-                    star.vy = star.vy * drag + SINK * (1 - drag);
-                    star.x += star.vx * delta;
-                    star.y += star.vy * delta;
-
-                    // Held at full brightness and then dropped, so a layer whose
-                    // stars share a lifetime goes dark all at once.
-                    const near = 0.72 + 0.28 * (star.depth + 1) / 2;
-                    context.globalAlpha = (left > 0.14 ? 1 : left / 0.14) * near;
-                    context.fillStyle = left > star.layer.turn ? star.layer.from : star.layer.to;
-                    context.beginPath();
-                    context.arc(star.x, star.y, star.layer.size * near, 0, Math.PI * 2);
-                    context.fill();
-                }
-
-                context.globalAlpha = 1;
-                context.globalCompositeOperation = 'source-over';
-                requestAnimationFrame(frame);
-            };
-
-            requestAnimationFrame(frame);
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Sakasu Portfolio — research, projects, and small discoveries." />
+    <meta name="theme-color" content="#181410" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>Sakasu's note — Autumn</title>
+    <script is:inline>
+      try {
+        document.documentElement.dataset.theme = localStorage.getItem('portfolio-theme') === 'light' ? 'light' : 'dark';
+      } catch { /* Use the default dark palette. */ }
     </script>
-
-</body>
+  </head>
+  <body>
+    <Background />
+    <main class="entry">
+      <p class="entry-season">秋 / AUTUMN</p>
+      <h1>Sakasu's note<span>.</span></h1>
+      <nav aria-label="Choose your language">
+        <a href="/ja/" lang="ja">日本語</a>
+        <a href="/en/" lang="en">English</a>
+        <a href="/zh/" lang="zh">中文</a>
+      </nav>
+    </main>
+    <script>
+      const preferred = navigator.languages?.length ? navigator.languages : [navigator.language];
+      const language = preferred.map((tag) => tag.toLowerCase().split('-')[0])
+        .map((tag) => tag === 'jp' ? 'ja' : tag).find((tag) => ['ja', 'zh', 'en'].includes(tag)) || 'en';
+      let played = false;
+      try {
+        played = sessionStorage.getItem('portfolio-autumn-intro-played') === '1';
+        sessionStorage.setItem('portfolio-autumn-intro-played', '1');
+      } catch { /* Language links also work without browser storage. */ }
+      const stillMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      setTimeout(() => location.replace(`/${language}/`), played || stillMotion ? 0 : 1100);
+    </script>
+  </body>
 </html>
+
+<style>
+  :global(html), body { margin: 0; min-height: 100%; background: var(--site-bg); color: var(--site-text); }
+  .entry { position: relative; z-index: 1; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: ui-sans-serif, system-ui, sans-serif; }
+  .entry-season { color: var(--site-accent); font-size: 0.7rem; letter-spacing: 0.26em; }
+  h1 { margin: 0.6rem 0 2rem; font-size: clamp(2rem, 7vw, 3rem); letter-spacing: -0.05em; }
+  h1 span { color: var(--site-accent); }
+  nav { display: flex; gap: 1.5rem; }
+  a { color: var(--site-muted); font-size: 0.8rem; text-decoration: none; }
+  a:hover { color: var(--site-accent); }
+  a:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 5px; }
+</style>

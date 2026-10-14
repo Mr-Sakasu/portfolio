@@ -1469,14 +1469,14 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               put(cx + dx, y, c);
             }
           }
-        } else if (lm.kind === 'sakura') {
+        } else if (lm.kind === 'sakura' || lm.kind === 'maple') {
           // A cherry standing right at the viewer: the trunk runs out of the
           // bottom of the frame, the limbs reach across the sky, and the
           // blossom is dense enough to read as mass. Near dark wood against
           // the far pale mountain — the whole reason to stand on this side.
           const petalHex = lm.accent ?? '#ffb8d2';
           const petal = word(petalHex);
-          const petalLit = word(mix(petalHex, '#ffffff', 0.5));
+          const petalLit = word(mix(petalHex, lm.kind === 'maple' ? '#f2b44f' : '#ffffff', 0.5));
           const petalDeep = word(mix(petalHex, lm.body, 0.45));
           // This tree is the near end of the picture and the mountain is the
           // far end, so it has to read as close: big enough that the frame
@@ -2459,10 +2459,10 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
         particles = [];
         if (spec.weather) {
           const pr = rng(spec.seed * 3 + 1);
-          const petals = spec.weather === 'petals';
+          const falling = spec.weather === 'petals' || spec.weather === 'leaves';
           // Counted off the area rather than fixed, so a wide frame is not left
           // half empty and a phone is not buried.
-          const count = petals ? Math.round((width * rows) / 250) : 26;
+          const count = falling ? Math.round((width * rows) / (spec.weather === 'leaves' ? 600 : 250)) : 26;
           for (let i = 0; i < count; i += 1) {
             // How near the petal is falling. The close ones drop faster, keep
             // their colour and turn broadside wider; the far ones sink slowly
@@ -2472,9 +2472,9 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
             particles.push({
               x: pr() * width,
               // Fireflies keep to the grass; petals are already falling.
-              y: petals ? pr() * rows : rows * (0.72 + pr() * 0.26),
+              y: falling ? pr() * rows : rows * (0.72 + pr() * 0.26),
               phase: pr() * Math.PI * 2,
-              fall: petals ? 0.26 + depth * 0.95 : 0.4 + pr() * 0.7,
+              fall: falling ? 0.26 + depth * 0.95 : 0.4 + pr() * 0.7,
               // Each one turns over at its own rate, or they flutter in step.
               sway: 1.3 + depth * 0.9,
               tone: pr(),
@@ -2712,7 +2712,7 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
           }
         }
 
-        if (spec.weather === 'petals') {
+        if (spec.weather === 'petals' || spec.weather === 'leaves') {
           // Blossom coming off the bank: each petal sinks at its own pace and
           // tips from side to side as it turns over, then starts again above
           // the frame a little further along.
@@ -2726,8 +2726,9 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
               }
               if (p.x > width) p.x -= width;
             }
-            ctx.fillStyle =
-              p.depth < 0.3
+            ctx.fillStyle = spec.weather === 'leaves'
+              ? (p.tone < 0.35 ? '#e1ad52' : p.tone < 0.7 ? '#c66a37' : '#a9472e')
+              : p.depth < 0.3
                 ? p.tone < 0.5
                   ? '#f4dcea'
                   : '#e2c0d6'

@@ -6,6 +6,12 @@
 - 公開 URL: <https://portfolio-five-blond-32.vercel.app>
 - 種別: 多言語ポートフォリオ / インタラクティブ静的サイト
 
+## 季節バージョン
+
+- `summer-fireworks`: 花火の夏版を保存したブランチ（`ea4d819`）。
+- `autumn`: 紅葉・銀杏が舞う秋版。ダークは深い茶色、ライトは生成り色を基調にしています。
+- 背景と初回演出は `src/components/chrome/autumn-scene.ts`、配色は `src/styles/tokens.css` で調整できます。端末の「視差効果を減らす」設定では背景を静止表示し、初回演出を省略します。
+
 ## 主な機能
 
 - **多言語ページ**: English, Chinese, Japanese の 3 言語に対応

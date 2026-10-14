@@ -30,7 +30,19 @@ const schools = [
 
 <Layout title="Sakasu Portfolio" lang={lang} description={t['hero.subtitle']} wide>
 
-    <section class="home-bento-section pt-5 md:pt-8">
+    <div class="home-season" aria-label={lang === 'ja' ? '秋バージョン' : lang === 'zh' ? '秋日版本' : 'Autumn edition'}>
+        <span class="home-season__label">
+            <svg viewBox="-20 -28 40 48" aria-hidden="true" width="20" height="24">
+                <path fill="currentColor" d="M0 10 L-4 5 L-12 7 L-10 1 L-17 -3 L-11 -6 L-13 -13 L-5 -10 L-4 -17 L0 -25 L4 -17 L5 -10 L13 -13 L11 -6 L17 -3 L10 1 L12 7 L4 5 Z" />
+                <path d="M0 8 L0 18" stroke="currentColor" fill="none" />
+            </svg>
+            秋 / AUTUMN
+        </span>
+        <span class="home-season__line" aria-hidden="true"></span>
+        <span class="home-season__note">{lang === 'ja' ? '紅葉と、ひと息。' : lang === 'zh' ? '秋叶之间，片刻闲适。' : 'A moment among the leaves.'}</span>
+    </div>
+
+    <section class="home-bento-section">
         <div class="home-bento-grid">
             <section class="home-bento-card home-profile-card md:col-span-7" data-reveal>
                 <div class="relative z-10 flex h-full flex-col justify-between gap-9 p-6 sm:p-8 md:p-9">
@@ -349,7 +361,7 @@ const schools = [
     </section>
 
     {/* Open sky: an empty stretch before the footer where nothing sits on top
-        of the background, so the fireworks can be watched on their own. */}
+        of the background, so the autumn leaves can be watched on their own. */}
     <div class="h-[70vh] min-h-72" aria-hidden="true"></div>
 
 </Layout>
@@ -374,6 +386,29 @@ const schools = [
 </style>
 
 <style>
+    .home-season {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.1rem 0 1.6rem;
+        color: var(--site-accent);
+    }
+    .home-season__label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.6rem;
+        flex-shrink: 0;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.18em;
+    }
+    .home-season__line { height: 1px; flex: 1; background: var(--site-card-border); }
+    .home-season__note { color: var(--site-muted); font-size: 0.7rem; letter-spacing: 0.04em; }
+    @media (max-width: 380px) {
+        .home-season { gap: 0.6rem; }
+        .home-season__note { font-size: 0.62rem; letter-spacing: 0; }
+    }
+
     /* The three sections under the bento, the same distance apart. */
     .home-section {
         margin-top: clamp(4rem, 8vw, 6rem);
@@ -418,7 +453,7 @@ const schools = [
     .home-profile-card {
         min-height: 380px;
         container-type: inline-size;
-        border-left: 3px solid #60a5fa;
+        border-left: 3px solid var(--site-accent);
         background: var(--site-card-bg);
     }
 
@@ -501,7 +536,7 @@ const schools = [
         right: 1.5rem;
         width: 3.5rem;
         height: 1px;
-        background: #6ee7b7;
+        background: var(--site-accent);
         content: '';
     }
 
@@ -509,7 +544,7 @@ const schools = [
         display: inline-flex;
         align-items: center;
         gap: 0.5rem;
-        color: rgba(191, 219, 254, 0.8);
+        color: var(--site-accent);
         font-size: 0.62rem;
         font-weight: 700;
         letter-spacing: 0.14em;
@@ -553,7 +588,7 @@ const schools = [
         display: inline-flex;
         padding: 2px;
         border-radius: 50%;
-        background: #60a5fa;
+        background: var(--site-accent);
         box-shadow: none;
     }
 
@@ -588,7 +623,7 @@ const schools = [
     .home-stars-card {
         min-height: 380px;
         background: #080d19 url('/cards/stars.svg') center / cover no-repeat;
-        border-left: 3px solid #60a5fa;
+        border-left: 3px solid var(--site-accent);
     }
 
     .home-stars-card iframe {
@@ -1050,11 +1085,11 @@ const schools = [
     }
 
     :global(html[data-theme='light']) .home-text-link {
-        color: #1d4ed8;
+        color: var(--site-accent);
     }
 
     :global(html[data-theme='light']) .home-eyebrow {
-        color: #1e3a8a;
+        color: var(--site-accent);
     }
 
     :global(html[data-theme='light']) .home-eyebrow--violet {
