@@ -141,7 +141,7 @@ export const skillStack: SkillStackItem[] = [
         name: 'ROS',
         category: 'frameworks',
         icon: '/icons/skills/ros.svg',
-        level: 1,
+        level: 2,
         summary: {
             en: 'Robot middleware; used with C++ for robotics control.',
             zh: '机器人中间件；与 C++ 一起用于机器人控制。',
