@@ -40,6 +40,14 @@ const { lang } = Astro.props;
   details[open] .journal-skill-toggle { transform: rotate(45deg); }
   details p { margin-top: 0.7rem; font-size: 1rem; line-height: 1.9; color: var(--site-muted); }
   ul { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: 0.7rem 0; color: var(--site-accent); font-size: 0.875rem; }
-  @media (max-width: 640px) { .journal-skills__group { grid-template-columns: minmax(0, 1fr); gap: 1rem; } .journal-skills__items { gap: 0.8rem 1.5rem; } }
-  @media (max-width: 560px) { .journal-skills__items { grid-template-columns: minmax(0, 1fr); gap: 0.8rem; } }
+  @media (max-width: 767px) {
+    .journal-skills__group { padding: 1.1rem 0; }
+    h3 { line-height: 1.6; }
+    summary { padding: 0.3rem 0; }
+    .journal-skill-info { gap: 0.15rem; }
+    details p { margin-top: 0.45rem; line-height: 1.65; }
+    ul { margin: 0.45rem 0; }
+  }
+  @media (max-width: 640px) { .journal-skills__group { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; } .journal-skills__items { gap: 0.35rem 1.5rem; } }
+  @media (max-width: 560px) { .journal-skills__items { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; } }
 </style>

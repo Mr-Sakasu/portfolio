@@ -70,7 +70,7 @@ const experiments = [
             {project.video ? (
               <video muted loop playsinline preload="none" poster={project.poster} data-src={project.video} data-project-video aria-label={`${project.title} demo`}></video>
             ) : project.image === '/er.png' ? (
-              <Image src={erProjectImage} alt={project.title} format="webp" widths={[280, 480]} sizes="(max-width: 640px) 50vw, 240px" loading="lazy" />
+              <Image src={erProjectImage} alt={project.title} format="webp" widths={[300, 600]} sizes="(max-width: 767px) 300px, 230px" loading="lazy" />
             ) : <img src={project.image} alt={project.title} loading="lazy" decoding="async" />}
           </div>
         </a>
@@ -188,23 +188,35 @@ const experiments = [
   .journal-experiment-list a > span:last-child { color: var(--site-accent); }
   .journal-ending { height: 200px; display: grid; place-items: center; color: var(--site-accent); font-size: 2rem; opacity: 0.65; }
   @media (max-width: 767px) {
-    .journal-hero { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 1.75rem; padding: 2.25rem 0 2.75rem; text-align: center; }
+    .journal-hero { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 1.25rem; padding: 1.5rem 0 1.75rem; text-align: center; }
     .journal-hero__text { min-width: 0; width: 100%; }
-    .journal-hero h1 { margin: 0.5rem 0 1.25rem; font-size: clamp(2.75rem, 14vw, 3.5rem); }
-    .journal-hero__bio { max-width: 32ch; margin-inline: auto; text-wrap: balance; }
-    .journal-hero__links { justify-content: center; margin-top: 1.25rem; }
-    .journal-profile { display: grid; justify-items: center; gap: 0.75rem; }
+    .journal-hero h1 { margin: 0.25rem 0 0.85rem; font-size: clamp(2.75rem, 14vw, 3.5rem); }
+    .journal-hero__bio { max-width: 32ch; margin-inline: auto; line-height: 1.65; text-wrap: balance; }
+    .journal-hero__links { justify-content: center; row-gap: 0.5rem; margin-top: 0.85rem; }
+    .journal-profile { display: grid; justify-items: center; gap: 0.5rem; }
+    .journal-profile p { line-height: 1.6; }
     .journal-avatar { width: 88px; height: 88px; }
     .journal-schools { margin: 0; gap: 0.75rem; }
     .journal-schools img { width: 32px; height: 32px; }
-    .journal-project { grid-template-columns: 1.2rem minmax(0, 1fr) 170px; gap: 1rem; }
+    .journal-landscape figcaption { padding: 0.6rem 0; }
+    .journal-section { margin-top: 2.75rem; }
+    .journal-section-heading { padding-bottom: 0.85rem; }
+    .journal-count { bottom: 1rem; }
+    .journal-project { grid-template-columns: 1.25rem minmax(0, 1fr); gap: 0.75rem 0.8rem; padding: 1.25rem 0; }
+    .journal-project h3 { line-height: 1.4; }
+    .journal-project__body > p { margin-top: 0.45rem; line-height: 1.65; }
+    .journal-tags { gap: 0.25rem 0.75rem; margin-top: 0.6rem; }
+    .journal-project__media { grid-column: 1 / -1; justify-self: center; width: min(100%, 300px); margin-top: 0.15rem; }
     .journal-detours { gap: 2rem; }
+    .journal-tracks { margin-top: 0.65rem; }
+    .journal-tracks li { padding: 0.7rem 0; }
+    .journal-more { margin-top: 0.9rem; }
+    .journal-experiment-list { margin-top: 0.4rem; }
+    .journal-experiment-list a { padding: 0.85rem 0; }
+    .journal-ending { height: 100px; }
   }
   @media (max-width: 560px) {
-    .journal-project { grid-template-columns: 1.25rem minmax(0, 1fr); gap: 0.8rem; padding: 1.6rem 0; }
-    .journal-project__media { grid-column: 2; width: 160px; margin-top: 0.5rem; }
-    .journal-count { position: static; display: block; margin-top: 0.7rem; }
-    .journal-detours { grid-template-columns: minmax(0, 1fr); gap: 3rem; }
+    .journal-detours { grid-template-columns: minmax(0, 1fr); gap: 2.25rem; }
   }
   @media (prefers-reduced-motion: reduce) { .journal-project:hover .journal-project__media :is(img, video) { transform: none; } }
 </style>
