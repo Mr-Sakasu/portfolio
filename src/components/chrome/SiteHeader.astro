@@ -15,7 +15,7 @@ const isScenesPage = Astro.url.pathname.includes('/scenes');
    playground, so the entry stays lit while the visitor is inside one. */
 const isPlaygroundPage = ['/playground', '/stars', '/bandit', '/hanoi', '/globe']
   .some((path) => Astro.url.pathname.includes(path));
-const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs md:text-sm font-medium transition-colors';
+const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors';
 ---
 
 <header class="site-header sticky top-0 z-40 w-full">
@@ -27,11 +27,11 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
       {/* The row wraps: at 360px the brand and the three controls do not fit
           side by side, and without this the controls ran off the right edge
           and gave the whole page a horizontal scroll. */}
-      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <div class="site-header-row flex flex-wrap items-center justify-between gap-x-2 gap-y-2">
         <a href={`/${lang}/`} class="site-brand font-display text-lg md:text-xl font-bold tracking-tight hover:text-[var(--site-accent)] transition-colors whitespace-nowrap">
           Sakasu's note<span class="site-brand__dot" aria-hidden="true">.</span>
         </a>
-        <div class="ml-auto flex items-center gap-2 shrink-0">
+        <div class="site-header-controls ml-auto flex items-center gap-2 shrink-0">
           <LanguagePicker />
           <button type="button" data-theme-toggle class="theme-toggle" aria-label={t['theme.toggle']} title={t['theme.toggle']}>
             <span class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true">☾</span>
@@ -160,5 +160,10 @@ const navBaseClass = 'shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1
       -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
       mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
     }
+  }
+
+  @media (max-width: 374px) {
+    .site-header-row { justify-content: center; }
+    .site-header-controls { margin-left: 0; }
   }
 </style>

@@ -30,15 +30,16 @@ const { lang } = Astro.props;
 </div>
 <style>
   .journal-skills__group { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 2rem; padding: 1.7rem 0; border-bottom: 1px solid var(--site-card-border); }
-  h3 { color: var(--site-accent); font-size: 0.75rem; font-weight: 500; line-height: 1.9; }
+  h3 { color: var(--site-accent); font-size: 1rem; font-weight: 500; line-height: 1.9; }
   .journal-skills__items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem 2rem; align-items: start; }
-  summary { display: flex; align-items: center; gap: 0.7rem; cursor: pointer; list-style: none; font-size: 0.8rem; padding: 0.2rem 0; }
+  summary { display: flex; align-items: center; gap: 0.7rem; cursor: pointer; list-style: none; font-size: 1rem; min-height: 44px; padding: 0.4rem 0; }
   summary::-webkit-details-marker { display: none; }
   summary img { flex-shrink: 0; padding: 2px; background: #fffaf2; border-radius: 2px; width: 22px; height: 22px; }
-  .journal-skill-info { display: grid; gap: 0.3rem; min-width: 0; }
+  .journal-skill-info { display: grid; gap: 0.3rem; min-width: 0; overflow-wrap: anywhere; }
   .journal-skill-toggle { margin-left: auto; color: var(--site-accent); transition: transform 160ms ease; }
   details[open] .journal-skill-toggle { transform: rotate(45deg); }
-  details p { margin-top: 0.7rem; font-size: 0.72rem; line-height: 1.9; color: var(--site-muted); }
-  ul { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: 0.7rem 0; color: var(--site-accent); font-size: 0.6rem; }
+  details p { margin-top: 0.7rem; font-size: 1rem; line-height: 1.9; color: var(--site-muted); }
+  ul { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: 0.7rem 0; color: var(--site-accent); font-size: 0.875rem; }
   @media (max-width: 640px) { .journal-skills__group { grid-template-columns: minmax(0, 1fr); gap: 1rem; } .journal-skills__items { gap: 0.8rem 1.5rem; } }
+  @media (max-width: 560px) { .journal-skills__items { grid-template-columns: minmax(0, 1fr); gap: 0.8rem; } }
 </style>

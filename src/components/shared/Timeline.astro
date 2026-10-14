@@ -132,11 +132,11 @@ const toneByColor = {
         backdrop-filter: none;
     }
     .timeline--journal .timeline-date { grid-column: 1; grid-row: 1 / span 3; margin: 0; }
-    .timeline--journal .timeline-date > span { border: 0; background: transparent !important; padding: 0; color: var(--site-accent) !important; font-size: 0.72rem; }
-    .timeline--journal .timeline-title { grid-column: 2; flex-direction: row; font-size: 1rem; font-weight: 500; }
-    .timeline--journal .timeline-entry > p:not(.timeline-date) { grid-column: 2; color: var(--site-muted); font-size: 0.8rem; line-height: 1.9; }
-    .timeline--journal .timeline-tags { grid-column: 2; justify-content: flex-start; }
-    .timeline--journal .timeline-tag { border: 0; padding: 0; background: transparent; color: var(--site-subtle); }
+    .timeline--journal .timeline-date > span { border: 0; background: transparent !important; padding: 0; color: var(--site-accent) !important; font-size: 0.875rem; }
+    .timeline--journal .timeline-title { grid-column: 2; flex-direction: row; font-size: 1.125rem; font-weight: 500; }
+    .timeline--journal .timeline-entry > p:not(.timeline-date) { grid-column: 2; color: var(--site-muted); font-size: 1rem; line-height: 1.9; }
+    .timeline--journal .timeline-tags { grid-column: 2; justify-content: flex-start; gap: 0.5rem 0.9rem; }
+    .timeline--journal .timeline-tag { border: 0; padding: 0; background: transparent; color: var(--site-subtle); font-size: 0.875rem; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
     @media (max-width: 560px) {
         .timeline--journal .timeline-entry { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
         .timeline--journal .timeline-date { grid-column: 1; grid-row: auto; }

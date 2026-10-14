@@ -497,7 +497,7 @@ const ogImage = `${siteOrigin}/og.png`;
     .lang-picker a {
         border-radius: 9999px;
         padding: 0.3rem 0.7rem;
-        font-size: 0.72rem;
+        font-size: 0.8125rem;
         font-weight: 600;
         letter-spacing: 0.04em;
         color: var(--site-muted);
@@ -506,6 +506,10 @@ const ogImage = `${siteOrigin}/og.png`;
 
     .lang-picker a:hover {
         color: var(--site-text);
+    }
+
+    @media (max-width: 767px) {
+        .lang-picker a { padding-inline: 0.5rem; }
     }
 
     .lang-picker a.is-active {
