@@ -2,6 +2,10 @@
   "name": "my-portfolio",
   "type": "module",
   "version": "0.0.1",
+  "engines": {
+    "node": "24.x",
+    "npm": ">=9.6.5"
+  },
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -11,14 +15,15 @@
     "playlist:update": ".venv/bin/python scripts/playlist/update_ytmusic_playlists.py"
   },
   "dependencies": {
-    "@astrojs/tailwind": "^6.0.2",
-    "astro": "^5.16.1",
+    "astro": "^7.3.8",
     "astronomy-engine": "^2.1.19",
     "globe.gl": "^2.46.1",
     "katex": "^0.16.28",
-    "tailwindcss": "^3.4.18"
+    "tailwindcss": "^3.4.19"
   },
   "devDependencies": {
-    "@tailwindcss/typography": "^0.5.19"
+    "@tailwindcss/typography": "^0.5.19",
+    "autoprefixer": "^10.6.1",
+    "baseline-browser-mapping": "^2.11.28"
   }
 }

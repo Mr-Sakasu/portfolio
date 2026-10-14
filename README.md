@@ -51,17 +51,20 @@ export const siteAppearance: SiteAppearance = {
 
 ## 技術スタック
 
-- Astro 5
+- Astro 7
 - TypeScript / JavaScript
-- Tailwind CSS
+- Tailwind CSS 3（PostCSS 経由）
 - `astronomy-engine`
 - YouTube Music / YouTube Data API
 - Python によるプレイリストデータ生成
 
 ## 開発
 
+Node.js 24 LTS を推奨します（`.nvmrc` は 24.21.0）。Astro 7 の実行には Node.js 22.12 以上が必要です。nvm を使う場合は、初回に `nvm install`、以降は `nvm use` で切り替えてください。Vercel のビルド環境も Node.js 24.x に揃えます。
+
 ```bash
-npm install
+nvm use
+npm ci
 npm run dev
 ```
 
@@ -70,6 +73,13 @@ npm run dev
 ```bash
 npm run build
 npm run preview
+```
+
+ブラウザー互換性データの更新警告が出た場合は、次のコマンドで依存関係とロックファイルを更新します。
+
+```bash
+npm install -D baseline-browser-mapping@latest
+npx update-browserslist-db@latest
 ```
 
 ## プレイリストデータの更新
