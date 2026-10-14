@@ -2737,14 +2737,15 @@ const names = sceneNames[activeLang] ?? sceneNames.en;
                   : p.tone < 0.72
                     ? '#ffcadd'
                     : '#f6a8c4';
-            // Edge-on for most of the turn, broadside at the ends of it, and
-            // only the nearest are big enough to show a second row.
+            // Edge-on for most of the turn, broadside at the ends of it.
+            // Larger autumn leaves remain visible in the small home preview.
             const broadside = Math.cos(t * p.sway + p.phase) > 0.55;
+            const size = spec.weather === 'leaves' ? 1.5 : 1;
             ctx.fillRect(
               Math.round(p.x),
               Math.round(p.y),
-              broadside && p.depth > 0.3 ? 2 : 1,
-              broadside && p.depth > 0.78 ? 2 : 1,
+              Math.round((broadside && p.depth > 0.3 ? 2 : 1) * size),
+              Math.round((broadside && p.depth > 0.78 ? 2 : 1) * size),
             );
           }
         } else {
