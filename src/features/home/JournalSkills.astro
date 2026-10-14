@@ -41,9 +41,10 @@ const { lang } = Astro.props;
   details p { margin-top: 0.7rem; font-size: 1rem; line-height: 1.9; color: var(--site-muted); }
   ul { display: flex; flex-wrap: wrap; gap: 0.4rem 0.8rem; margin: 0.7rem 0; color: var(--site-accent); font-size: 0.875rem; }
   @media (max-width: 767px) {
-    .journal-skills__group { padding: 1.1rem 0; }
+    .journal-skills__group { padding: 1.1rem 0.75rem; }
     h3 { line-height: 1.4; }
     summary { padding: 0.3rem 0; line-height: 1.35; }
+    summary img { width: 32px; height: 32px; }
     .journal-skill-info { gap: 0.15rem; }
     details p { margin-top: 0.3rem; line-height: 1.45; }
     ul { margin: 0.3rem 0; line-height: 1.4; }
