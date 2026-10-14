@@ -150,6 +150,15 @@ const experiments = [
   }
   .journal a { transition: color 180ms ease; }
   .journal a:hover { color: var(--site-accent); }
+  .journal :global(:is(h1, h2, h3)),
+  .journal-hero__bio {
+    text-shadow:
+      1px 0 0 var(--site-bg),
+      -1px 0 0 var(--site-bg),
+      0 1px 0 var(--site-bg),
+      0 -1px 0 var(--site-bg),
+      0 0 5px var(--site-bg);
+  }
   .journal-hero { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; align-items: center; gap: 1.5rem; padding: 2rem 0 2.5rem; text-align: center; }
   .journal-hero__text { min-width: 0; width: 100%; }
   .journal-hero h1 { margin: 0.5rem 0 1rem; font-family: Georgia, 'Times New Roman', serif; font-weight: 400; font-size: clamp(3.2rem, 6.6vw, 5.7rem); letter-spacing: -0.055em; line-height: 1.05; }
@@ -202,9 +211,9 @@ const experiments = [
   @media (max-width: 767px) {
     .journal::before {
       inset: -1rem;
-      background: color-mix(in srgb, var(--site-surface) 35%, transparent);
-      -webkit-backdrop-filter: blur(1px);
-      backdrop-filter: blur(1px);
+      background: color-mix(in srgb, var(--site-surface) 15%, transparent);
+      -webkit-backdrop-filter: blur(0.75px);
+      backdrop-filter: blur(0.75px);
     }
     .journal-hero { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 1.25rem; padding: 1.5rem 0 1.75rem; text-align: center; }
     .journal-hero__text { min-width: 0; width: 100%; }
