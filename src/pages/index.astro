@@ -24,11 +24,7 @@ import { siteAppearance, paletteDetails } from '../config/appearance';
     <Background />
     <main class="entry">
       <h1>Sakasu's note<span>.</span></h1>
-      <nav aria-label="Choose your language">
-        <a href="/ja/" lang="ja">日本語</a>
-        <a href="/en/" lang="en">English</a>
-        <a href="/zh/" lang="zh">中文</a>
-      </nav>
+      <noscript><a href="/en/">Enter →</a></noscript>
     </main>
     <script>
       import { introStorageKey, siteAppearance } from '../config/appearance';
@@ -39,7 +35,7 @@ import { siteAppearance, paletteDetails } from '../config/appearance';
       try {
         played = sessionStorage.getItem(introStorageKey) === '1';
         sessionStorage.setItem(introStorageKey, '1');
-      } catch { /* Language links also work without browser storage. */ }
+      } catch { /* Continue without session storage. */ }
       const stillMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
       setTimeout(() => location.replace(`/${language}/`), played || stillMotion || !siteAppearance.intro || siteAppearance.background === 'none' ? 0 : 1100);
     </script>
@@ -48,11 +44,10 @@ import { siteAppearance, paletteDetails } from '../config/appearance';
 
 <style>
   :global(html), body { margin: 0; min-height: 100%; background: var(--site-bg); color: var(--site-text); }
-  .entry { position: relative; z-index: 1; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: ui-sans-serif, system-ui, sans-serif; }
-  h1 { margin: 0.6rem 0 2rem; font-size: clamp(2rem, 7vw, 3rem); letter-spacing: -0.05em; }
+  .entry { position: relative; z-index: 1; min-height: 100svh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; font-family: ui-sans-serif, system-ui, sans-serif; }
+  h1 { margin: 0; font-size: clamp(2rem, 7vw, 3rem); letter-spacing: -0.05em; }
   h1 span { color: var(--site-accent); }
-  nav { display: flex; gap: 1.5rem; }
-  a { color: var(--site-muted); font-size: 0.8rem; text-decoration: none; }
+  a { color: var(--site-muted); font-size: 1rem; text-decoration: none; }
   a:hover { color: var(--site-accent); }
   a:focus-visible { outline: 2px solid var(--site-accent); outline-offset: 5px; }
 </style>
