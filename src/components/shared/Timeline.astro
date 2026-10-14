@@ -138,12 +138,14 @@ const toneByColor = {
     .timeline--journal .timeline-tags { grid-column: 2; justify-content: flex-start; gap: 0.5rem 0.9rem; }
     .timeline--journal .timeline-tag { border: 0; padding: 0; background: transparent; color: var(--site-subtle); font-size: 0.875rem; line-height: 1.5; white-space: normal; overflow-wrap: anywhere; }
     @media (max-width: 767px) {
-        .timeline--journal .timeline-entry { padding: 1.1rem 0; }
-        .timeline--journal .timeline-entry > p:not(.timeline-date) { line-height: 1.65; }
-        .timeline--journal .timeline-tags { margin-top: 0.45rem; gap: 0.3rem 0.9rem; }
+        .timeline--journal .timeline-entry { padding: 1rem 0.75rem; }
+        .timeline--journal .timeline-title { line-height: 1.3; }
+        .timeline--journal .timeline-entry > p:not(.timeline-date) { line-height: 1.45; }
+        .timeline--journal .timeline-tags { margin-top: 0.3rem; gap: 0.15rem 0.9rem; }
+        .timeline--journal .timeline-tag { line-height: 1.4; }
     }
     @media (max-width: 560px) {
-        .timeline--journal .timeline-entry { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
+        .timeline--journal .timeline-entry { grid-template-columns: minmax(0, 1fr); gap: 0.3rem; }
         .timeline--journal .timeline-date { grid-column: 1; grid-row: auto; }
         .timeline--journal .timeline-entry > p:not(.timeline-date),
         .timeline--journal .timeline-tags { margin-top: 0; }
