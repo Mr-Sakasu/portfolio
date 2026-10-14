@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 :root {
+  font-size: 112.5%;
   color-scheme: dark;
   --site-bg: #181410;
   --site-bg-glow:
