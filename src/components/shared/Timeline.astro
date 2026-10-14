@@ -1,7 +1,7 @@
 ---
 import { CURRENT_MONTH_TOKEN, timelineData } from '../../data/timeline';
 
-const { lang } = Astro.props;
+const { lang, variant = 'default' } = Astro.props;
 const events = timelineData[lang] || timelineData['en'];
 
 const toneByColor = {
@@ -38,8 +38,8 @@ const toneByColor = {
 } as const;
 ---
 
-<div class="relative overflow-hidden px-1 py-2 md:px-3 md:py-6">
-    <div aria-hidden="true" class="pointer-events-none absolute left-[1.375rem] md:left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-slate-300/85 to-transparent"></div>
+<div class:list={["timeline relative overflow-hidden px-1 py-2 md:px-3 md:py-6", { "timeline--journal": variant === "journal" }]}>
+    <div aria-hidden="true" class="timeline-stem pointer-events-none absolute left-[1.375rem] md:left-1/2 -translate-x-1/2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-slate-300/85 to-transparent"></div>
 
     {events.map((event, index) => {
         const isLeft = index % 2 === 0;
@@ -53,16 +53,16 @@ const toneByColor = {
                     auto-flowed onto a second row — grid never fills backwards
                     — dropping every left-hand card the height of its own dot
                     below the line it belongs to. */}
-                <div class="relative grid grid-cols-[2.25rem_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] items-start">
-                    <div class="relative row-start-1 col-start-1 md:col-start-2 flex justify-center pt-2">
+                <div class="timeline-grid relative grid grid-cols-[2.25rem_minmax(0,1fr)] md:grid-cols-[minmax(0,1fr)_3rem_minmax(0,1fr)] items-start">
+                    <div class="timeline-marker relative row-start-1 col-start-1 md:col-start-2 flex justify-center pt-2">
                         <span class="z-10 grid h-8 w-8 place-items-center rounded-full border border-slate-600/80 bg-[#0f131d]">
                             <span class={`h-2.5 w-2.5 rounded-full ${tone.dot}`}></span>
                         </span>
                     </div>
 
-                    <div class={`row-start-1 col-start-2 ${isLeft ? 'md:col-start-1 md:pr-6 md:text-right' : 'md:col-start-3 md:pl-6 md:text-left'}`}>
-                        <div class={`${isCurrent ? 'timeline-card--current ' : ''}rounded-xl border bg-[#111722]/80 backdrop-blur-md px-4 py-3 md:px-5 md:py-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] transition-colors duration-300 ${tone.card}`}>
-                            <p class="mb-2">
+                    <div class={`timeline-body row-start-1 col-start-2 ${isLeft ? 'md:col-start-1 md:pr-6 md:text-right' : 'md:col-start-3 md:pl-6 md:text-left'}`}>
+                        <div class={`timeline-entry ${isCurrent ? 'timeline-card--current ' : ''}rounded-xl border bg-[#111722]/80 backdrop-blur-md px-4 py-3 md:px-5 md:py-4 shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)] transition-colors duration-300 ${tone.card}`}>
+                            <p class="timeline-date mb-2">
                                 <span class={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide ${tone.badge}`}>
                                     {event.date === CURRENT_MONTH_TOKEN ? (
                                         <time data-current-month aria-label="Current month"></time>
@@ -113,6 +113,38 @@ const toneByColor = {
 </script>
 
 <style>
+    .timeline--journal { padding: 0; overflow: visible; }
+    .timeline--journal .timeline-stem,
+    .timeline--journal .timeline-marker { display: none; }
+    .timeline--journal .timeline-item { margin: 0; }
+    .timeline--journal .timeline-grid { display: block; }
+    .timeline--journal .timeline-body { padding: 0; text-align: left; }
+    .timeline--journal .timeline-entry {
+        display: grid;
+        grid-template-columns: 8rem minmax(0, 1fr);
+        column-gap: 2rem;
+        padding: 1.7rem 0;
+        border: 0;
+        border-bottom: 1px solid var(--site-card-border);
+        border-radius: 0;
+        background: transparent !important;
+        box-shadow: none;
+        backdrop-filter: none;
+    }
+    .timeline--journal .timeline-date { grid-column: 1; grid-row: 1 / span 3; margin: 0; }
+    .timeline--journal .timeline-date > span { border: 0; background: transparent !important; padding: 0; color: var(--site-accent) !important; font-size: 0.72rem; }
+    .timeline--journal .timeline-title { grid-column: 2; flex-direction: row; font-size: 1rem; font-weight: 500; }
+    .timeline--journal .timeline-entry > p:not(.timeline-date) { grid-column: 2; color: var(--site-muted); font-size: 0.8rem; line-height: 1.9; }
+    .timeline--journal .timeline-tags { grid-column: 2; justify-content: flex-start; }
+    .timeline--journal .timeline-tag { border: 0; padding: 0; background: transparent; color: var(--site-subtle); }
+    @media (max-width: 560px) {
+        .timeline--journal .timeline-entry { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+        .timeline--journal .timeline-date { grid-column: 1; grid-row: auto; }
+        .timeline--journal .timeline-title,
+        .timeline--journal .timeline-entry > p:not(.timeline-date),
+        .timeline--journal .timeline-tags { grid-column: 1; }
+    }
+
     /* The same chip the project cards wear, so a tag reads as the same kind of
        thing on either side of the page. */
     .timeline-title {

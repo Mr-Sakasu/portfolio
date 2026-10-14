@@ -1,0 +1,397 @@
+// Summer fireworks retained from the summer-fireworks branch.
+export const createFireworksScene = (canvas, ctx) => {
+    // Real shells climb quickly, then their stars hang in the sky. Keeping
+    // separate clocks avoids the slow-motion launch that made the effect feel
+    // artificial while retaining a measured, cinematic fall after the burst.
+    const SHELL_MOTION_SCALE = 0.94;
+    const SPARK_MOTION_SCALE = 0.68;
+    const EFFECT_MOTION_SCALE = 0.74;
+    const GRAVITY = 0.055;      // px per frame squared, for the climbing shell
+    // Stars fall far more slowly than the shell rises. Real ones are hundreds of
+    // metres away, so they drift down rather than drop; at the shell's gravity
+    // a burst rained straight out of frame.
+    const STAR_GRAVITY = 0.023;
+    const DRAG = 0.992;         // spark velocity retained per frame — high enough
+                                // that sparks stay streaks instead of collapsing
+                                // to stationary dots after a few frames
+    const DEFAULT_FRAME_DRAG = Math.pow(DRAG, SPARK_MOTION_SCALE);
+    const GOLD_FRAME_DRAG = Math.pow(0.997, SPARK_MOTION_SCALE);
+    const SPARK_CAP = 680;      // enough density for full traditional blooms,
+                                // while still bounding overlapping shells
+    const GOLD_HUE = 44;        // the colour 冠菊 settles into
+    // Restrained 和色-like firework hues: beni red, amber/gold, green, indigo,
+    // blue and violet. Small variation is added per star inside burst().
+    const TRADITIONAL_HUES = [4, 24, 43, 52, 138, 202, 220, 270, 318];
+    const pickTraditionalHue = () => TRADITIONAL_HUES[Math.floor(Math.random() * TRADITIONAL_HUES.length)];
+    const shells = [];
+    const sparks = [];
+    const flashes = [];
+    const pending = [];         // bursts scheduled for a later frame (小割浮模様)
+    let framesToLaunch = 0;     // first shell goes up immediately
+    let tick = 0;
+    let motionTime = 0;
+    let launches = 0;
+
+    // Over the cap, drop the stars nearest death rather than the oldest: a 冠菊
+    // is old by design, and culling from the front would delete the very thing
+    // it exists to show — the gold curtain hanging after everything else is out.
+    const trimSparks = () => {
+      while (sparks.length > SPARK_CAP) {
+        let weakest = 0;
+        for (let i = 1; i < sparks.length; i++) {
+          if (sparks[i].life < sparks[weakest].life) weakest = i;
+        }
+        sparks.splice(weakest, 1);
+      }
+    };
+
+    // Reduced motion keeps the fireworks but takes the energy out of them:
+    // smaller bursts, longer gaps. Suppressing them entirely would only send
+    // the visitor to the other scene, which drifts and animates too.
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // On the light theme the sky is near-white: bright sparks disappear, so the
+    // hues go darker and more saturated and the white-hot core is dropped.
+    const lightStyle = { light: 42, sat: 90, glow: 8, glowAlpha: 0.1, alpha: 0.8, core: false, additive: false };
+    const darkStyle = { light: 64, sat: 100, glow: 12, glowAlpha: 0.16, alpha: 0.92, core: true, additive: true };
+
+    // The shells Nagaoka is known for. 菊 is the everyday one; the rest appear
+    // often enough to be recognised and rarely enough to stay an event.
+    const pickShellType = () => {
+      // launches has already been incremented for this shell, so the first one
+      // is 1, not 0.
+      if (launches === 1) return 'kiku';        // declare the scene on arrival
+      const roll = Math.random();
+      if (!calm && roll < 0.07) return 'sanjaku';  // 正三尺玉
+      if (roll < 0.37) return 'kamuro';            // 冠菊 / 黄金すだれ
+      if (roll < 0.52) return 'senrin';            // 彩色千輪
+      return 'kiku';
+    };
+
+    const addShell = (x, apexFraction, type, hue) => {
+      const apexY = canvas.height * apexFraction;
+      const rise = Math.max(canvas.height - apexY, 40);
+      const y = canvas.height + 8;
+      shells.push({
+        x,
+        y,
+        trail: [x, y, x, y, x, y],
+        vx: (Math.random() - 0.5) * 0.9,
+        vy: -Math.sqrt(2 * GRAVITY * rise),
+        hue,
+        type,
+      });
+    };
+
+    const launch = () => {
+      launches += 1;
+
+      // 復興祈願花火フェニックス: shells strung across the whole width at once,
+      // opening low and wide instead of one high sphere.
+      if (!calm && launches > 1 && Math.random() < 0.04) {
+        const count = 5 + Math.floor(Math.random() * 3);
+        const hue = pickTraditionalHue();
+        for (let i = 0; i < count; i++) {
+          const x = canvas.width * (0.08 + (0.84 * i) / (count - 1));
+          // Staggered apexes so the line reads as a wing rather than a fence.
+          const apex = 0.34 + Math.abs(i - (count - 1) / 2) * 0.045;
+          addShell(x, apex, 'phoenix', (hue + i * 14) % 360);
+        }
+        return;
+      }
+
+      addShell(
+        canvas.width * (0.12 + Math.random() * 0.76),
+        0.14 + Math.random() * 0.3,
+        pickShellType(),
+        pickTraditionalHue(),
+      );
+    };
+
+    // One sphere of stars. A 割物 is judged on how round it opens, and a real
+    // one is a sphere seen flat: stars near the rim travel across the view,
+    // stars near the poles barely move sideways at all. Taking the speed from a
+    // sphere's projection gives that dense rim and open centre; a uniform
+    // random speed gives a filled disc, and a constant speed a hollow ring.
+    const burst = (x, y, hue, opts) => {
+      const count = Math.max(6, Math.round(opts.count * (calm ? 0.68 : 1)));
+      const spread = opts.spread ?? 20;
+      for (let i = 0; i < count; i++) {
+        const angle = (i / count) * Math.PI * 2 + Math.random() * 0.14;
+        const u = Math.random() * 2 - 1;              // cos of the polar angle
+        const speed = opts.power * Math.sqrt(1 - u * u);
+        const life = opts.life + Math.floor(Math.random() * opts.lifeSpread);
+        sparks.push({
+          x,
+          y,
+          // A few frames of history: the tail is what makes a star read as a
+          // streak of fire rather than a moving dot.
+          trail: [x, y, x, y, x, y],
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          hue: hue + (Math.random() - 0.5) * spread,
+          // 色変化 — the star changes colour partway through its fall.
+          hue2: opts.gold ? GOLD_HUE : opts.hue2 ?? null,
+          gold: opts.gold === true,
+          // 冠菊 keeps its speed and falls harder, so it droops into a hanging
+          // curtain instead of stalling as a ring.
+          frameDrag: opts.gold ? GOLD_FRAME_DRAG : DEFAULT_FRAME_DRAG,
+          grav: opts.gold ? STAR_GRAVITY * 1.9 : STAR_GRAVITY,
+          twinkle: opts.twinkle === true,
+          seed: Math.random() * Math.PI * 2,
+          life,
+          maxLife: life,
+        });
+      }
+      trimSparks();
+    };
+
+    const bloom = (x, y, hue, radius, life) => {
+      flashes.push({ x, y, hue, radius, life, maxLife: life });
+    };
+
+    const explode = (shell) => {
+      const x = shell.x;
+      const y = shell.y;
+      const hue = shell.hue;
+
+      if (shell.type === 'kamuro') {
+        // 冠菊 / 黄金すだれ: opens in colour, settles to gold, and hangs.
+        bloom(x, y, hue, 64, 15);
+        burst(x, y, hue, { count: 72, power: 3.4 + Math.random() * 1.6, life: 200, lifeSpread: 90, gold: true, spread: 14 });
+        return;
+      }
+
+      if (shell.type === 'senrin') {
+        // 彩色千輪: a modest opening, then many small coloured flowers.
+        bloom(x, y, hue, 44, 12);
+        burst(x, y, hue, { count: 30, power: 2.6 + Math.random() * 1.2, life: 82, lifeSpread: 44, spread: 24 });
+        const flowers = 5 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < flowers; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = 26 + Math.random() * 54;
+          pending.push({
+            frames: 16 + Math.floor(Math.random() * 16),
+            x: x + Math.cos(a) * r,
+            y: y + Math.sin(a) * r,
+            hue: pickTraditionalHue(),              // 彩色: each flower its own
+            opts: { count: 15, power: 1.5 + Math.random() * 0.7, life: 66, lifeSpread: 34, spread: 18, twinkle: true },
+          });
+        }
+        return;
+      }
+
+      if (shell.type === 'sanjaku') {
+        // 正三尺玉: the big one — a wide sphere, a second core inside it, and
+        // 小割浮模様 opening around it a moment later.
+        bloom(x, y, hue, 108, 20);
+        burst(x, y, hue, { count: 112, power: 6.4 + Math.random() * 2.4, life: 170, lifeSpread: 80, spread: 16 });
+        burst(x, y, (hue + 150) % 360, { count: 44, power: 3 + Math.random() * 1.2, life: 130, lifeSpread: 54, spread: 12 });
+        const kowari = 4 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < kowari; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = 60 + Math.random() * 90;
+          pending.push({
+            frames: 22 + Math.floor(Math.random() * 20),
+            x: x + Math.cos(a) * r,
+            y: y + Math.sin(a) * r,
+            hue: (hue + 40 + Math.random() * 280) % 360,
+            opts: { count: 17, power: 1.7 + Math.random() * 0.8, life: 70, lifeSpread: 36, spread: 20, twinkle: true },
+          });
+        }
+        return;
+      }
+
+      if (shell.type === 'phoenix') {
+        // Part of a line across the sky: wide, low, and quick.
+        bloom(x, y, hue, 52, 12);
+        burst(x, y, hue, { count: 40, power: 3.4 + Math.random() * 1.4, life: 108, lifeSpread: 52, spread: 22 });
+        return;
+      }
+
+      // 菊 with 二重芯: the everyday shell, a coloured sphere with a second,
+      // smaller sphere of a contrasting colour sitting inside it.
+      bloom(x, y, hue, 58, 14);
+      burst(x, y, hue, { count: 66, power: 4.2 + Math.random() * 2.4, life: 120, lifeSpread: 66, spread: 16 });
+      burst(x, y, (hue + 140 + Math.random() * 80) % 360, { count: 28, power: 2 + Math.random() * 0.9, life: 92, lifeSpread: 42, spread: 12 });
+    };
+
+    return (isLight) => {
+      const style = isLight ? lightStyle : darkStyle;
+      tick += 1;
+      motionTime += SPARK_MOTION_SCALE;
+
+      if (framesToLaunch <= 0) {
+        launch();
+        // Leave a natural pause between shells. The longer-lived, slower bursts
+        // need more open sky around them than the old rapid sequence did.
+        framesToLaunch = (calm ? 480 : 240) + Math.floor(Math.random() * (calm ? 420 : 210));
+      }
+      framesToLaunch -= 1;
+
+      // 小割浮模様 — the small bursts that open around a big shell a beat later.
+      for (let i = pending.length - 1; i >= 0; i--) {
+        pending[i].frames -= EFFECT_MOTION_SCALE;
+        if (pending[i].frames > 0) continue;
+        const job = pending[i];
+        pending.splice(i, 1);
+        bloom(job.x, job.y, job.hue, 20, 8);
+        burst(job.x, job.y, job.hue, job.opts);
+      }
+
+      ctx.lineCap = 'round';
+
+      // Flashes first, so the sparks read on top of the bloom.
+      for (let i = flashes.length - 1; i >= 0; i--) {
+        const f = flashes[i];
+        f.life -= EFFECT_MOTION_SCALE;
+        if (f.life <= 0) {
+          flashes.splice(i, 1);
+          continue;
+        }
+        const t = f.life / f.maxLife;
+        const radius = f.radius * (1.3 - t * 0.55);
+        const hot = Math.min(style.light + 14, 92);
+        const bloom = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, radius);
+        bloom.addColorStop(0, `hsla(${f.hue}, ${style.sat}%, ${hot}%, ${0.55 * t * style.alpha})`);
+        bloom.addColorStop(0.42, `hsla(${f.hue}, ${style.sat}%, ${style.light}%, ${0.2 * t * style.alpha})`);
+        bloom.addColorStop(1, `hsla(${f.hue}, ${style.sat}%, ${style.light}%, 0)`);
+        ctx.fillStyle = bloom;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let i = shells.length - 1; i >= 0; i--) {
+        const s = shells[i];
+        s.trail[4] = s.trail[2];
+        s.trail[5] = s.trail[3];
+        s.trail[2] = s.trail[0];
+        s.trail[3] = s.trail[1];
+        s.trail[0] = s.x;
+        s.trail[1] = s.y;
+        s.vy += GRAVITY * SHELL_MOTION_SCALE;
+        s.x += s.vx * SHELL_MOTION_SCALE;
+        s.y += s.vy * SHELL_MOTION_SCALE;
+
+        // Embers falling off the tail — the part that makes a launch look lit
+        // rather than like a dot sliding upward. Every other frame is enough.
+        if (tick % 2 === 0 && sparks.length < SPARK_CAP) {
+          const life = 20 + Math.floor(Math.random() * 20);
+          sparks.push({
+            x: s.x,
+            y: s.y,
+            trail: [s.x, s.y, s.x, s.y, s.x, s.y],
+            frameDrag: DEFAULT_FRAME_DRAG,
+            grav: STAR_GRAVITY,
+            hue2: null,
+            gold: false,
+            twinkle: false,
+            seed: 0,
+            vx: s.vx * 0.3 + (Math.random() - 0.5) * 0.6,
+            vy: -s.vy * 0.08 + Math.random() * 0.4,
+            hue: s.hue,
+            life,
+            maxLife: life * 2.4, // starts already dim, so it reads as an ember
+          });
+        }
+
+        // Streak drawn from remembered positions: a trail that needs no
+        // knowledge of what is painted behind the canvas.
+        ctx.shadowBlur = style.glow;
+        ctx.shadowColor = `hsla(${s.hue}, ${style.sat}%, ${style.light}%, 0.9)`;
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${s.hue}, ${style.sat}%, ${style.light}%, ${style.alpha * 0.4})`;
+        ctx.lineWidth = 1.6;
+        ctx.moveTo(s.trail[4], s.trail[5]);
+        ctx.lineTo(s.trail[0], s.trail[1]);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${s.hue}, ${style.sat}%, ${style.light}%, ${style.alpha})`;
+        ctx.lineWidth = 2.8;
+        ctx.moveTo(s.trail[0], s.trail[1]);
+        ctx.lineTo(s.x, s.y);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        if (s.vy >= 0) {
+          explode(s);
+          shells.splice(i, 1);
+        }
+      }
+
+      // Sparks add their light together on a dark sky, the way real ones do.
+      // On the light theme that would only bleach toward white, so it stays off.
+      if (style.additive) ctx.globalCompositeOperation = 'lighter';
+
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const p = sparks[i];
+        p.trail[4] = p.trail[2];
+        p.trail[5] = p.trail[3];
+        p.trail[2] = p.trail[0];
+        p.trail[3] = p.trail[1];
+        p.trail[0] = p.x;
+        p.trail[1] = p.y;
+        p.vx *= p.frameDrag;
+        p.vy = p.vy * p.frameDrag + p.grav * SPARK_MOTION_SCALE;
+        p.x += p.vx * SPARK_MOTION_SCALE;
+        p.y += p.vy * SPARK_MOTION_SCALE;
+        p.life -= SPARK_MOTION_SCALE;
+
+        if (p.life <= 0) {
+          sparks.splice(i, 1);
+          continue;
+        }
+
+        // Fade on a curve so the burst hangs bright, then drops away quickly.
+        const t = p.life / p.maxLife;
+        // 色変化: a star takes its second colour partway down. 冠菊 turns early
+        // and holds, because the gold curtain IS the shell — switching it late
+        // hid the gold behind a fade that had already taken the light away.
+        const hue = p.hue2 !== null && t < (p.gold ? 0.86 : 0.55) ? p.hue2 : p.hue;
+        // 点滅: the small flowers of a 千輪 flicker out rather than fade out.
+        const flicker = p.twinkle && t < 0.5
+          ? 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(motionTime * 0.9 + p.seed))
+          : 1;
+        const fade = t ** (p.gold ? 0.55 : 1.15) * style.alpha * flicker;
+
+        // Glow is a wide, faint stroke rather than shadowBlur: a canvas shadow
+        // costs ~100x more per stroke, and with hundreds of sparks that alone
+        // took the frame from ~1ms to ~150ms. Under additive blending the wide
+        // strokes bloom where they overlap, which is what the shadow was for.
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${hue}, ${style.sat}%, ${style.light}%, ${fade * style.glowAlpha})`;
+        ctx.lineWidth = 5.5;
+        ctx.moveTo(p.trail[2], p.trail[3]);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        // Tail: dimmer, thinner, drawn from the oldest remembered position.
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${hue}, ${style.sat}%, ${style.light}%, ${fade * 0.45})`;
+        ctx.lineWidth = 1.3;
+        ctx.moveTo(p.trail[4], p.trail[5]);
+        ctx.lineTo(p.trail[0], p.trail[1]);
+        ctx.stroke();
+
+        // Head: the bright end of the streak.
+        ctx.beginPath();
+        ctx.strokeStyle = `hsla(${hue}, ${style.sat}%, ${style.light}%, ${fade})`;
+        ctx.lineWidth = 2.4;
+        ctx.moveTo(p.trail[0], p.trail[1]);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+
+        if (style.core && fade > 0.5) {
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${(fade - 0.5) * 1.1})`;
+          ctx.lineWidth = 1;
+          ctx.moveTo(p.trail[0], p.trail[1]);
+          ctx.lineTo(p.x, p.y);
+          ctx.stroke();
+        }
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+    };
+  };

@@ -185,15 +185,15 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
     }
 
     .skill-ring-tab.is-active {
-        border-color: rgba(34, 211, 238, 0.55);
-        background: rgba(34, 211, 238, 0.12);
-        color: #67e8f9;
+        border-color: var(--site-card-border-hover);
+        background: var(--site-chip-bg);
+        color: var(--site-accent);
     }
 
     :global(html[data-theme='light']) .skill-ring-tab.is-active {
-        border-color: rgba(8, 145, 178, 0.5);
-        background: rgba(8, 145, 178, 0.1);
-        color: #0e7490;
+        border-color: var(--site-card-border-hover);
+        background: var(--site-chip-bg);
+        color: var(--site-accent);
     }
 
     .skill-card {
@@ -203,7 +203,7 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
 
     .skill-card__category {
         margin-bottom: 0.75rem;
-        color: rgba(103, 232, 249, 0.8);
+        color: var(--site-accent);
         font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.14em;
@@ -212,7 +212,7 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
     }
 
     :global(html[data-theme='light']) .skill-card__category {
-        color: #0e7490;
+        color: var(--site-accent);
     }
 
     .skill-ring-nav {

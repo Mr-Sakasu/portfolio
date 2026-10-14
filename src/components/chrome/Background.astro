@@ -15,7 +15,8 @@
 </style>
 
 <script>
-  import { startAutumnScene } from './autumn-scene';
+  import { startBackground } from './background-scenes';
+  import { siteAppearance } from '../../config/appearance';
 
   let cleanup: (() => void) | undefined;
   function initBackground() {
@@ -23,7 +24,7 @@
     cleanup = undefined;
     if (document.documentElement.dataset.previewFrame !== undefined) return;
     const canvas = document.getElementById('network-canvas');
-    if (canvas instanceof HTMLCanvasElement) cleanup = startAutumnScene(canvas);
+    if (canvas instanceof HTMLCanvasElement) cleanup = startBackground(canvas, siteAppearance.background);
   }
 
   document.addEventListener('astro:before-swap', () => cleanup?.());

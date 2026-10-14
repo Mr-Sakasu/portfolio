@@ -1,0 +1,51 @@
+---
+interface Props { name: string }
+const { name } = Astro.props;
+---
+<span id="hero-typewriter" class="typewriter-title" data-text={name}>
+  <span class="sr-only">{name}</span>
+  <span class="typewriter-title__text" aria-hidden="true">{name}</span>
+</span>
+
+<style>
+  .typewriter-title {
+    display: inline-grid;
+    white-space: nowrap;
+    vertical-align: bottom;
+    min-height: 1em;
+    text-align: left;
+  }
+
+  /* Reserve the full name's width while the visible text is being typed. */
+  .typewriter-title::before {
+    content: attr(data-text);
+    grid-area: 1 / 1;
+    padding-right: 0.08em;
+    border-right: 0.08em solid transparent;
+    visibility: hidden;
+  }
+
+  .typewriter-title__text {
+    grid-area: 1 / 1;
+    justify-self: start;
+    display: inline-block;
+    width: max-content;
+    min-height: 1em;
+    padding-right: 0.08em;
+    border-right: 0.08em solid transparent;
+  }
+
+  @keyframes typewriter-caret {
+    0%, 49% { border-right-color: var(--site-caret, currentColor); }
+    50%, 100% { border-right-color: transparent; }
+  }
+
+  .typewriter-title.typing .typewriter-title__text,
+  .typewriter-title.settling .typewriter-title__text {
+    animation: typewriter-caret 0.95s step-end infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .typewriter-title .typewriter-title__text { animation: none; }
+  }
+</style>

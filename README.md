@@ -6,11 +6,26 @@
 - 公開 URL: <https://portfolio-five-blond-32.vercel.app>
 - 種別: 多言語ポートフォリオ / インタラクティブ静的サイト
 
-## 季節バージョン
+## レイアウト・配色・背景の設定
 
-- `summer-fireworks`: 花火の夏版を保存したブランチ（`ea4d819`）。
-- `autumn`: 紅葉・銀杏が舞う秋版。ダークは深い茶色、ライトは生成り色を基調にしています。
-- 背景と初回演出は `src/components/chrome/autumn-scene.ts`、配色は `src/styles/tokens.css` で調整できます。端末の「視差効果を減らす」設定では背景を静止表示し、初回演出を省略します。
+`src/config/appearance.ts` の `siteAppearance` で、それぞれ独立して設定します。変更後は再ビルドしてください。訪問者用の切替メニューや URL パラメーターによる上書きはありません。明暗テーマの切替は従来どおりです。
+
+```ts
+export const siteAppearance: SiteAppearance = {
+  homeLayout: 'journal', // 'journal': 余白と区切り線 / 'bento': カードのグリッド
+  palette: 'autumn',     // 'autumn': 茶・琥珀・生成り / 'summer': 青・水色
+  background: 'autumn',  // 'autumn': 紅葉・銀杏 / 'fireworks': 花火 / 'none': 静止背景
+  intro: true,          // 初回演出。background が none の場合は実行しない
+};
+```
+
+たとえば `homeLayout: 'bento'` だけを変えると、秋の配色・紅葉の背景を保ったままカード表示になります。`background: 'fireworks'` だけを変えると、縦並びのレイアウト・秋の配色のまま花火になります。夏の組み合わせは `bento / summer / fireworks` です。
+
+- レイアウト: `src/features/home/HomeJournal.astro` / `HomeBento.astro`。制作物・曲・スキル・活動履歴は共通のデータを参照します。
+- 配色: `src/styles/tokens.css`（秋の基本色）、`src/styles/palettes/summer.css`（夏）、`src/styles/seasonal-ui.css`（秋の操作部品）。写真・ロゴ・天体やグラフのデータ色は保持します。
+- 背景: `src/components/chrome/background-scenes.ts` の登録表から選択。レイアウトへの依存はありません。
+- 端末の「視差効果を減らす」設定では背景を静止表示し、初回演出を省略します。
+- `summer-fireworks` ブランチには元の夏版（`ea4d819`）を保存しています。`autumn` ブランチで秋版を開発しています。
 
 ## 主な機能
 

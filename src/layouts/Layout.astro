@@ -6,13 +6,16 @@ import Intro from '../components/chrome/Intro.astro';
 import SiteFooter from '../components/chrome/SiteFooter.astro';
 import SiteHeader from '../components/chrome/SiteHeader.astro';
 import '../styles/tokens.css';
+import '../styles/palettes/summer.css';
+import '../styles/seasonal-ui.css';
+import { siteAppearance, paletteDetails, introStorageKey } from '../config/appearance';
 
 const { title, lang, description, wide = false } = Astro.props;
 const pageDescription = typeof description === 'string' && description.trim().length
   ? description.trim()
   : 'Sakasu portfolio with interactive star watching and bandit optimization demos.';
 const contentWidth = wide ? 'max-w-6xl' : 'max-w-3xl';
-const introEligible = /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
+const introEligible = siteAppearance.intro && siteAppearance.background !== 'none' && /^\/(?:en|zh|ja)\/$/.test(Astro.url.pathname);
 
 /* Every page exists once per language at the same path under /en, /zh and
    /ja, so the alternates can be written from the path alone. `site` in
@@ -32,14 +35,14 @@ const ogImage = `${siteOrigin}/og.png`;
 ---
 
 <!DOCTYPE html>
-<html lang={lang} class="scroll-smooth bg-[#181410]" data-intro-eligible={introEligible ? 'true' : undefined}>
+<html lang={lang} class="scroll-smooth" data-palette={siteAppearance.palette} data-home-layout={siteAppearance.homeLayout} data-background={siteAppearance.background} data-intro-key={introStorageKey} data-intro-eligible={introEligible ? 'true' : undefined}>
 		<head>
 			<meta charset="UTF-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<meta name="description" content={pageDescription} />
 			<title>{title}</title>
 			<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-			<meta name="theme-color" content="#181410" />
+			<meta name="theme-color" content={paletteDetails[siteAppearance.palette].color} />
 			<link rel="canonical" href={canonicalUrl} />
 			{alternates.map((alternate) => (
 				<link rel="alternate" hreflang={alternate.hreflang} href={alternate.href} />
@@ -81,7 +84,7 @@ const ogImage = `${siteOrigin}/og.png`;
 
                     let introPlayed = true;
                     try {
-                        introPlayed = window.sessionStorage.getItem('portfolio-autumn-intro-played') === '1';
+                        introPlayed = window.sessionStorage.getItem(document.documentElement.dataset.introKey) === '1';
                     } catch (error) {
                         introPlayed = false;
                     }
@@ -378,7 +381,7 @@ const ogImage = `${siteOrigin}/og.png`;
     }
 
     .site-brand__dot {
-        background: linear-gradient(120deg, #bc6545, #e6bc77);
+        background: linear-gradient(120deg, var(--site-accent-deep), var(--site-accent));
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -506,9 +509,9 @@ const ogImage = `${siteOrigin}/og.png`;
     }
 
     .lang-picker a.is-active {
-        background: linear-gradient(120deg, #9c4f2f, #805a2f);
+        background: linear-gradient(120deg, var(--site-accent-deep), var(--site-accent-deep));
         color: #fff;
-        box-shadow: 0 6px 16px -8px rgba(156, 79, 47, 0.5);
+        box-shadow: 0 6px 16px -8px rgba(var(--site-accent-rgb), 0.3);
     }
 
     .lang-picker a.is-active:hover {

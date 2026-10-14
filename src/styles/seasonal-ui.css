@@ -1,0 +1,63 @@
+/* Only UI colors follow the palette. Photos, logos, sky maps and data-series
+   colors retain their meaning. Layout styles never decide the palette. */
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light']) {
+  --season-ui-surface: var(--site-surface);
+}
+
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is([class^='text-blue-'], [class*=' text-blue-'], [class^='text-cyan-'], [class*=' text-cyan-'], [class^='text-violet-'], [class*=' text-violet-'], [class^='text-sky-'], [class*=' text-sky-'], [class^='text-emerald-'], [class*=' text-emerald-']) {
+  color: var(--site-accent) !important;
+}
+
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is([class^='border-blue-'], [class*=' border-blue-'], [class^='border-cyan-'], [class*=' border-cyan-'], [class^='border-violet-'], [class*=' border-violet-'], [class^='border-sky-'], [class*=' border-sky-'], [class^='border-emerald-'], [class*=' border-emerald-']) {
+  border-color: var(--site-card-border-hover) !important;
+}
+
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is([class^='bg-blue-'], [class*=' bg-blue-'], [class^='bg-cyan-'], [class*=' bg-cyan-'], [class^='bg-violet-'], [class*=' bg-violet-'], [class^='bg-sky-'], [class*=' bg-sky-'], [class^='bg-emerald-'], [class*=' bg-emerald-']) {
+  background-color: rgba(var(--site-accent-rgb), 0.12) !important;
+}
+
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is(button.bg-blue-600, a.bg-blue-600) {
+  background-color: var(--site-accent-deep) !important;
+  color: #fff8ed !important;
+}
+
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is(.hover\:text-blue-400:hover, .hover\:text-cyan-400:hover, .hover\:text-violet-300:hover) {
+  color: var(--site-accent) !important;
+}
+
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is([class*='bg-[#111722'], [class*='bg-[#0f151f'], [class*='bg-[#101722'], [class*='bg-[#121b2a']) {
+  background-color: var(--site-surface) !important;
+}
+
+html[data-palette='autumn'] input[type='range'] { accent-color: var(--site-accent); }
+html[data-palette='autumn'] .site-footer { color: var(--site-muted); }
+html[data-palette='autumn'] .home-bento :is(.home-bento-card, .home-project-card) { border-color: var(--site-card-border); }
+html[data-palette='autumn'] .home-bento .home-bento-card { border-left-color: var(--site-accent); }
+html[data-palette='autumn'] .home-bento :is(.home-eyebrow, .home-text-link) { color: var(--site-accent); }
+html[data-palette='autumn'] .home-bento .home-online-status > span { background: var(--site-accent); }
+html[data-palette='autumn'] .home-bento .home-playlist-tracks__play {
+  color: var(--site-accent) !important;
+  border-color: var(--site-card-border-hover) !important;
+  background: rgba(var(--site-accent-rgb), 0.12) !important;
+}
+html[data-palette='autumn'] .home-bento :is(.home-playlist-card, .home-bandit-card) .card-photo { filter: sepia(0.85) saturate(0.75); }
+html[data-palette='autumn'] .home-bento .home-hanoi-card { background: var(--site-card-bg); }
+html[data-palette='autumn'] .home-bento .home-hanoi-preview__disk { background: var(--site-accent-deep); }
+html[data-palette='autumn'] .home-bento .home-hanoi-preview__disk--medium { background: #b77d41; }
+html[data-palette='autumn'] .home-bento .home-hanoi-preview__disk--small { background: #d7ac64; }
+html[data-palette='autumn'] .home-bento .home-playlist-tracks li { border-left-color: var(--site-card-border-hover); }
+html[data-palette='autumn'] .home-bento .home-playlist-tracks__title { color: var(--site-text) !important; }
+html[data-palette='autumn'] .home-bento .home-playlist-tracks__artist { color: var(--site-subtle) !important; }
+
+/* These tiles contain artwork, so use light ink over the art in both modes. */
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light'])
+  :is(.home-stars-card, .home-scenes-card) :is(.home-eyebrow, [class^='text-sky-'], [class*=' text-sky-']) { color: #f1d9b6 !important; }
+html[data-palette='autumn']:is([data-theme='dark'], [data-theme='light']) .site-card.playground-card { --card-accent: var(--site-accent); }
+html[data-palette='autumn'] .section-rule { background: linear-gradient(to right, var(--site-accent-deep), var(--site-accent)); }
+html[data-palette='autumn'] :is(.playground-card--cyan, .playground-card--violet) .card-photo { filter: sepia(0.85) saturate(0.75); }

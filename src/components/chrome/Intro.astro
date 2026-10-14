@@ -10,7 +10,8 @@
 </style>
 
 <script>
-  import { startAutumnScene } from './autumn-scene';
+  import { startBackground } from './background-scenes';
+  import { siteAppearance, introStorageKey } from '../../config/appearance';
 
   let cleanup: (() => void) | undefined;
   const finish = () => {
@@ -20,10 +21,10 @@
   };
   function initIntro() {
     if (!document.documentElement.classList.contains('intro-active') || cleanup) return;
-    try { sessionStorage.setItem('portfolio-autumn-intro-played', '1'); } catch { /* Storage is optional. */ }
+    try { sessionStorage.setItem(introStorageKey, '1'); } catch { /* Storage is optional. */ }
     const canvas = document.getElementById('site-intro-canvas');
     if (!(canvas instanceof HTMLCanvasElement)) { finish(); return; }
-    cleanup = startAutumnScene(canvas, { intro: true, onFinish: finish });
+    cleanup = startBackground(canvas, siteAppearance.background, { intro: true, onFinish: finish });
   }
   document.addEventListener('astro:before-swap', finish);
   document.addEventListener('astro:page-load', initIntro);
