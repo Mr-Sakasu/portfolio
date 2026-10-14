@@ -2,6 +2,7 @@
 import { ui } from '../../i18n/ui';
 import {
   playlistCollectionFor,
+  selectHomeTracks,
   selectPlaylists,
   sortTracks,
   type PlaylistData,
@@ -22,7 +23,9 @@ const displayPlaylists = selectPlaylists(lang, variant);
    variant above narrows the visible list down to. */
 const sourcePlaylists = selectPlaylists(lang, 'page');
 const normalizePlaylist = (playlist: PlaylistData) => {
-  const tracks = sortTracks(playlist.tracks);
+  const tracks = variant === 'home'
+    ? selectHomeTracks(lang, playlist.tracks)
+    : sortTracks(playlist.tracks);
   const playlistUrl = playlist.url || (playlist.playlistId ? `https://music.youtube.com/playlist?list=${playlist.playlistId}` : '');
 
   return {

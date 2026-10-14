@@ -5,7 +5,7 @@ import HeroName from './HeroName.astro';
 import Timeline from '../../components/shared/Timeline.astro';
 import JournalSkills from './JournalSkills.astro';
 import { projectData, projectSlugs } from '../../data/projects';
-import { selectPlaylists, sortTracks, trackArtist } from '../playlist/select';
+import { selectHomeTracks, selectPlaylists, trackArtist } from '../playlist/select';
 import profileImage from '../../assets/sakasu.jpg';
 import erProjectImage from '../../assets/er.png';
 interface Props { lang: Locale }
@@ -13,7 +13,7 @@ const { lang } = Astro.props;
 const t = getUi(lang);
 const projects = projectData[lang];
 const playlist = selectPlaylists(lang, 'home')[0];
-const tracks = sortTracks(playlist?.tracks).slice(0, 3);
+const tracks = selectHomeTracks(lang, playlist?.tracks);
 const experiments = [
   { href: 'stars', title: t['stars.title'], mark: '01' },
   { href: 'bandit', title: t['bandit.title'], mark: '02' },

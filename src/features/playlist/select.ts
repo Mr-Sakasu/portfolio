@@ -68,6 +68,15 @@ const homePlaylistByLang: Partial<Record<PlaylistLocale, string[]>> = {
     ja: ['PLiz-kupUIzB6CcPtBlm-W9MpMuGw2I3le'],
 };
 
+/** Home-page picks stay in this order when the playlist feed is refreshed. */
+const homeTracksByLang: Partial<Record<PlaylistLocale, PlaylistTrack[]>> = {
+    en: [
+        { videoId: '09efb966Bn8', title: 'Beauty and a Beat (Acoustic)', artists: 'Justin Bieber' },
+        { videoId: 'LjhCEhWiKXk', title: 'Just the Way You Are', artists: 'Bruno Mars' },
+        { videoId: 'CnQ8N1KacJc', title: 'Good Riddance (Time of Your Life)', artists: 'Green Day' },
+    ],
+};
+
 const playlistRoot = playlistData as PlaylistData;
 
 const trackTime = (track: PlaylistTrack) => {
@@ -88,6 +97,16 @@ export function sortTracks(tracks: PlaylistTrack[] | undefined): PlaylistTrack[]
             })
             .map(({ track }) => track)
         : [];
+}
+
+export function selectHomeTracks(lang: PlaylistLocale, tracks: PlaylistTrack[] | undefined): PlaylistTrack[] {
+    const picks = homeTracksByLang[lang];
+    if (!picks) return sortTracks(tracks).slice(0, 3);
+
+    return picks.map((pick) => ({
+        ...tracks?.find((track) => track.videoId === pick.videoId),
+        ...pick,
+    }));
 }
 
 /**
