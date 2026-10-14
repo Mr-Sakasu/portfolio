@@ -38,10 +38,10 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2026-08',
             title: 'LINEYahoo Software Engineer Internship',
-            desc: 'Geographic data analysis.',
+            desc: 'Statistical processing of map data and user persona inference.',
             color: 'green',
             icon: '💼',
-            tags: ['Python', 'PySpark', 'Geographic Data'],
+            tags: ['Python', 'PySpark', 'Statistical Processing', 'User Persona Inference'],
         },
         {
             date: '2026-06',
@@ -89,7 +89,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: 'Passed the national examination.',
             color: 'blue',
             icon: '🏅',
-            tags: ['National Certification'],
+            tags: ['Computer Science'],
         },
         {
             date: '2023-08',
@@ -128,10 +128,10 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2026-08',
             title: 'LINEYahoo 软件工程师实习',
-            desc: '地理数据分析。',
+            desc: '地图信息的统计处理与用户画像推断。',
             color: 'green',
             icon: '💼',
-            tags: ['Python', 'PySpark', '地理数据'],
+            tags: ['Python', 'PySpark', '统计处理', '用户画像推断'],
         },
         {
             date: '2026-06',
@@ -179,7 +179,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: '通过国家资格考试。',
             color: 'blue',
             icon: '🏅',
-            tags: ['国家资格'],
+            tags: ['计算机科学'],
         },
         {
             date: '2023-08',
@@ -218,10 +218,10 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2026-08',
             title: 'LINEヤフー ソフトウェアエンジニアインターンシップ',
-            desc: '地理データの分析',
+            desc: '地図情報の統計処理と利用者のペルソナ推定',
             color: 'green',
             icon: '💼',
-            tags: ['Python', 'PySpark', '地理データ'],
+            tags: ['Python', 'PySpark', '統計処理', 'ペルソナ推定'],
         },
         {
             date: '2026-06',
@@ -269,7 +269,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             desc: '国家試験に合格',
             color: 'blue',
             icon: '🏅',
-            tags: ['国家資格'],
+            tags: ['コンピューターサイエンス'],
         },
         {
             date: '2023-08',

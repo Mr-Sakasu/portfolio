@@ -100,9 +100,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/python.svg',
         level: 2,
         summary: {
-            en: 'Research experiments, data analysis, automation, web app backends, and implementation of machine-learning emotion recognition algorithms. Used PySpark for geographic data analysis at LINE Yahoo.',
-            zh: '研究实验、数据分析、自动化、Web 应用后端，以及基于机器学习的情感识别算法实现。在 LINE Yahoo 实习时使用 PySpark 进行地理数据分析。',
-            ja: '研究実験、データ分析、自動化、Webアプリのバックエンドとして使用。機械学習による感情認識アルゴリズムも実装。LINEヤフーでは PySpark を用いた地理データ分析を担当',
+            en: 'Research experiments, data analysis, automation, web app backends, and implementation of machine-learning emotion recognition algorithms. Used PySpark for statistical processing of map data and user persona inference at LINE Yahoo.',
+            zh: '研究实验、数据分析、自动化、Web 应用后端，以及基于机器学习的情感识别算法实现。在 LINE Yahoo 实习时使用 PySpark 进行地图信息的统计处理与用户画像推断。',
+            ja: '研究実験、データ分析、自動化、Webアプリのバックエンドとして使用。機械学習による感情認識アルゴリズムも実装。LINEヤフーでは PySpark を用いた地図情報の統計処理と利用者のペルソナ推定を担当',
         },
         children: [
             { name: 'NumPy', icon: '/icons/skills/numpy.svg' },
