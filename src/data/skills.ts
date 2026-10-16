@@ -49,6 +49,34 @@ export interface SkillStackItem {
     }>;
 }
 
+export const skillLevelDescriptions: Record<SkillStackItem['level'], Record<SkillLocale, string>> = {
+    1: {
+        en: 'Have used it in classes or similar settings.',
+        zh: '在课程等场景中有使用经验。',
+        ja: '授業などで使用した経験がある。',
+    },
+    2: {
+        en: 'Can implement with reference materials, while also needing to learn the relevant concepts.',
+        zh: '能够边查资料边实现，但也需要同时学习相关概念。',
+        ja: '調べながら実装できるが、関連する概念の学習も必要。',
+    },
+    3: {
+        en: 'Have a working understanding of the relevant concepts and can implement with reference materials.',
+        zh: '对相关概念有一定理解，能够查阅资料完成实现。',
+        ja: '関連する概念をある程度理解しており、調べながら実装できる。',
+    },
+    4: {
+        en: 'Can implement without consulting reference materials.',
+        zh: '无需查阅资料即可完成实现。',
+        ja: '資料を参照せずに実装できる。',
+    },
+    5: {
+        en: 'Can design and implement libraries with efficient time and space complexity and strong maintainability, without consulting reference materials.',
+        zh: '无需查阅资料，即可设计并实现兼顾时间复杂度、空间复杂度和可维护性的高质量库。',
+        ja: '資料を参照せずに、時間・空間計算量や保守性に優れたライブラリを設計・実装できる。',
+    },
+};
+
 export const skillStack: SkillStackItem[] = [
     {
         name: 'C++',
@@ -87,7 +115,7 @@ export const skillStack: SkillStackItem[] = [
         name: 'C#',
         category: 'languages',
         icon: '/icons/skills/csharp.svg',
-        level: 1,
+        level: 2,
         summary: {
             en: 'Used in the GAME FREAK build development course to implement build optimization; also picked up out of personal interest.',
             zh: '在 GAME FREAK 的构建开发课程中用于实现构建效率优化；此外也出于个人兴趣学习和使用。',
@@ -196,9 +224,9 @@ export const skillStack: SkillStackItem[] = [
         icon: '/icons/skills/java.svg',
         level: 1,
         summary: {
-            en: 'Class-based programming basics; studied for about six months in undergraduate coursework.',
-            zh: '基于类的编程基础；本科课程中学习了约半年。',
-            ja: 'クラスベースのプログラミング基礎。学部の授業で半年ほど履修',
+            en: 'Object-oriented programming basics; studied for about six months in undergraduate coursework.',
+            zh: '面向对象编程基础；本科课程中学习了约半年。',
+            ja: 'オブジェクト指向プログラミングの基礎。学部の授業で半年ほど履修',
         },
     },
     {

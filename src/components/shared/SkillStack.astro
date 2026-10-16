@@ -9,6 +9,7 @@ import {
 } from '../../data/skills';
 import { ui } from '../../i18n/ui';
 import SkillRating from './SkillRating.astro';
+import SkillLevelGuide from './SkillLevelGuide.astro';
 
 interface Props {
     lang: keyof typeof ui;
@@ -58,6 +59,8 @@ const getSkillChildGroups = (skill: (typeof skillStack)[number]) => {
     <div class="section-title" data-reveal>
         <h2>{t['skills.title']}</h2>
     </div>
+
+    <SkillLevelGuide lang={locale} />
 
     {/* Where the ring is standing. Pressing a category brings its first card
         round; the one lit is the category the front card belongs to. */}

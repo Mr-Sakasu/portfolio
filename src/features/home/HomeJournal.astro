@@ -4,6 +4,7 @@ import { getUi, type Locale } from '../../i18n';
 import HeroName from './HeroName.astro';
 import Timeline from '../../components/shared/Timeline.astro';
 import JournalSkills from './JournalSkills.astro';
+import SkillLevelGuide from '../../components/shared/SkillLevelGuide.astro';
 import { projectData, projectSlugs } from '../../data/projects';
 import { selectHomeTracks, selectPlaylists, trackArtist } from '../playlist/select';
 import profileImage from '../../assets/sakasu.jpg';
@@ -115,6 +116,7 @@ const experiments = [
     <div class="journal-section-heading">
       <h2 id="journal-skills-title">{t['skills.title']}</h2>
     </div>
+    <SkillLevelGuide lang={lang} />
     <JournalSkills lang={lang} />
   </section>
 
