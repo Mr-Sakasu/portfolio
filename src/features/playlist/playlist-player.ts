@@ -150,8 +150,19 @@ export const initPlaylistPlayer = () => {
       : null;
 
     if (playlistTarget?.dataset.playlistTarget) {
-      document.getElementById(`playlist-${playlistTarget.dataset.playlistTarget}`)
-        ?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      const section = document.getElementById(playlistTarget.dataset.playlistTarget);
+      if (section instanceof HTMLDetailsElement) {
+        section.open = true;
+        section.querySelector('summary')?.focus({ preventScroll: true });
+      }
+      const header = document.querySelector<HTMLElement>('.site-header');
+      if (section && header) {
+        section.style.scrollMarginTop = `${header.getBoundingClientRect().height + 16}px`;
+      }
+      section?.scrollIntoView({
+        block: 'start',
+        behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth',
+      });
       return;
     }
 
@@ -174,6 +185,12 @@ export const initPlaylistPlayer = () => {
 
     const player = players.get(card);
     const sameTrack = card.dataset.playingVideo === videoId;
+
+    players.forEach((otherPlayer, otherCard) => {
+      if (otherCard === card) return;
+      otherPlayer.pauseVideo();
+      markButtons(otherCard, otherCard.dataset.playingVideo ?? '', false);
+    });
 
     // The same button again: stop it, and leave it where it was so the next
     // press picks the track up rather than starting it over.

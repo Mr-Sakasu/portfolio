@@ -1,12 +1,12 @@
 ---
 import { ui } from '../../i18n/ui';
+import { groupEnglishTracks } from './artists';
 import {
   playlistCollectionFor,
   selectHomeTracks,
   selectPlaylists,
   sortTracks,
   type PlaylistData,
-  type PlaylistTrack,
 } from './select';
 
 interface Props {
@@ -22,6 +22,12 @@ const displayPlaylists = selectPlaylists(lang, variant);
 /* The artist chart counts across everything the locale has, whatever the
    variant above narrows the visible list down to. */
 const sourcePlaylists = selectPlaylists(lang, 'page');
+const englishArtistGroups = lang === 'en'
+  ? groupEnglishTracks(sourcePlaylists, t['playlist.unknownArtist'])
+  : [];
+const groupByArtist = lang === 'en' && variant === 'page' && englishArtistGroups.length > 0;
+const CardTag = groupByArtist ? 'details' : 'div';
+const HeaderTag = groupByArtist ? 'summary' : 'a';
 const normalizePlaylist = (playlist: PlaylistData) => {
   const tracks = variant === 'home'
     ? selectHomeTracks(lang, playlist.tracks)
@@ -45,13 +51,26 @@ const configuredPlaylists = displayPlaylists.map(normalizePlaylist).filter((play
 const availablePlaylists = configuredPlaylists.length > 0
   ? configuredPlaylists
   : [normalizePlaylist(playlistCollection)];
-const visiblePlaylists = variant === 'home'
+const playlistsToShow = variant === 'home'
   ? availablePlaylists.slice(0, 1)
   : availablePlaylists;
+const visiblePlaylists = groupByArtist
+  ? englishArtistGroups.map(group => ({
+      ...normalizePlaylist({
+        ...group.source,
+        title: group.artist,
+        tracks: group.tracks,
+        trackCount: group.tracks.length,
+        duration: '',
+        thumbnail: group.tracks.find(track => track.thumbnail)?.thumbnail,
+      }),
+      sectionId: group.sectionId,
+    }))
+  : playlistsToShow.map(playlist => ({ ...playlist, sectionId: `playlist-${playlist.playlistId}` }));
 const shouldRender = configuredPlaylists.length > 0 || import.meta.env.DEV;
 const sectionClass = variant === 'page' ? 'mt-6' : 'mt-4 md:mt-8';
 const trackListClass = variant === 'page'
-  ? lang === 'ja'
+  ? lang === 'ja' || groupByArtist
     ? 'max-h-80 divide-y divide-white/10 overflow-y-auto overscroll-contain'
     : 'max-h-[70vh] divide-y divide-white/10 overflow-y-auto overscroll-contain'
   : 'divide-y divide-white/10';
@@ -84,84 +103,6 @@ const jpopPlaylistNames: Record<string, string> = {
   'Liked: JPOP - Orangestar': 'Orangestar',
   'Liked: JPOP - Aqu3ra': 'Aqu3ra',
 };
-const englishArtistNameOverrides: Record<string, string> = {
-  'AbbaVEVO': 'ABBA',
-  'billyjoelVEVO': 'Billy Joel',
-  'DefTech004': 'Def Tech',
-  'IBeLovinTheJ5': 'The Jackson 5',
-  'JFlaMusic': 'J.Fla',
-  'JustinBieberVEVO': 'Justin Bieber',
-  'KnaanVEVO': "K'NAAN",
-  'littlemixVEVO': 'Little Mix',
-  'MIKAVEVO': 'MIKA',
-  'MKTOVEVO': 'MKTO',
-  'oasisvideos': 'Oasis',
-  'PentatonixVEVO': 'Pentatonix',
-  'PostmodernJukebox': 'Postmodern Jukebox',
-  'RachelPlattenVEVO': 'Rachel Platten',
-  'TheKillersVEVO': 'The Killers',
-  'TimefliesVEVO': 'Timeflies',
-  'VideoHitsBelemBrazil': 'Kylie Minogue',
-  'XXxxZakixxXX': 'Weezer',
-};
-const englishArtistFromTitle = (title: string) => {
-  const knownArtists = [
-    'Billy Joel',
-    'Bruno Mars',
-    'Daniel Powter',
-    'Dua Lipa',
-    'Ed Sheeran',
-    'Green Day',
-    'James Blunt',
-    'John Lennon',
-    'Kylie Minogue',
-    'Little Mix',
-    'MIKA',
-    'Oasis',
-    'Pentatonix',
-    'Rachel Platten',
-    'The Carpenters',
-    'The Killers',
-    'Weezer',
-  ];
-  const loweredTitle = title.toLowerCase();
-  return knownArtists.find((artist) => loweredTitle.startsWith(artist.toLowerCase())) ?? '';
-};
-const englishRelatedArtistByVideoId: Record<string, string> = {
-  '7RZ12L-sp7g': 'Maroon 5',
-};
-const englishRelatedArtistFromTrack = (track: PlaylistTrack) => {
-  const videoIdArtist = englishRelatedArtistByVideoId[track.videoId ?? ''];
-  if (videoIdArtist) {
-    return videoIdArtist;
-  }
-
-  const title = (track.title ?? '').trim().toLowerCase();
-  if (title === 'memories (feat. ben woodward)') {
-    return 'Maroon 5';
-  }
-
-  return '';
-};
-const normalizeEnglishArtist = (track: PlaylistTrack) => {
-  const relatedArtist = englishRelatedArtistFromTrack(track);
-  if (relatedArtist) {
-    return relatedArtist;
-  }
-
-  const titleArtist = englishArtistFromTitle(track.title ?? '');
-  if (titleArtist) {
-    return titleArtist;
-  }
-
-  const rawArtist = (track.artists ?? '').trim();
-  const mappedArtist = englishArtistNameOverrides[rawArtist] ?? rawArtist;
-  const normalizedArtist = mappedArtist
-    .replace(/\s+-\s+Topic$/, '')
-    .replace(/VEVO$/, '')
-    .trim();
-  return englishArtistNameOverrides[normalizedArtist] ?? (normalizedArtist || t['playlist.unknownArtist']);
-};
 const playlistByTitle = new Map(sourcePlaylists.map((playlist) => [playlist.title, playlist]));
 const playlistTrackCount = (playlist?: PlaylistData) => {
   if (!playlist) {
@@ -179,32 +120,18 @@ const formatTrackCount = (count: number) => (
     ? '1 track'
     : t['playlist.trackCount'].replace('{count}', String(count))
 );
-const englishArtistCounts = new Map<string, number>();
-if (lang === 'en') {
-  sourcePlaylists.forEach((playlist) => {
-    (playlist.tracks ?? [])
-      .filter((track) => track?.title)
-      .forEach((track) => {
-        const artist = normalizeEnglishArtist(track);
-        englishArtistCounts.set(artist, (englishArtistCounts.get(artist) ?? 0) + 1);
-      });
-  });
-}
-const englishArtistChartItems = [...englishArtistCounts.entries()]
-  .map(([artist, count], index) => ({
-    artist,
-    count,
-    order: index,
-    playlistId: sourcePlaylists[0]?.playlistId ?? '',
-  }))
-  .filter((item) => item.count > 1)
-  .sort((first, second) => second.count - first.count || first.artist.localeCompare(second.artist));
+const englishArtistChartItems = englishArtistGroups.map((group, index) => ({
+  artist: group.artist,
+  count: group.tracks.length,
+  order: index,
+  targetId: group.sectionId,
+}));
 const artistChartItems = lang === 'ja'
   ? jpopArtistChartConfig
       .map((item, index) => {
         const playlist = playlistByTitle.get(item.playlistTitle);
         const count = playlistTrackCount(playlist) ?? item.auditFallbackCount ?? 0;
-        return { ...item, playlistId: playlist?.playlistId ?? '', count, order: index };
+        return { ...item, targetId: playlist?.playlistId ? `playlist-${playlist.playlistId}` : '', count, order: index };
       })
       .filter((item) => item.count > 0)
       .sort((first, second) => second.count - first.count || first.order - second.order)
@@ -316,9 +243,9 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                 <button
                   type="button"
                   class="grid w-full min-w-0 grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-3 rounded-md bg-white/[0.035] px-3 py-2 text-left transition-colors hover:bg-white/[0.09] focus-visible:outline focus-visible:outline-2 focus-visible:outline-violet-200"
-                  data-playlist-target={item.playlistId}
+                  data-playlist-target={item.targetId}
                   aria-label={`${item.artist}: ${formatTrackCount(item.count)}`}
-                  disabled={!item.playlistId}
+                  disabled={!item.targetId}
                 >
                   <span
                     class="h-3 w-3 rounded-full"
@@ -368,19 +295,21 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 
     <div class="space-y-4">
       {visiblePlaylists.map((playlist) => (
-        <div
-          id={`playlist-${playlist.playlistId}`}
+        <CardTag
+          id={playlist.sectionId}
           class="overflow-hidden rounded-xl border border-white/10 bg-[#111722]/80 backdrop-blur-md shadow-[0_12px_30px_-28px_rgba(15,23,42,0.95)]"
           data-reveal
           style="--reveal-delay: 80ms;"
           data-playlist-card
+          data-artist={groupByArtist ? playlist.title : undefined}
+          open={groupByArtist && playlist === visiblePlaylists[0] ? true : undefined}
         >
           {playlist.hasTracks ? (
             <>
-              <a
-                href={playlist.playlistUrl}
-                target="_blank"
-                rel="noreferrer"
+              <HeaderTag
+                href={groupByArtist ? undefined : playlist.playlistUrl}
+                target={groupByArtist ? undefined : '_blank'}
+                rel={groupByArtist ? undefined : 'noreferrer'}
                 class="group flex items-center gap-3 p-4 transition-colors hover:bg-white/[0.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-violet-200/70 sm:gap-4 sm:p-5"
               >
                 {playlist.featuredThumbnail && (
@@ -398,11 +327,12 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                   </h3>
                   {playlist.metaItems.length > 0 && (
                     <p class="mt-1.5 text-[11px] uppercase tracking-widest text-violet-100/65 sm:mt-2 sm:text-xs">
-                      {playlist.metaItems.join(' / ')}
+                      {groupByArtist ? formatTrackCount(playlist.tracks.length) : playlist.metaItems.join(' / ')}
                     </p>
                   )}
                 </div>
-              </a>
+                {groupByArtist && <span class="artist-group-toggle" aria-hidden="true">+</span>}
+              </HeaderTag>
 
               <div class="hidden border-y border-white/10 bg-black/25 p-3" data-playlist-player>
                 <div class="mb-2 truncate text-xs font-semibold text-violet-100/80" data-player-title></div>
@@ -456,12 +386,12 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
                       <span class="h-12 w-12 shrink-0 rounded bg-white/[0.04]"></span>
                     )}
                     <a
-                      href={playlist.playlistUrl}
+                      href={track.url || (track.videoId ? `https://www.youtube.com/watch?v=${track.videoId}` : playlist.playlistUrl)}
                       target="_blank"
                       rel="noreferrer"
                       class="min-w-0 flex-1"
                     >
-                      <span class="block truncate text-sm font-semibold text-white group-hover:text-violet-100">
+                      <span class:list={['block text-sm font-semibold text-white group-hover:text-violet-100', groupByArtist ? 'artist-track-title' : 'truncate']}>
                         {track.title}
                       </span>
                       <span class="mt-1 block truncate text-xs text-gray-400">
@@ -490,7 +420,7 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
               <p class="mt-2 text-sm leading-relaxed text-gray-400">{t['playlist.empty']}</p>
             </div>
           )}
-        </div>
+        </CardTag>
       ))}
     </div>
   </section>
@@ -505,6 +435,12 @@ const shouldShowArtistChart = variant === 'page' && artistChartItems.length > 0;
 </script>
 
 <style>
+  details[data-playlist-card] > summary { cursor: pointer; list-style: none; }
+  details[data-playlist-card] > summary::-webkit-details-marker { display: none; }
+  .artist-group-toggle { color: var(--site-accent); font-size: 1.5rem; flex: none; }
+  details[open] > summary .artist-group-toggle { transform: rotate(45deg); }
+  .artist-track-title { overflow-wrap: anywhere; line-height: 1.5; }
+
   .artist-chart-tooltip {
     background: #101827;
     border-color: rgb(255 255 255 / 0.2);
