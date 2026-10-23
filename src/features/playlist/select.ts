@@ -1,4 +1,5 @@
 import playlistData from '../../data/generated/ytmusic-playlist.json';
+import { playlistAdditionsById } from '../../data/playlist-additions';
 import type { ui } from '../../i18n/ui';
 
 export type PlaylistLocale = keyof typeof ui;
@@ -124,6 +125,21 @@ export function playlistCollectionFor(lang: PlaylistLocale): PlaylistData {
     return playlistRoot.byLang?.[lang] ?? playlistRoot;
 }
 
+export function withPlaylistAdditions(playlist: PlaylistData): PlaylistData {
+    const additions = playlistAdditionsById[playlist.playlistId ?? ''];
+    if (!additions?.length) return playlist;
+
+    const existing = playlist.tracks ?? [];
+    const existingIds = new Set(existing.map(track => track.videoId));
+    const extraTracks = additions.filter(track => !existingIds.has(track.videoId));
+    const overrides = new Map(additions.map(track => [track.videoId, track]));
+    return {
+        ...playlist,
+        tracks: [...existing.map(track => ({ ...track, ...overrides.get(track.videoId) })), ...extraTracks],
+        trackCount: (playlist.trackCount ?? existing.length) + extraTracks.length,
+    };
+}
+
 /**
  * The playlists a locale shows, in order. The home variant speaks for one
  * playlist only, so the card in the bento and the page below it cannot end up
@@ -134,7 +150,9 @@ export function selectPlaylists(lang: PlaylistLocale, variant: 'home' | 'page'):
     const all = Array.isArray(collection.playlists) && collection.playlists.length > 0
         ? collection.playlists
         : [collection];
-    const sources = all.filter((playlist) => !hiddenPlaylists.has(playlist.playlistId ?? ''));
+    const sources = all
+        .filter((playlist) => !hiddenPlaylists.has(playlist.playlistId ?? ''))
+        .map(withPlaylistAdditions);
 
     const order = playlistOrderByLang[lang] ?? [];
     const ordered = order.length > 0
