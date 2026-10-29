@@ -40,7 +40,7 @@ export interface SkillStackItem {
     name: string;
     icon: string;
     category: SkillCategory;
-    level: 1 | 2 | 3 | 4 | 5;
+    level: 1 | 2 | 3;
     summary: Record<SkillLocale, string>;
     children?: Array<{
         name: string;
@@ -51,29 +51,19 @@ export interface SkillStackItem {
 
 export const skillLevelDescriptions: Record<SkillStackItem['level'], Record<SkillLocale, string>> = {
     1: {
-        en: 'Have used it in classes or similar settings.',
-        zh: '在课程等场景中有使用经验。',
-        ja: '授業などで使用した経験がある。',
+        en: 'Have encountered it in classes/research',
+        zh: '在课程或研究等场景中接触过',
+        ja: '授業や研究などで触れたことがある',
     },
     2: {
-        en: 'Can implement with reference materials, while also needing to learn the relevant concepts.',
-        zh: '能够边查资料边实现，但也需要同时学习相关概念。',
-        ja: '調べながら実装できるが、関連する概念の学習も必要。',
+        en: 'Have built applications with references',
+        zh: '曾参考资料创建或构建应用程序',
+        ja: 'レファレンスを参照しながらアプリケーションを作成・構築したことがある',
     },
     3: {
-        en: 'Have a working understanding of the relevant concepts and can implement with reference materials.',
-        zh: '对相关概念有一定理解，能够查阅资料完成实现。',
-        ja: '関連する概念をある程度理解しており、調べながら実装できる。',
-    },
-    4: {
-        en: 'Can implement without consulting reference materials.',
-        zh: '无需查阅资料即可完成实现。',
-        ja: '資料を参照せずに実装できる。',
-    },
-    5: {
-        en: 'Can design and implement libraries with efficient time and space complexity and strong maintainability, without consulting reference materials.',
-        zh: '无需查阅资料，即可设计并实现兼顾时间复杂度、空间复杂度和可维护性的高质量库。',
-        ja: '資料を参照せずに、時間・空間計算量や保守性に優れたライブラリを設計・実装できる。',
+        en: 'Have built applications without references',
+        zh: '曾无需参考资料创建或构建应用程序',
+        ja: 'レファレンスを参照せずにアプリケーションを作成・構築したことがある',
     },
 };
 
@@ -82,7 +72,7 @@ export const skillStack: SkillStackItem[] = [
         name: 'C++',
         category: 'languages',
         icon: '/icons/skills/cplusplus.svg',
-        level: 4,
+        level: 3,
         summary: {
             en: 'Competitive programming, robotics control, solvers, optimization algorithms for my graduation thesis, and use of Gurobi.',
             zh: '算法竞赛、机器人控制、求解器、毕业论文中的优化算法实现，以及 Gurobi 的使用。',

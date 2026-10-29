@@ -8,13 +8,13 @@ interface Props {
 
 const { level, lang } = Astro.props;
 const label = {
-  ja: `習熟度: 5段階中${level}`,
-  en: `Proficiency: ${level} out of 5`,
-  zh: `熟练度：${level}/5`,
+  ja: `経験レベル: 3段階中${level}`,
+  en: `Experience level: ${level} out of 3`,
+  zh: `经验等级：${level}/3`,
 }[lang];
 ---
 <span class="skill-rating" role="img" aria-label={label}>
-  {Array.from({ length: 5 }, (_, index) => (
+  {Array.from({ length: 3 }, (_, index) => (
     <svg class:list={['skill-rating__star', { 'is-filled': index < level }]} viewBox="0 0 24 24" width="12" height="12" aria-hidden="true">
       <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.6l6.2-.9Z" />
     </svg>
