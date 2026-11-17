@@ -28,6 +28,14 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             tags: ['C++', 'Python', 'Optimization', 'Affective Computing'],
         },
         {
+            date: '2026-11',
+            title: 'Nomura Research Institute (NRI) IT Solution Internship',
+            desc: 'Worked on developing an automated system to help people keep up with technology news.',
+            color: 'green',
+            icon: '💼',
+            tags: ['athenAI', 'Requirements Definition', 'System Design'],
+        },
+        {
             date: '2026-09',
             title: 'GAME FREAK Build Optimization Internship',
             desc: 'Implemented build optimization techniques.',
@@ -118,6 +126,14 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             tags: ['C++', 'Python', '数理优化', '情感计算'],
         },
         {
+            date: '2026-11',
+            title: '野村综合研究所 (NRI) IT 解决方案实习',
+            desc: '参与开发帮助用户及时了解技术资讯的自动化系统。',
+            color: 'green',
+            icon: '💼',
+            tags: ['athenAI', '需求定义', '系统设计'],
+        },
+        {
             date: '2026-09',
             title: 'GAME FREAK 构建效率优化实习',
             desc: '实现构建效率优化方法。',
@@ -206,6 +222,14 @@ export const timelineData: Record<string, TimelineEvent[]> = {
             color: 'blue',
             icon: '✒',
             tags: ['C++', 'Python', '数理最適化', '感情コンピューティング'],
+        },
+        {
+            date: '2026-11',
+            title: '野村総合研究所 (NRI) ITソリューションインターンシップ',
+            desc: '技術情報のキャッチアップを支援する自動化システムの開発に取り組みました。',
+            color: 'green',
+            icon: '💼',
+            tags: ['athenAI', '要件定義', 'システム設計'],
         },
         {
             date: '2026-09',
