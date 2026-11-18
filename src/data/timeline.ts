@@ -128,7 +128,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2026-11',
             title: '野村综合研究所 (NRI) IT 解决方案实习',
-            desc: '参与开发帮助用户及时了解技术资讯的自动化系统。',
+            desc: '技术信息收集自动化工作流开发',
             color: 'green',
             icon: '💼',
             tags: ['athenAI', '需求定义', '系统设计'],
@@ -226,7 +226,7 @@ export const timelineData: Record<string, TimelineEvent[]> = {
         {
             date: '2026-11',
             title: '野村総合研究所 (NRI) ITソリューションインターンシップ',
-            desc: '技術情報のキャッチアップを支援する自動化システムの開発に取り組みました。',
+            desc: '技術情報収集自動化ワークフロー開発',
             color: 'green',
             icon: '💼',
             tags: ['athenAI', '要件定義', 'システム設計'],
